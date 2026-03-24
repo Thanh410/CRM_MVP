@@ -1,0 +1,925 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id                String             @id @default(uuid())
+  name              String
+  slug              String             @unique
+  logo              String?
+  website           String?
+  address           String?
+  phone             String?
+  email             String?
+  plan              String             @default("free")
+  settings          Json               @default("{}")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  deletedAt         DateTime?
+  activities        Activity[]
+  attachments       Attachment[]
+  auditLogs         AuditLog[]
+  campaignTemplates CampaignTemplate[]
+  campaigns         Campaign[]
+  channelAccounts   ChannelAccount[]
+  companies         Company[]
+  contacts          Contact[]
+  conversations     Conversation[]
+  customFields      CustomField[]
+  dealStages        DealStage[]
+  deals             Deal[]
+  departments       Department[]
+  leads             Lead[]
+  notes             Note[]
+  notifications     Notification[]
+  pipelines         Pipeline[]
+  projects          Project[]
+  roles             Role[]
+  tags              Tag[]
+  tasks             Task[]
+  teams             Team[]
+  users             User[]
+
+  @@index([slug])
+  @@map("organizations")
+}
+
+model Department {
+  id          String       @id @default(uuid())
+  orgId       String
+  name        String
+  description String?
+  parentId    String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+  org         Organization @relation(fields: [orgId], references: [id])
+  parent      Department?  @relation("DeptHierarchy", fields: [parentId], references: [id])
+  children    Department[] @relation("DeptHierarchy")
+  projects    Project[]
+  teams       Team[]
+  users       User[]
+
+  @@index([orgId])
+  @@map("departments")
+}
+
+model Team {
+  id          String       @id @default(uuid())
+  orgId       String
+  deptId      String?
+  name        String
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+  dept        Department?  @relation(fields: [deptId], references: [id])
+  org         Organization @relation(fields: [orgId], references: [id])
+  members     User[]
+
+  @@index([orgId])
+  @@map("teams")
+}
+
+model User {
+  id               String                    @id @default(uuid())
+  orgId            String
+  email            String
+  passwordHash     String
+  fullName         String
+  phone            String?
+  avatar           String?
+  status           UserStatus                @default(INVITED)
+  gender           Gender?
+  deptId           String?
+  teamId           String?
+  jobTitle         String?
+  settings         Json                      @default("{}")
+  lastLoginAt      DateTime?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+  deletedAt        DateTime?
+  activities       Activity[]
+  auditLogs        AuditLog[]
+  assignedContacts Contact[]                 @relation("ContactAssignee")
+  convParticipants ConversationParticipant[]
+  assignedConvs    Conversation[]            @relation("ConvAssignee")
+  ownedDeals       Deal[]                    @relation("DealOwner")
+  assignedLeads    Lead[]                    @relation("LeadAssignee")
+  notes            Note[]
+  notifications    Notification[]
+  ownedProjects    Project[]
+  refreshTokens    RefreshToken[]
+  taskComments     TaskComment[]
+  watchedTasks     TaskWatcher[]
+  assignedTasks    Task[]                    @relation("TaskAssignee")
+  userRoles        UserRole[]
+  dept             Department?               @relation(fields: [deptId], references: [id])
+  org              Organization              @relation(fields: [orgId], references: [id])
+  team             Team?                     @relation(fields: [teamId], references: [id])
+
+  @@unique([orgId, email])
+  @@index([orgId])
+  @@index([email])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  userAgent String?
+  ip        String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+model Role {
+  id              String           @id @default(uuid())
+  orgId           String
+  name            SystemRole
+  displayName     String
+  description     String?
+  isDefault       Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  rolePermissions RolePermission[]
+  org             Organization     @relation(fields: [orgId], references: [id])
+  userRoles       UserRole[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
+  @@map("roles")
+}
+
+model Permission {
+  id              String           @id @default(uuid())
+  resource        String
+  action          String
+  description     String?
+  createdAt       DateTime         @default(now())
+  rolePermissions RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model UserRole {
+  userId    String
+  roleId    String
+  orgId     String
+  createdAt DateTime @default(now())
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([orgId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model Lead {
+  id                 String             @id @default(uuid())
+  orgId              String
+  fullName           String
+  email              String?
+  phone              String?
+  status             LeadStatus         @default(NEW)
+  source             String?
+  utmSource          String?
+  utmMedium          String?
+  utmCampaign        String?
+  utmContent         String?
+  assignedTo         String?
+  convertedContactId String?
+  convertedAt        DateTime?
+  description        String?
+  createdBy          String?
+  updatedBy          String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  deletedAt          DateTime?
+  assignee           User?              @relation("LeadAssignee", fields: [assignedTo], references: [id])
+  org                Organization       @relation(fields: [orgId], references: [id])
+  tasks              Task[]
+
+  @@index([orgId])
+  @@index([assignedTo])
+  @@index([status])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+model Contact {
+  id                String             @id @default(uuid())
+  orgId             String
+  fullName          String
+  email             String?
+  phone             String?
+  mobile            String?
+  gender            Gender?
+  dateOfBirth       DateTime?
+  address           String?
+  companyId         String?
+  jobTitle          String?
+  assignedTo        String?
+  description       String?
+  createdBy         String?
+  updatedBy         String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  deletedAt         DateTime?
+  campaignLogs      CampaignLog[]
+  assignee          User?              @relation("ContactAssignee", fields: [assignedTo], references: [id])
+  company           Company?           @relation(fields: [companyId], references: [id])
+  org               Organization       @relation(fields: [orgId], references: [id])
+  conversations     Conversation[]
+  deals             Deal[]
+  tasks             Task[]
+
+  @@index([orgId])
+  @@index([email])
+  @@index([phone])
+  @@index([companyId])
+  @@map("contacts")
+}
+
+model Company {
+  id                String             @id @default(uuid())
+  orgId             String
+  name              String
+  industry          String?
+  size              String?
+  website           String?
+  address           String?
+  phone             String?
+  email             String?
+  taxCode           String?
+  description       String?
+  createdBy         String?
+  updatedBy         String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  deletedAt         DateTime?
+  org               Organization       @relation(fields: [orgId], references: [id])
+  contacts          Contact[]
+  deals             Deal[]
+
+  @@index([orgId])
+  @@index([name])
+  @@map("companies")
+}
+
+model Pipeline {
+  id        String       @id @default(uuid())
+  orgId     String
+  name      String
+  isDefault Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  deletedAt DateTime?
+  stages    DealStage[]
+  deals     Deal[]
+  org       Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@map("pipelines")
+}
+
+model DealStage {
+  id          String       @id @default(uuid())
+  orgId       String
+  pipelineId  String
+  name        String
+  order       Int          @default(0)
+  color       String       @default("#6366f1")
+  probability Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  org         Organization @relation(fields: [orgId], references: [id])
+  pipeline    Pipeline     @relation(fields: [pipelineId], references: [id])
+  deals       Deal[]
+
+  @@index([pipelineId])
+  @@map("deal_stages")
+}
+
+model Deal {
+  id                String             @id @default(uuid())
+  orgId             String
+  title             String
+  value             Decimal            @default(0) @db.Decimal(15, 2)
+  currency          String             @default("VND")
+  status            DealStatus         @default(OPEN)
+  stageId           String?
+  pipelineId        String?
+  probability       Int                @default(0)
+  closeDate         DateTime?
+  contactId         String?
+  companyId         String?
+  ownerId           String?
+  description       String?
+  lostReason        String?
+  createdBy         String?
+  updatedBy         String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  deletedAt         DateTime?
+  company           Company?           @relation(fields: [companyId], references: [id])
+  contact           Contact?           @relation(fields: [contactId], references: [id])
+  org               Organization       @relation(fields: [orgId], references: [id])
+  owner             User?              @relation("DealOwner", fields: [ownerId], references: [id])
+  pipeline          Pipeline?          @relation(fields: [pipelineId], references: [id])
+  stage             DealStage?         @relation(fields: [stageId], references: [id])
+  tasks             Task[]
+
+  @@index([orgId])
+  @@index([stageId])
+  @@index([ownerId])
+  @@index([status])
+  @@map("deals")
+}
+
+model Note {
+  id         String       @id @default(uuid())
+  orgId      String
+  entityType EntityType
+  entityId   String
+  content    String
+  authorId   String?
+  isPinned   Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  deletedAt  DateTime?
+  author     User?        @relation(fields: [authorId], references: [id])
+  org        Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId, entityType, entityId])
+  @@index([authorId])
+  @@map("notes")
+}
+
+model Activity {
+  id          String       @id @default(uuid())
+  orgId       String
+  type        ActivityType
+  entityType  EntityType
+  entityId    String
+  title       String
+  description String?
+  userId      String?
+  occurredAt  DateTime     @default(now())
+  isDone      Boolean      @default(false)
+  doneAt      DateTime?
+  dueAt       DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  org         Organization @relation(fields: [orgId], references: [id])
+  user        User?        @relation(fields: [userId], references: [id])
+
+  @@index([orgId, entityType, entityId])
+  @@index([userId])
+  @@map("activities")
+}
+
+model Tag {
+  id        String       @id @default(uuid())
+  orgId     String
+  name      String
+  color     String       @default("#6366f1")
+  createdAt DateTime     @default(now())
+  entities  EntityTag[]
+  org       Organization @relation(fields: [orgId], references: [id])
+
+  @@unique([orgId, name])
+  @@index([orgId])
+  @@map("tags")
+}
+
+model EntityTag {
+  entityType EntityType
+  entityId   String
+  tagId      String
+  createdAt  DateTime   @default(now())
+  tag        Tag        @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([entityType, entityId, tagId])
+  @@index([tagId])
+  @@map("entity_tags")
+}
+
+model Attachment {
+  id         String       @id @default(uuid())
+  orgId      String
+  entityType EntityType
+  entityId   String
+  filename   String
+  fileKey    String
+  mimeType   String
+  size       Int
+  uploadedBy String?
+  createdAt  DateTime     @default(now())
+  org        Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId, entityType, entityId])
+  @@map("attachments")
+}
+
+model CustomField {
+  id         String             @id @default(uuid())
+  orgId      String
+  entityType EntityType
+  name       String
+  label      String
+  type       CustomFieldType
+  options    Json?
+  required   Boolean            @default(false)
+  order      Int                @default(0)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  values     CustomFieldValue[]
+  org        Organization       @relation(fields: [orgId], references: [id])
+
+  @@unique([orgId, entityType, name])
+  @@index([orgId, entityType])
+  @@map("custom_fields")
+}
+
+model CustomFieldValue {
+  id         String      @id @default(uuid())
+  fieldId    String
+  entityType EntityType
+  entityId   String
+  value      String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  field      CustomField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@unique([fieldId, entityId])
+  @@index([entityType, entityId])
+  @@map("custom_field_values")
+}
+
+model Project {
+  id          String        @id @default(uuid())
+  orgId       String
+  name        String
+  description String?
+  deptId      String?
+  ownerId     String?
+  status      ProjectStatus @default(PLANNING)
+  startDate   DateTime?
+  dueDate     DateTime?
+  createdBy   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  dept        Department?   @relation(fields: [deptId], references: [id])
+  org         Organization  @relation(fields: [orgId], references: [id])
+  owner       User?         @relation(fields: [ownerId], references: [id])
+  tasks       Task[]
+
+  @@index([orgId])
+  @@index([deptId])
+  @@map("projects")
+}
+
+model Task {
+  id          String        @id @default(uuid())
+  orgId       String
+  projectId   String?
+  parentId    String?
+  title       String
+  description String?
+  status      TaskStatus    @default(TODO)
+  priority    TaskPriority  @default(MEDIUM)
+  assigneeId  String?
+  dueDate     DateTime?
+  entityType  EntityType?
+  entityId    String?
+  leadId      String?
+  contactId   String?
+  dealId      String?
+  createdBy   String?
+  updatedBy   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  comments    TaskComment[]
+  watchers    TaskWatcher[]
+  assignee    User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  contact     Contact?      @relation(fields: [contactId], references: [id])
+  deal        Deal?         @relation(fields: [dealId], references: [id])
+  lead        Lead?         @relation(fields: [leadId], references: [id])
+  org         Organization  @relation(fields: [orgId], references: [id])
+  parent      Task?         @relation("TaskHierarchy", fields: [parentId], references: [id])
+  subtasks    Task[]        @relation("TaskHierarchy")
+  project     Project?      @relation(fields: [projectId], references: [id])
+
+  @@index([orgId])
+  @@index([assigneeId])
+  @@index([projectId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+model TaskWatcher {
+  taskId    String
+  userId    String
+  createdAt DateTime @default(now())
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, userId])
+  @@map("task_watchers")
+}
+
+model TaskComment {
+  id        String    @id @default(uuid())
+  taskId    String
+  authorId  String?
+  content   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  author    User?     @relation(fields: [authorId], references: [id])
+  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_comments")
+}
+
+model CampaignTemplate {
+  id        String          @id @default(uuid())
+  orgId     String
+  name      String
+  channel   CampaignChannel
+  subject   String?
+  body      String
+  variables Json?
+  createdBy String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  deletedAt DateTime?
+  org       Organization    @relation(fields: [orgId], references: [id])
+  campaigns Campaign[]
+
+  @@index([orgId])
+  @@map("campaign_templates")
+}
+
+model Campaign {
+  id             String            @id @default(uuid())
+  orgId          String
+  name           String
+  channel        CampaignChannel
+  status         CampaignStatus    @default(DRAFT)
+  templateId     String?
+  audienceFilter Json?
+  description    String?
+  startDate      DateTime?
+  endDate        DateTime?
+  sentCount      Int               @default(0)
+  openCount      Int               @default(0)
+  clickCount     Int               @default(0)
+  createdBy      String?
+  updatedBy      String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  deletedAt      DateTime?
+  logs           CampaignLog[]
+  org            Organization      @relation(fields: [orgId], references: [id])
+  template       CampaignTemplate? @relation(fields: [templateId], references: [id])
+
+  @@index([orgId])
+  @@index([status])
+  @@map("campaigns")
+}
+
+model CampaignLog {
+  id         String    @id @default(uuid())
+  campaignId String
+  contactId  String?
+  status     String
+  sentAt     DateTime?
+  openedAt   DateTime?
+  clickedAt  DateTime?
+  errorMsg   String?
+  createdAt  DateTime  @default(now())
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contact    Contact?  @relation(fields: [contactId], references: [id])
+
+  @@index([campaignId])
+  @@index([contactId])
+  @@map("campaign_logs")
+}
+
+model ChannelAccount {
+  id             String           @id @default(uuid())
+  orgId          String
+  channel        ChannelType
+  name           String
+  externalId     String?
+  credentialsEnc String?
+  webhookToken   String?
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  org            Organization     @relation(fields: [orgId], references: [id])
+  webhookEvents  ChannelWebhook[]
+  conversations  Conversation[]
+
+  @@index([orgId])
+  @@map("channel_accounts")
+}
+
+model ChannelWebhook {
+  id               String         @id @default(uuid())
+  channelAccountId String
+  eventType        String
+  payload          Json
+  processed        Boolean        @default(false)
+  processedAt      DateTime?
+  error            String?
+  retryCount       Int            @default(0)
+  createdAt        DateTime       @default(now())
+  channelAccount   ChannelAccount @relation(fields: [channelAccountId], references: [id])
+
+  @@index([channelAccountId])
+  @@index([processed])
+  @@map("channel_webhooks")
+}
+
+model Conversation {
+  id               String                    @id @default(uuid())
+  orgId            String
+  channel          ChannelType
+  channelAccountId String?
+  externalId       String
+  status           ConversationStatus        @default(OPEN)
+  assignedTo       String?
+  contactId        String?
+  leadId           String?
+  subject          String?
+  lastMessageAt    DateTime?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+  deletedAt        DateTime?
+  participants     ConversationParticipant[]
+  assignee         User?                     @relation("ConvAssignee", fields: [assignedTo], references: [id])
+  channelAccount   ChannelAccount?           @relation(fields: [channelAccountId], references: [id])
+  contact          Contact?                  @relation(fields: [contactId], references: [id])
+  org              Organization              @relation(fields: [orgId], references: [id])
+  messages         Message[]
+
+  @@unique([orgId, channel, externalId])
+  @@index([orgId])
+  @@index([status])
+  @@index([assignedTo])
+  @@index([lastMessageAt])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  conversationId String
+  userId         String
+  joinedAt       DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String           @id @default(uuid())
+  conversationId String
+  direction      MessageDirection
+  senderId       String?
+  content        String?
+  mediaUrl       String?
+  mediaType      String?
+  externalId     String?
+  rawPayload     Json?
+  sentAt         DateTime         @default(now())
+  createdAt      DateTime         @default(now())
+  conversation   Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, externalId])
+  @@index([conversationId])
+  @@index([sentAt])
+  @@map("messages")
+}
+
+model AuditLog {
+  id         String       @id @default(uuid())
+  orgId      String
+  userId     String?
+  action     AuditAction
+  resource   String
+  resourceId String?
+  changes    Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime     @default(now())
+  org        Organization @relation(fields: [orgId], references: [id])
+  user       User?        @relation(fields: [userId], references: [id])
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id         String           @id @default(uuid())
+  orgId      String
+  userId     String
+  type       NotificationType
+  title      String
+  body       String?
+  read       Boolean          @default(false)
+  readAt     DateTime?
+  entityType EntityType?
+  entityId   String?
+  createdAt  DateTime         @default(now())
+  org        Organization     @relation(fields: [orgId], references: [id])
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  INVITED
+}
+
+enum SystemRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  SALES
+  MARKETING
+  SUPPORT
+  STAFF
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  UNQUALIFIED
+  CONVERTED
+}
+
+enum DealStatus {
+  OPEN
+  WON
+  LOST
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+  NOTE
+  TASK
+  DEMO
+  FOLLOW_UP
+  OTHER
+}
+
+enum EntityType {
+  LEAD
+  CONTACT
+  COMPANY
+  DEAL
+  TASK
+  PROJECT
+  CAMPAIGN
+  CONVERSATION
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum CampaignChannel {
+  ZALO
+  MESSENGER
+  EMAIL
+  SMS
+  MANUAL
+}
+
+enum ConversationStatus {
+  OPEN
+  PENDING
+  CLOSED
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+  INTERNAL
+}
+
+enum ChannelType {
+  ZALO
+  MESSENGER
+  INSTAGRAM
+  WHATSAPP
+  TELEGRAM
+}
+
+enum AuditAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  IMPORT
+  ASSIGN
+}
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  DATE
+  BOOLEAN
+  SELECT
+  MULTI_SELECT
+  URL
+  EMAIL
+  PHONE
+}
+
+enum NotificationType {
+  LEAD_ASSIGNED
+  DEAL_STAGE_CHANGED
+  TASK_ASSIGNED
+  TASK_DUE_SOON
+  MESSAGE_RECEIVED
+  MENTION
+  SYSTEM
+}
