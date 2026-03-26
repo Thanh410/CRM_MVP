@@ -1,13 +1,18 @@
 // tests/helpers/auth.ts
-import { APIRequestContext } from '@playwright/test';
+// NOTE: All API calls use FULL URL because Playwright's pwRequest.newContext()
+// baseURL only applies to browser navigation (page.goto()), NOT API requests.
+import type { APIRequestContext } from '@playwright/test';
+
+const API_URL = 'http://localhost:3000/api';
 
 export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'SALES';
 
+// Hardcoded demo accounts — matches db/seed.ts credentials
 const DEMO_ACCOUNTS: Record<Role, { email: string; password: string }> = {
-  SUPER_ADMIN: { email: process.env.DEMO_SUPERADMIN_EMAIL!, password: process.env.DEMO_SUPERADMIN_PASSWORD! },
-  ADMIN:       { email: process.env.DEMO_ADMIN_EMAIL!,        password: process.env.DEMO_ADMIN_PASSWORD! },
-  MANAGER:     { email: process.env.DEMO_MANAGER_EMAIL!,      password: process.env.DEMO_MANAGER_PASSWORD! },
-  SALES:       { email: process.env.DEMO_SALES_EMAIL!,         password: process.env.DEMO_SALES_PASSWORD! },
+  SUPER_ADMIN: { email: 'superadmin@abc.com.vn', password: 'Admin@123456' },
+  ADMIN:       { email: 'admin@abc.com.vn',       password: 'Admin@123456' },
+  MANAGER:     { email: 'manager.sales@abc.com.vn', password: 'Admin@123456' },
+  SALES:       { email: 'sales@abc.com.vn',       password: 'Sales@123456' },
 };
 
 export interface AuthTokens {
@@ -25,12 +30,13 @@ export interface AuthTokens {
 
 export async function loginAs(request: APIRequestContext, role: Role): Promise<AuthTokens> {
   const { email, password } = DEMO_ACCOUNTS[role];
-  const res = await request.post('/api/auth/login', {
+  const res = await request.post(`${API_URL}/auth/login`, {
     data: { email, password },
   });
   if (res.status() !== 200) {
     throw new Error(`Login as ${role} failed: ${res.status()} ${await res.text()}`);
   }
+  // Body consumed here — caller MUST NOT call res.json() again.
   return res.json() as Promise<AuthTokens>;
 }
 
@@ -43,8 +49,9 @@ export async function loginAsUI(page: import('@playwright/test').Page, role: Rol
   await page.waitForURL('**/dashboard', { timeout: 15_000 });
 }
 
-export async function logout(request: APIRequestContext, refreshToken: string) {
-  await request.post('/api/auth/logout', {
-    data: { refreshToken },
+export async function logout(request: APIRequestContext, accessToken: string) {
+  await request.post(`${API_URL}/auth/logout`, {
+    data: {},
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 }
