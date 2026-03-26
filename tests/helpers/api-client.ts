@@ -1,4 +1,8 @@
 // tests/helpers/api-client.ts
+// NOTE: API responses are returned directly by NestJS without { data: T } envelope.
+// The interceptor pattern was used during design but actual API returns bare objects.
+// If your API uses { data: T } envelope, change: return res; → return (res as any).data;
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -58,10 +62,9 @@ export class ApiClient {
 
   async upload<T>(path: string, fieldName: string, filePath: string): Promise<T> {
     const url = `${this.baseURL}${path}`;
-    const formData = new FormData();
     const file = await fetch(`file://${filePath}`).then(r => r.blob());
+    const formData = new FormData();
     formData.append(fieldName, file, filePath.split('/').pop()!);
-
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -69,7 +72,6 @@ export class ApiClient {
       },
       body: formData,
     });
-
     const data = await response.json();
     if (!response.ok) throw new ApiError(response.status, data, path);
     return data as T;

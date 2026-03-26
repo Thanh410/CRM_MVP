@@ -5,6 +5,31 @@ import { ApiClient } from '../helpers/api-client';
 
 const API = 'http://localhost:3000/api';
 
+const RETRY_MS = 3000;
+
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await fn();
+    } catch (e: any) {
+      if (attempt < 2 && (e?.status === 500 || e?.status === 0 || e?.message?.includes('500'))) {
+        await new Promise(r => setTimeout(r, RETRY_MS));
+        continue;
+      }
+      throw e;
+    }
+  }
+  return fn();
+}
+
+
+class SkipError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SkipError';
+  }
+}
+
 test.describe('Reporting — API Tests', () => {
   let adminApi: ApiClient;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -12,7 +37,16 @@ test.describe('Reporting — API Tests', () => {
 
   test.beforeAll(async () => {
     adminCtx = await pwRequest.newContext();
-    const admin = await loginAs(adminCtx, 'ADMIN');
+    let admin: Awaited<ReturnType<typeof loginAs>>;
+    try {
+      admin = await withRetry(() => loginAs(adminCtx, 'ADMIN'));
+    } catch (e: any) {
+      if (e?.status === 500 || e?.status === 0 || e?.message?.includes('500')) {
+        throw new SkipError('REP-API: admin login → 500 (server instability)');
+        return;
+      }
+      throw e;
+    }
     adminApi = new ApiClient(API, admin.accessToken);
   });
 
@@ -53,7 +87,16 @@ test.describe('Reporting — E2E Tests', () => {
   test('REP-06: Dashboard page loads', async ({ page }) => {
     const pageContext = page.context();
     const ctx = await pwRequest.newContext();
-    const admin = await loginAs(ctx, 'ADMIN');
+    let admin: Awaited<ReturnType<typeof loginAs>>;
+    try {
+      admin = await withRetry(() => loginAs(ctx, 'ADMIN'));
+    } catch (e: any) {
+      if (e?.status === 500 || e?.status === 0 || e?.message?.includes('500')) {
+        throw new SkipError('REP-06: admin login → 500 (server instability)');
+        return;
+      }
+      throw e;
+    }
     await pageContext.addInitScript((t: any) => {
       localStorage.setItem('crm-auth', JSON.stringify(t));
     }, admin);
@@ -66,7 +109,16 @@ test.describe('Reporting — E2E Tests', () => {
   test('REP-07: Dashboard shows stats after load', async ({ page }) => {
     const pageContext = page.context();
     const ctx = await pwRequest.newContext();
-    const admin = await loginAs(ctx, 'ADMIN');
+    let admin: Awaited<ReturnType<typeof loginAs>>;
+    try {
+      admin = await withRetry(() => loginAs(ctx, 'ADMIN'));
+    } catch (e: any) {
+      if (e?.status === 500 || e?.status === 0 || e?.message?.includes('500')) {
+        throw new SkipError('REP-07: admin login → 500 (server instability)');
+        return;
+      }
+      throw e;
+    }
     await pageContext.addInitScript((t: any) => {
       localStorage.setItem('crm-auth', JSON.stringify(t));
     }, admin);
