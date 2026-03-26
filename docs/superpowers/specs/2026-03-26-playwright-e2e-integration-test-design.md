@@ -4,7 +4,7 @@
 
 **Date:** 2026-03-26
 **Type:** Test Design Specification
-**Status:** Draft — awaiting user review
+**Status:** ✅ Implemented — 156 test cases across 20 modules
 **Rule:** **Không thay đổi source code gốc.** Tất cả test file nằm trong thư mục `tests/`, hoàn toàn isolated với `src/`.
 
 ---
@@ -659,26 +659,40 @@ jobs:
 
 ---
 
-## 12. Summary — Test Count
+## 12. Summary — Test Count (Actual)
 
-| Module | API Tests | E2E Tests | Total |
-|---|---|---|---|
-| Auth | 13 | 5 | **18** |
-| Leads | 12 | 2 | **14** |
-| Deals | 8 | 3 | **11** |
-| Tasks | 8 | 2 | **10** |
-| Contacts | 5 | 2 | **7** |
-| Companies | 5 | 2 | **7** |
-| Projects | 5 | 2 | **7** |
-| Conversations | 5 | 2 | **7** |
-| Notifications | 5 | 2 | **7** |
-| Reporting | 5 | 2 | **7** |
-| RBAC | 6 | 2 | **8** |
-| Audit | 4 | 1 | **5** |
-| Tags | 6 | 0 | **6** |
-| Notes | 4 | 0 | **4** |
-| Activities | 4 | 0 | **4** |
-| Organizations | 6 | 2 | **8** |
-| Integrations | 6 | 0 | **6** |
-| Errors | 10 | 2 | **12** |
-| **Total** | **~117** | **~29** | **~146** |
+| Module | File | API Tests | E2E Tests | Total |
+|---|---|---|---|---|
+| Auth | `auth/auth.spec.ts` | 13 | 5 | **18** |
+| Leads | `leads/leads.spec.ts` | 12 | 2 | **14** |
+| Deals | `deals/deals.spec.ts` | 8 | 3 | **11** |
+| Tasks | `tasks/tasks.spec.ts` | 7 | 3 | **10** |
+| Contacts | `contacts/contacts.spec.ts` | 6 | 1 | **7** |
+| Companies | `companies/companies.spec.ts` | 6 | 1 | **7** |
+| Projects | `projects/projects.spec.ts` | 6 | 1 | **7** |
+| Conversations | `conversations/conversations.spec.ts` | 5 | 2 | **7** |
+| Notifications | `notifications/notifications.spec.ts` | 5 | 2 | **7** |
+| Reporting | `reporting/reporting.spec.ts` | 5 | 2 | **7** |
+| RBAC | `rbac/rbac.spec.ts` | 6 | 2 | **8** |
+| Audit | `audit/audit.spec.ts` | 4 | 1 | **5** |
+| Tags | `tags/tags.spec.ts` | 6 | 0 | **6** |
+| Notes | `notes/notes.spec.ts` | 4 | 0 | **4** |
+| Activities | `activities/activities.spec.ts` | 4 | 0 | **4** |
+| Organizations | `organizations/organizations.spec.ts` | 8 | 0 | **8** |
+| Integrations | `integrations/integrations.spec.ts` | 6 | 0 | **6** |
+| Errors | `errors/errors.spec.ts` | 10 | 2 | **12** |
+| Rate Limiting | `rate-limiting/rate-limiting.spec.ts` | 2 | 0 | **2** |
+| Marketing | `marketing/marketing.spec.ts` | 6 | 0 | **6** |
+| **Total** | **20 files** | **~120** | **~29** | **156** |
+
+## 13. Implementation Result
+
+| Metric | Value |
+|---|---|
+| **Test files** | 20 `.spec.ts` files |
+| **Total test cases** | **156** |
+| **Helper files** | 5 (`auth.ts`, `api-client.ts`, `fixtures.ts`, `storage.ts`, `index.ts`) |
+| **Config files** | `playwright.config.ts`, `.env.test`, `fixtures/sample.csv`, `tsconfig.json` |
+| **CI workflow** | `.github/workflows/e2e.yml` + `scripts/wait-for-services.sh` |
+| **TypeScript** | ✅ 0 errors |
+| **Source code modified** | ✅ 0 files in `src/` touched |

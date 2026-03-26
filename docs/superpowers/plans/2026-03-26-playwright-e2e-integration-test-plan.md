@@ -2,7 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Tạo bộ test E2E + Integration hoàn chỉnh bằng Playwright cho CRM MVP, cover ~146 test cases across 19 modules, **không thay đổi source code gốc**, bao gồm GitHub Actions CI.
+**Goal:** Tạo bộ test E2E + Integration hoàn chỉnh bằng Playwright cho CRM MVP, cover **156 test cases** across **20 modules**, **không thay đổi source code gốc**, bao gồm GitHub Actions CI.
+
+**Status:** ✅ Fully implemented — all 14 tasks completed
 
 **Architecture:** Test suite nằm hoàn toàn trong thư mục `tests/`, dùng Playwright với `APIRequestContext` cho API tests và `Page` object cho E2E browser tests. Shared helpers (`auth`, `api-client`, `fixtures`) được reuse xuyên suốt. Test data được tạo động qua API mỗi test, đảm bảo isolation hoàn toàn.
 
