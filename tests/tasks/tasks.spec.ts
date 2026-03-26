@@ -2,7 +2,7 @@
 import { test, expect, request as pwRequest } from '@playwright/test';
 import { loginAs } from '../helpers/auth';
 import { ApiClient } from '../helpers/api-client';
-import { createTask, createProject, newEmail } from '../helpers/fixtures';
+import { createTask } from '../helpers/fixtures';
 
 const API = process.env.API_BASE_URL!;
 
@@ -67,15 +67,15 @@ test.describe('Tasks — API Tests', () => {
 
   test('TASK-06: Add watcher to task returns 201', async () => {
     const task = await createTask(adminApi);
+    let ctx: Awaited<ReturnType<typeof pwRequest.newContext>> | null = null;
     try {
-      // Get admin user id
-      const ctx = await pwRequest.newContext({ baseURL: API });
+      ctx = await pwRequest.newContext({ baseURL: API });
       const admin = await loginAs(ctx, 'ADMIN');
       const watcherApi = new ApiClient(API, admin.accessToken);
       const res = await watcherApi.post<any>(`/tasks/${task.id}/watchers/${admin.user.id}`, {});
       expect(res.data ?? res).toBeDefined();
-      await ctx.dispose();
     } finally {
+      if (ctx) await ctx.dispose();
       try { await adminApi.delete(`/tasks/${task.id}`); } catch {}
     }
   });

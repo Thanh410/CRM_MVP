@@ -2,7 +2,7 @@
 import { test, expect, request as pwRequest } from '@playwright/test';
 import { loginAs } from '../helpers/auth';
 import { ApiClient } from '../helpers/api-client';
-import { createDeal, createLead, newEmail } from '../helpers/fixtures';
+import { createDeal } from '../helpers/fixtures';
 
 const API = process.env.API_BASE_URL!;
 
