@@ -6,13 +6,22 @@ import { createLead, newEmail } from '../helpers/fixtures';
 
 const API = process.env.API_BASE_URL!;
 
+// NOTE: All API responses use { data: T } envelope convention.
+// createLead strips envelope (returns T). GET/PATCH also return { data: T }.
+// If API returns bare T instead, update fixtures.ts and assertions accordingly.
+
 test.describe('Leads — API Tests', () => {
   let adminApi: ApiClient;
   let salesApi: ApiClient;
+  // Store contexts at describe scope so afterAll can dispose them
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let adminCtx: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let salesCtx: any;
 
   test.beforeAll(async () => {
-    const adminCtx = await pwRequest.newContext({ baseURL: API });
-    const salesCtx = await pwRequest.newContext({ baseURL: API });
+    adminCtx = await pwRequest.newContext({ baseURL: API });
+    salesCtx = await pwRequest.newContext({ baseURL: API });
     const admin = await loginAs(adminCtx, 'ADMIN');
     const sales = await loginAs(salesCtx, 'SALES');
     adminApi = new ApiClient(API, admin.accessToken);
@@ -20,17 +29,20 @@ test.describe('Leads — API Tests', () => {
   });
 
   test.afterAll(async () => {
-    // dispose contexts if needed
+    if (adminCtx) await adminCtx.dispose();
+    if (salesCtx) await salesCtx.dispose();
   });
 
   test('LEAD-01: Create lead returns 201 and lead object', async () => {
     const lead = await createLead(adminApi);
-    expect(lead.id).toBeDefined();
-    expect(lead.status).toBe('NEW');
-    expect(lead.fullName).toBeTruthy();
-    expect(lead.email).toBeTruthy();
-    // cleanup
-    await adminApi.delete(`/leads/${lead.id}`);
+    try {
+      expect(lead.id).toBeDefined();
+      expect(lead.status).toBe('NEW');
+      expect(lead.fullName).toBeTruthy();
+      expect(lead.email).toBeTruthy();
+    } finally {
+      await adminApi.delete(`/leads/${lead.id}`);
+    }
   });
 
   test('LEAD-02: List leads returns paginated response', async () => {
@@ -67,43 +79,50 @@ test.describe('Leads — API Tests', () => {
 
   test('LEAD-05: Assign lead to user returns updated lead', async () => {
     const lead = await createLead(adminApi);
+    let assignCtx: Awaited<ReturnType<typeof pwRequest.newContext>> | null = null;
     try {
-      const adminCtx = await pwRequest.newContext({ baseURL: API });
-      const admin = await loginAs(adminCtx, 'ADMIN');
-      const res = await adminApi.patch<any>(`/leads/${lead.id}/assign`, {
-        assignedTo: admin.user.id,
+      assignCtx = await pwRequest.newContext({ baseURL: API });
+      const admin2 = await loginAs(assignCtx, 'ADMIN');
+      const assignApi = new ApiClient(API, admin2.accessToken);
+      const res = await assignApi.patch<any>(`/leads/${lead.id}/assign`, {
+        assignedTo: admin2.user.id,
       });
       expect(res.data.assigneeId ?? res.data.assignedTo ?? res.data.assignee?.id).toBeTruthy();
-      await adminCtx.dispose();
     } finally {
+      if (assignCtx) await assignCtx.dispose();
       await adminApi.delete(`/leads/${lead.id}`);
     }
   });
 
-  test('LEAD-06: Delete lead returns 204', async () => {
+  test('LEAD-06: Delete lead returns 204 and resource is gone', async () => {
     const lead = await createLead(adminApi);
-    const res = await adminApi.delete(`/leads/${lead.id}`);
-    expect(res).toBeUndefined(); // 204 returns undefined
-    // Verify deleted
-    let error;
     try {
-      await adminApi.get(`/leads/${lead.id}`);
-    } catch (e: any) {
-      error = e;
+      const res = await adminApi.delete(`/leads/${lead.id}`);
+      expect(res).toBeUndefined(); // 204 → undefined
+      // Verify deleted — GET should throw ApiError with 404
+      let errorStatus: number | undefined;
+      try {
+        await adminApi.get(`/leads/${lead.id}`);
+      } catch (e: any) {
+        errorStatus = e?.status;
+      }
+      expect(errorStatus).toBe(404);
+    } finally {
+      // Best-effort cleanup (safe if already deleted)
+      try { await adminApi.delete(`/leads/${lead.id}`); } catch {}
     }
-    expect(error?.status).toBe(404);
   });
 
   test('LEAD-07: Get deleted lead returns 404', async () => {
     const lead = await createLead(adminApi);
     await adminApi.delete(`/leads/${lead.id}`);
-    let error;
+    let errorStatus: number | undefined;
     try {
       await adminApi.get(`/leads/${lead.id}`);
     } catch (e: any) {
-      error = e;
+      errorStatus = e?.status;
     }
-    expect(error?.status).toBe(404);
+    expect(errorStatus).toBe(404);
   });
 
   test('LEAD-08: Filter leads by status', async () => {
@@ -141,13 +160,13 @@ test.describe('Leads — API Tests', () => {
   test('LEAD-11: SALES role cannot delete lead (RBAC)', async () => {
     const lead = await createLead(adminApi);
     try {
-      let error;
+      let errorStatus: number | undefined;
       try {
         await salesApi.delete(`/leads/${lead.id}`);
       } catch (e: any) {
-        error = e;
+        errorStatus = e?.status;
       }
-      expect(error?.status).toBe(403);
+      expect(errorStatus).toBe(403);
     } finally {
       await adminApi.delete(`/leads/${lead.id}`);
     }
