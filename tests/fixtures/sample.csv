@@ -1,0 +1,4 @@
+fullName,email,phone,source,status
+Nguyễn Test 1,test1@example.com,0901000001,WEBSITE,NEW
+Nguyễn Test 2,test2@example.com,0901000002,REFERRAL,CONTACTED
+Nguyễn Test 3,test3@example.com,0901000003,AD,QUALIFIED

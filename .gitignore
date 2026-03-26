@@ -42,3 +42,9 @@ docker/volumes/
 
 # TypeScript
 *.tsbuildinfo
+
+# Playwright
+playwright-report/
+tests/.auth/
+test-results/
+playwright/.cache/
