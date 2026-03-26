@@ -1,0 +1,150 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  e2e:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: crm_user
+          POSTGRES_PASSWORD: crm_password_change_me
+          POSTGRES_DB: crm_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup MinIO (for S3)
+        run: |
+          docker run -d --name minio -p 9000:9000 -p 9001:9001 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio server /data --console-address ":9001"
+
+      - name: Wait for services
+        run: bash scripts/wait-for-services.sh
+
+      - name: Create .env.test
+        run: |
+          cat > .env.test << 'ENVEOF'
+NODE_ENV=test
+PORT=3000
+FRONTEND_URL=http://localhost:3001
+API_BASE_URL=http://localhost:3000/api
+DATABASE_URL=postgresql://crm_user:crm_password_change_me@localhost:5432/crm_db?schema=public
+REDIS_HOST=localhost
+REDIS_PORT=6379
+JWT_SECRET=ci_test_secret_min_32_chars_abc123_ci_test
+JWT_ACCESS_EXPIRES=15m
+JWT_REFRESH_SECRET=ci_refresh_secret_min_32_chars_abc123_ci
+JWT_REFRESH_EXPIRES=7d
+S3_ENDPOINT=http://localhost:9000
+S3_ACCESS_KEY=minioadmin
+S3_SECRET_KEY=minioadmin
+S3_BUCKET=crm-files
+S3_REGION=us-east-1
+S3_USE_SSL=false
+ZALO_WEBHOOK_SECRET=
+META_VERIFY_TOKEN=
+DEMO_SUPERADMIN_EMAIL=superadmin@abc.com.vn
+DEMO_SUPERADMIN_PASSWORD=Admin@123456
+DEMO_ADMIN_EMAIL=admin@abc.com.vn
+DEMO_ADMIN_PASSWORD=Admin@123456
+DEMO_SALES_EMAIL=sales@abc.com.vn
+DEMO_SALES_PASSWORD=Sales@123456
+DEMO_MANAGER_EMAIL=manager.sales@abc.com.vn
+DEMO_MANAGER_PASSWORD=Admin@123456
+ENVEOF
+
+      - name: Run database migrations
+        run: pnpm --filter api db:generate && pnpm --filter api db:migrate
+
+      - name: Seed database
+        run: pnpm --filter api db:seed
+
+      - name: Start API server
+        run: |
+          pnpm --filter api dev &
+          echo $! > /tmp/api.pid
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://crm_user:crm_password_change_me@localhost:5432/crm_db?schema=public
+
+      - name: Start Web server
+        run: |
+          pnpm --filter web dev &
+          echo $! > /tmp/web.pid
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3000/api
+
+      - name: Wait for servers to be ready
+        run: npx wait-on http://localhost:3001 --timeout 120000
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: pnpm exec playwright test --project=chromium --timeout=60000
+        env:
+          NODE_ENV: test
+          CI: true
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-${{ github.run_number }}
+          path: test-results/
+          retention-days: 14
