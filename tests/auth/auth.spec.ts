@@ -1,6 +1,5 @@
 // tests/auth/auth.spec.ts
 import { test, expect, request as pwRequest } from '@playwright/test';
-import { ApiClient, ApiError } from '../helpers/api-client';
 
 const API = process.env.API_BASE_URL!; // http://localhost:3000/api
 
