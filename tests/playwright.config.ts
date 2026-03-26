@@ -21,7 +21,7 @@ export default defineConfig({
   ],
   use: {
     baseURL: BASE_URL,
-    apiBaseURL: API_BASE,
+    // apiBaseURL intentionally omitted — helpers read API_BASE_URL directly from process.env
     actionTimeout: 10_000,
     navigationTimeout: 30_000,
     trace: 'on-first-retry',
