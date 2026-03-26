@@ -131,6 +131,14 @@ export default defineConfig({
     },
   ],
   timeout: 60_000,
+  // NOTE: webServer intentionally omitted — services are started manually or by CI workflow.
+  // For local dev convenience, add this block:
+  // webServer: {
+  //   command: 'pnpm dev',
+  //   url: 'http://localhost:3001',
+  //   timeout: 120_000,
+  //   reuseExistingServer: !process.env.CI,
+  // },
 });
 ```
 
@@ -589,7 +597,7 @@ Pattern mỗi test file:
 
 ```typescript
 // tests/leads/leads.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect, request as pwRequest } from '@playwright/test';
 import { loginAs } from '../helpers/auth';
 import { ApiClient } from '../helpers/api-client';
 import { createLead, newEmail } from '../helpers/fixtures';
@@ -600,9 +608,12 @@ test.describe('Leads — API Tests', () => {
   let adminApi: ApiClient;
   let salesApi: ApiClient;
 
-  test.beforeAll(async ({ request }) => {
-    const admin = await loginAs(request as any, 'ADMIN');
-    const sales = await loginAs(request as any, 'SALES');
+  test.beforeAll(async () => {
+    // Dùng pwRequest.newContext() thay vì page.request — đảm bảo type đúng
+    const adminCtx = await pwRequest.newContext({ baseURL: API });
+    const salesCtx = await pwRequest.newContext({ baseURL: API });
+    const admin = await loginAs(adminCtx, 'ADMIN');
+    const sales = await loginAs(salesCtx, 'SALES');
     adminApi = new ApiClient(API, admin.accessToken);
     salesApi = new ApiClient(API, sales.accessToken);
   });
@@ -1028,6 +1039,8 @@ DEMO_ADMIN_EMAIL=admin@abc.com.vn
 DEMO_ADMIN_PASSWORD=Admin@123456
 DEMO_SALES_EMAIL=sales@abc.com.vn
 DEMO_SALES_PASSWORD=Sales@123456
+DEMO_MANAGER_EMAIL=admin@abc.com.vn
+DEMO_MANAGER_PASSWORD=Admin@123456
 ENVEOF
 
       - name: Run database migrations
