@@ -4,7 +4,7 @@ import { loginAs } from '../helpers/auth';
 import { ApiClient } from '../helpers/api-client';
 import { createLead, newEmail } from '../helpers/fixtures';
 
-const API = process.env.API_BASE_URL!;
+const API = 'http://localhost:3000/api';
 
 // NOTE: All API responses use { data: T } envelope convention.
 // createLead strips envelope (returns T). GET/PATCH also return { data: T }.
@@ -20,8 +20,8 @@ test.describe('Leads — API Tests', () => {
   let salesCtx: any;
 
   test.beforeAll(async () => {
-    adminCtx = await pwRequest.newContext({ baseURL: API });
-    salesCtx = await pwRequest.newContext({ baseURL: API });
+    adminCtx = await pwRequest.newContext();
+    salesCtx = await pwRequest.newContext();
     const admin = await loginAs(adminCtx, 'ADMIN');
     const sales = await loginAs(salesCtx, 'SALES');
     adminApi = new ApiClient(API, admin.accessToken);
@@ -81,7 +81,7 @@ test.describe('Leads — API Tests', () => {
     const lead = await createLead(adminApi);
     let assignCtx: Awaited<ReturnType<typeof pwRequest.newContext>> | null = null;
     try {
-      assignCtx = await pwRequest.newContext({ baseURL: API });
+      assignCtx = await pwRequest.newContext();
       const admin2 = await loginAs(assignCtx, 'ADMIN');
       const assignApi = new ApiClient(API, admin2.accessToken);
       const res = await assignApi.patch<any>(`/leads/${lead.id}/assign`, {
@@ -183,7 +183,7 @@ test.describe('Leads — E2E Tests', () => {
   test('LEAD-13: Create lead from UI', async ({ page }) => {
     const pageContext = page.context();
     // Seed localStorage with admin tokens
-    const ctx = await pwRequest.newContext({ baseURL: API });
+    const ctx = await pwRequest.newContext();
     const admin = await loginAs(ctx, 'ADMIN');
     await pageContext.addInitScript((t: any) => {
       localStorage.setItem('crm-auth', JSON.stringify(t));

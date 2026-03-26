@@ -3,7 +3,7 @@ import { test, expect, request as pwRequest } from '@playwright/test';
 import { loginAs } from '../helpers/auth';
 import { ApiClient } from '../helpers/api-client';
 
-const API = process.env.API_BASE_URL!;
+const API = 'http://localhost:3000/api';
 
 test.describe('Conversations — API Tests', () => {
   let adminApi: ApiClient;
@@ -11,7 +11,7 @@ test.describe('Conversations — API Tests', () => {
   let adminCtx: any;
 
   test.beforeAll(async () => {
-    adminCtx = await pwRequest.newContext({ baseURL: API });
+    adminCtx = await pwRequest.newContext();
     const admin = await loginAs(adminCtx, 'ADMIN');
     adminApi = new ApiClient(API, admin.accessToken);
   });
@@ -47,7 +47,7 @@ test.describe('Conversations — API Tests', () => {
     }
     const firstId = listRes.data[0].id;
     // Use the admin user id from the auth token
-    const ctx2 = await pwRequest.newContext({ baseURL: API });
+    const ctx2 = await pwRequest.newContext();
     const admin2 = await loginAs(ctx2, 'ADMIN');
     try {
       const assignApi = new ApiClient(API, admin2.accessToken);
@@ -91,7 +91,7 @@ test.describe('Conversations — API Tests', () => {
 test.describe('Conversations — E2E Tests', () => {
   test('CONV-06: Inbox page loads', async ({ page }) => {
     const pageContext = page.context();
-    const ctx = await pwRequest.newContext({ baseURL: API });
+    const ctx = await pwRequest.newContext();
     const admin = await loginAs(ctx, 'ADMIN');
     await pageContext.addInitScript((t: any) => {
       localStorage.setItem('crm-auth', JSON.stringify(t));
@@ -104,7 +104,7 @@ test.describe('Conversations — E2E Tests', () => {
 
   test('CONV-07: Conversation list is visible on inbox page', async ({ page }) => {
     const pageContext = page.context();
-    const ctx = await pwRequest.newContext({ baseURL: API });
+    const ctx = await pwRequest.newContext();
     const admin = await loginAs(ctx, 'ADMIN');
     await pageContext.addInitScript((t: any) => {
       localStorage.setItem('crm-auth', JSON.stringify(t));

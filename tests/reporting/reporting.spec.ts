@@ -3,7 +3,7 @@ import { test, expect, request as pwRequest } from '@playwright/test';
 import { loginAs } from '../helpers/auth';
 import { ApiClient } from '../helpers/api-client';
 
-const API = process.env.API_BASE_URL!;
+const API = 'http://localhost:3000/api';
 
 test.describe('Reporting — API Tests', () => {
   let adminApi: ApiClient;
@@ -11,7 +11,7 @@ test.describe('Reporting — API Tests', () => {
   let adminCtx: any;
 
   test.beforeAll(async () => {
-    adminCtx = await pwRequest.newContext({ baseURL: API });
+    adminCtx = await pwRequest.newContext();
     const admin = await loginAs(adminCtx, 'ADMIN');
     adminApi = new ApiClient(API, admin.accessToken);
   });
@@ -52,7 +52,7 @@ test.describe('Reporting — API Tests', () => {
 test.describe('Reporting — E2E Tests', () => {
   test('REP-06: Dashboard page loads', async ({ page }) => {
     const pageContext = page.context();
-    const ctx = await pwRequest.newContext({ baseURL: API });
+    const ctx = await pwRequest.newContext();
     const admin = await loginAs(ctx, 'ADMIN');
     await pageContext.addInitScript((t: any) => {
       localStorage.setItem('crm-auth', JSON.stringify(t));
@@ -65,7 +65,7 @@ test.describe('Reporting — E2E Tests', () => {
 
   test('REP-07: Dashboard shows stats after load', async ({ page }) => {
     const pageContext = page.context();
-    const ctx = await pwRequest.newContext({ baseURL: API });
+    const ctx = await pwRequest.newContext();
     const admin = await loginAs(ctx, 'ADMIN');
     await pageContext.addInitScript((t: any) => {
       localStorage.setItem('crm-auth', JSON.stringify(t));

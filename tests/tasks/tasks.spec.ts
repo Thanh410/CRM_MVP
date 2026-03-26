@@ -4,7 +4,7 @@ import { loginAs } from '../helpers/auth';
 import { ApiClient } from '../helpers/api-client';
 import { createTask } from '../helpers/fixtures';
 
-const API = process.env.API_BASE_URL!;
+const API = 'http://localhost:3000/api';
 
 test.describe('Tasks — API Tests', () => {
   let adminApi: ApiClient;
@@ -12,7 +12,7 @@ test.describe('Tasks — API Tests', () => {
   let adminCtx: any;
 
   test.beforeAll(async () => {
-    adminCtx = await pwRequest.newContext({ baseURL: API });
+    adminCtx = await pwRequest.newContext();
     const admin = await loginAs(adminCtx, 'ADMIN');
     adminApi = new ApiClient(API, admin.accessToken);
   });
@@ -69,7 +69,7 @@ test.describe('Tasks — API Tests', () => {
     const task = await createTask(adminApi);
     let ctx: Awaited<ReturnType<typeof pwRequest.newContext>> | null = null;
     try {
-      ctx = await pwRequest.newContext({ baseURL: API });
+      ctx = await pwRequest.newContext();
       const admin = await loginAs(ctx, 'ADMIN');
       const watcherApi = new ApiClient(API, admin.accessToken);
       const res = await watcherApi.post<any>(`/tasks/${task.id}/watchers/${admin.user.id}`, {});
@@ -92,7 +92,7 @@ test.describe('Tasks — API Tests', () => {
 
 test.describe('Tasks — E2E Tests', () => {
   test('TASK-08: Tasks page loads', async ({ page }) => {
-    const ctx = await pwRequest.newContext({ baseURL: API });
+    const ctx = await pwRequest.newContext();
     const admin = await loginAs(ctx, 'ADMIN');
     await page.context().addInitScript((t: any) => {
       localStorage.setItem('crm-auth', JSON.stringify(t));
@@ -104,7 +104,7 @@ test.describe('Tasks — E2E Tests', () => {
   });
 
   test('TASK-09: Kanban columns visible on tasks page', async ({ page }) => {
-    const ctx = await pwRequest.newContext({ baseURL: API });
+    const ctx = await pwRequest.newContext();
     const admin = await loginAs(ctx, 'ADMIN');
     await page.context().addInitScript((t: any) => {
       localStorage.setItem('crm-auth', JSON.stringify(t));
@@ -116,7 +116,7 @@ test.describe('Tasks — E2E Tests', () => {
   });
 
   test('TASK-10: Create task modal opens and submits', async ({ page }) => {
-    const ctx = await pwRequest.newContext({ baseURL: API });
+    const ctx = await pwRequest.newContext();
     const admin = await loginAs(ctx, 'ADMIN');
     await page.context().addInitScript((t: any) => {
       localStorage.setItem('crm-auth', JSON.stringify(t));

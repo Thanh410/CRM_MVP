@@ -2,15 +2,15 @@ import { test, expect, request as pwRequest } from '@playwright/test';
 import { ApiClient } from '../helpers/api-client';
 import { ApiError } from '../helpers/api-client';
 
-const API = process.env.API_BASE_URL!;
+const API = 'http://localhost:3000/api';
 
 test.describe('Errors — API Tests', () => {
   let unauthCtx: import('@playwright/test').APIRequestContext;
   let salesCtx: import('@playwright/test').APIRequestContext;
 
   test.beforeAll(async () => {
-    unauthCtx = await pwRequest.newContext({ baseURL: API });
-    salesCtx = await pwRequest.newContext({ baseURL: API });
+    unauthCtx = await pwRequest.newContext();
+    salesCtx = await pwRequest.newContext();
   });
 
   test.afterAll(async () => {
@@ -93,12 +93,12 @@ test.describe('Errors — API Tests', () => {
 
   // ERR-06: Rate limit → POST /auth/login ×11 fast → 429
   test('ERR-06: Rapid login attempts trigger rate limit → 429', async () => {
-    const rateLimitCtx = await pwRequest.newContext({ baseURL: API });
+    const rateLimitCtx = await pwRequest.newContext();
     try {
       let errorStatus = 0;
       for (let i = 0; i < 11; i++) {
         try {
-          await rateLimitCtx.post('/api/auth/login', {
+          await rateLimitCtx.post(`${API}/auth/login`, {
             data: { email: 'ratelimit@test.com', password: 'wrong' },
           });
         } catch (err) {

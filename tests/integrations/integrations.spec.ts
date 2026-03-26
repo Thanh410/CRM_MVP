@@ -1,12 +1,12 @@
 import { test, expect, request as pwRequest } from '@playwright/test';
 
-const API = process.env.API_BASE_URL!;
+const API = 'http://localhost:3000/api';
 
 test.describe('Integration Webhook Tests', () => {
   let publicCtx: any;
 
   test.beforeAll(async () => {
-    publicCtx = await pwRequest.newContext({ baseURL: API });
+    publicCtx = await pwRequest.newContext();
   });
 
   test.afterAll(async () => {

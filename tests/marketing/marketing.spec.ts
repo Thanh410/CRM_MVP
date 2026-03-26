@@ -3,7 +3,7 @@ import { test, expect, request as pwRequest } from '@playwright/test';
 import { loginAs } from '../helpers/auth';
 import { ApiClient } from '../helpers/api-client';
 
-const API = process.env.API_BASE_URL!;
+const API = 'http://localhost:3000/api';
 
 test.describe('Marketing — API Tests', () => {
   let adminApi: ApiClient;
@@ -11,7 +11,7 @@ test.describe('Marketing — API Tests', () => {
   let adminCtx: any;
 
   test.beforeAll(async () => {
-    adminCtx = await pwRequest.newContext({ baseURL: API });
+    adminCtx = await pwRequest.newContext();
     const admin = await loginAs(adminCtx, 'ADMIN');
     adminApi = new ApiClient(API, admin.accessToken);
   });

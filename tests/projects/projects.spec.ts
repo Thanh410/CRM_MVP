@@ -4,7 +4,7 @@ import { loginAs } from '../helpers/auth';
 import { ApiClient } from '../helpers/api-client';
 import { createProject } from '../helpers/fixtures';
 
-const API = process.env.API_BASE_URL!;
+const API = 'http://localhost:3000/api';
 
 test.describe('Projects — API Tests', () => {
   let adminApi: ApiClient;
@@ -12,7 +12,7 @@ test.describe('Projects — API Tests', () => {
   let adminCtx: any;
 
   test.beforeAll(async () => {
-    adminCtx = await pwRequest.newContext({ baseURL: API });
+    adminCtx = await pwRequest.newContext();
     const admin = await loginAs(adminCtx, 'ADMIN');
     adminApi = new ApiClient(API, admin.accessToken);
   });
@@ -93,7 +93,7 @@ test.describe('Projects — API Tests', () => {
 test.describe('Projects — E2E Tests', () => {
   test('PROJECT-07: Projects page loads', async ({ page }) => {
     const pageContext = page.context();
-    const ctx = await pwRequest.newContext({ baseURL: API });
+    const ctx = await pwRequest.newContext();
     const admin = await loginAs(ctx, 'ADMIN');
     await pageContext.addInitScript((t: any) => {
       localStorage.setItem('crm-auth', JSON.stringify(t));
