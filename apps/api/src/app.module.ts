@@ -39,6 +39,7 @@ import { ZaloModule } from './modules/integrations/zalo/zalo.module';
 import { MessengerModule } from './modules/integrations/messenger/messenger.module';
 // Reporting
 import { ReportingModule } from './modules/reporting/reporting.module';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -111,6 +112,8 @@ import { ReportingModule } from './modules/reporting/reporting.module';
     // Reporting
     ReportingModule,
   ],
+
+  controllers: [HealthController],
 
   providers: [
     // Global providers

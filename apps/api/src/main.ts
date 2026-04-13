@@ -25,9 +25,22 @@ async function bootstrap() {
   // Cookie parser (for refresh token cookie)
   app.use(cookieParser());
 
-  // CORS
+  // CORS — allow LAN IP, ngrok, and any dev origin
+  const allowedOrigins = [frontendUrl, 'http://localhost:3001', 'https://crm-web-blue.vercel.app'];
   app.enableCors({
-    origin: [frontendUrl, 'http://localhost:3001'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+      // Allow configured origins
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      // Allow LAN IPs (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+      if (/^https?:\/\/(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(origin)) return callback(null, true);
+      // Allow ngrok
+      if (/\.ngrok(-free)?\.app$/.test(new URL(origin).hostname)) return callback(null, true);
+      // Block others in production, allow all in dev
+      if (process.env.NODE_ENV !== 'production') return callback(null, true);
+      callback(new Error(`CORS blocked: ${origin}`));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Trace-Id'],
@@ -81,8 +94,8 @@ async function bootstrap() {
     swaggerOptions: { persistAuthorization: true },
   });
 
-  await app.listen(port);
-  console.log(`🚀 CRM API running on http://localhost:${port}/api`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`🚀 CRM API running on http://0.0.0.0:${port}/api`);
   console.log(`📚 Swagger docs at http://localhost:${port}/api/docs`);
 }
 

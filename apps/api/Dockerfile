@@ -1,32 +1,30 @@
 # ── Base ─────────────────────────────────────────────────
 FROM node:20-alpine AS base
-RUN npm install -g pnpm
+RUN corepack enable && corepack prepare pnpm@9.1.0 --activate
 WORKDIR /app
 
-# ── Development ───────────────────────────────────────────
-FROM base AS development
-COPY package.json pnpm-lock.yaml* ./
+# ── Install deps (monorepo) ─────────────────────────────
+FROM base AS deps
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/types/package.json ./packages/types/
 RUN pnpm install --frozen-lockfile
-COPY . .
-RUN pnpm db:generate
-EXPOSE 3000
-CMD ["pnpm", "dev"]
 
-# ── Builder ───────────────────────────────────────────────
+# ── Builder ──────────────────────────────────────────────
 FROM base AS builder
-COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --frozen-lockfile
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=deps /app/packages/types/node_modules ./packages/types/node_modules
 COPY . .
-RUN pnpm db:generate
-RUN pnpm build
+RUN cd apps/api && pnpm db:generate
+RUN cd apps/api && pnpm build
 
-# ── Production ────────────────────────────────────────────
+# ── Production ───────────────────────────────────────────
 FROM node:20-alpine AS production
-RUN npm install -g pnpm
 WORKDIR /app
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/prisma ./prisma
-COPY package.json ./
+COPY --from=builder /app/apps/api/dist ./dist
+COPY --from=builder /app/apps/api/node_modules ./node_modules
+COPY --from=builder /app/apps/api/prisma ./prisma
+COPY --from=builder /app/apps/api/package.json ./
 EXPOSE 3000
-CMD ["node", "dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
