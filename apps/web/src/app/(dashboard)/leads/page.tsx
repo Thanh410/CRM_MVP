@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useLeads, LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, SOURCE_LABELS, useDeleteLead, useConvertLead, useAssignLead, useImportLeads, useCreateLead } from '@/hooks/use-leads';
 import { formatDate, getInitials } from '@/lib/utils';
 import { Plus, Download, Upload, Search, RefreshCw, UserCheck, X, Trash2 } from 'lucide-react';
@@ -106,12 +107,18 @@ function useUsers() {
 }
 
 export default function LeadsPage() {
-  const [search, setSearch] = useState('');
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) { setSearch(q); setPage(1); }
+  }, [searchParams]);
 
   const { data, isLoading, refetch } = useLeads({ search: search || undefined, status: status || undefined, page, limit: 20 });
   const deleteLead = useDeleteLead();

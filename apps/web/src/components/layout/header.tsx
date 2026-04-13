@@ -6,11 +6,14 @@ import { useAuthStore } from '@/store/auth.store';
 import { getInitials, formatDate } from '@/lib/utils';
 import { useNotifications, useMarkRead, useMarkAllRead, useDeleteNotification } from '@/hooks/use-notifications';
 import { Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export function Header() {
   const user = useAuthStore((s) => s.user);
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const { data: notifications = [] } = useNotifications();
   const markRead = useMarkRead();
@@ -36,7 +39,15 @@ export function Header() {
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Tìm kiếm..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && searchQuery.trim()) {
+                router.push(`/leads?q=${encodeURIComponent(searchQuery.trim())}`);
+                setSearchQuery('');
+              }
+            }}
+            placeholder="Tìm kiếm lead, liên hệ... (Enter)"
             className="w-full pl-9 pr-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
         </div>

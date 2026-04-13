@@ -20,10 +20,7 @@ interface AuditLog {
 
 interface PagedResult {
   data: AuditLog[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  meta: { total: number; page: number; limit: number; totalPages: number };
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -90,7 +87,7 @@ export default function AuditPage() {
   });
 
   const logs = data?.data ?? [];
-  const totalPages = data?.totalPages ?? 1;
+  const totalPages = data?.meta?.totalPages ?? 1;
 
   return (
     <div className="p-6">
@@ -107,7 +104,7 @@ export default function AuditPage() {
         </div>
         {data && (
           <span className="text-sm text-gray-500">
-            Tổng <span className="font-semibold text-gray-900">{data.total.toLocaleString()}</span> bản ghi
+            Tổng <span className="font-semibold text-gray-900">{(data.meta?.total ?? 0).toLocaleString()}</span> bản ghi
           </span>
         )}
       </div>

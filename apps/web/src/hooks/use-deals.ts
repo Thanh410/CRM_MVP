@@ -78,6 +78,15 @@ export function useDeal(id: string) {
   });
 }
 
+export function useDeleteDeal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/deals/${id}`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['deals'] }); toast.success('Đã xóa deal'); },
+    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Xóa thất bại'),
+  });
+}
+
 export function usePipelines() {
   return useQuery({
     queryKey: ['pipelines'],

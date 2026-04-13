@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Pencil, Trash2, MessageSquare, ChevronRight, X, Eye, UserPlus } from 'lucide-react';
+import { Pencil, Trash2, MessageSquare, X, Eye, UserPlus, LayoutGrid, List, CheckSquare } from 'lucide-react';
+import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors, type DragStartEvent, type DragEndEvent } from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import {
   useTasksKanban,
   useMoveTaskStatus,
@@ -378,6 +380,38 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
   );
 }
 
+// ─── DnD helpers ──────────────────────────────────────────────────────────────
+function TaskStatusColumn({ status, children }: { status: string; children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: status });
+  return (
+    <div ref={setNodeRef} className={`flex-shrink-0 w-72 rounded-xl p-3 transition-colors ${STATUS_COLORS[status]} ${isOver ? 'ring-2 ring-indigo-300 ring-inset' : ''}`}>
+      {children}
+    </div>
+  );
+}
+
+interface TaskCardProps {
+  task: Task;
+  onMove: (id: string, status: Task['status']) => void;
+  onEdit: (task: Task) => void;
+  onDelete: (task: Task) => void;
+  onDetail: (task: Task) => void;
+  dragListeners?: Record<string, any>;
+}
+
+function DraggableTaskCard(props: Omit<TaskCardProps, 'dragListeners'>) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: props.task.id,
+    data: { taskData: props.task, status: props.task.status },
+  });
+  const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined;
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className={`${isDragging ? 'opacity-30' : ''} cursor-grab active:cursor-grabbing`}>
+      <TaskCard {...props} />
+    </div>
+  );
+}
+
 // ─── TaskCard ──────────────────────────────────────────────────────────────
 function TaskCard({
   task,
@@ -385,13 +419,7 @@ function TaskCard({
   onEdit,
   onDelete,
   onDetail,
-}: {
-  task: Task;
-  onMove: (id: string, status: Task['status']) => void;
-  onEdit: (task: Task) => void;
-  onDelete: (task: Task) => void;
-  onDetail: (task: Task) => void;
-}) {
+}: Omit<TaskCardProps, 'dragListeners'>) {
   const statuses: Task['status'][] = ['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'];
 
   return (
@@ -482,7 +510,7 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    await createTask.mutateAsync({ title, priority: priority as any, projectId: projectId || undefined });
+    await createTask.mutateAsync({ title, priority: priority as any, projectId: projectId || undefined } as any);
     toast.success('Đã tạo nhiệm vụ');
     onCreated();
     onClose();
@@ -560,6 +588,25 @@ export default function TasksPage() {
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Task | null>(null);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [activeDragTask, setActiveDragTask] = useState<Task | null>(null);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragTask(event.active.data.current?.taskData ?? null);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveDragTask(null);
+    const { active, over } = event;
+    if (!over) return;
+    const fromStatus = active.data.current?.status;
+    const toStatus = over.id as Task['status'];
+    if (fromStatus && toStatus && fromStatus !== toStatus) {
+      moveStatus.mutate({ id: active.id as string, status: toStatus });
+    }
+  };
 
   const handleMove = async (id: string, status: Task['status']) => {
     await moveStatus.mutateAsync({ id, status });
@@ -580,29 +627,43 @@ export default function TasksPage() {
   }
 
   const statuses: Task['status'][] = ['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'];
+  const allTasks = columns?.flatMap(c => c.tasks) ?? [];
 
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Nhiệm vụ</h1>
-          <p className="text-gray-500 text-sm mt-1">Quản lý nhiệm vụ theo bảng Kanban</p>
+          <p className="text-gray-500 text-sm mt-1">Quản lý nhiệm vụ theo {viewMode === 'kanban' ? 'bảng Kanban' : 'danh sách'}</p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700"
-        >
-          + Tạo nhiệm vụ
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+            <button onClick={() => setViewMode('kanban')} className={`px-2.5 py-2 ${viewMode === 'kanban' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`} title="Kanban">
+              <LayoutGrid size={15} />
+            </button>
+            <button onClick={() => setViewMode('list')} className={`px-2.5 py-2 border-l border-gray-200 ${viewMode === 'list' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`} title="Danh sách">
+              <List size={15} />
+            </button>
+          </div>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700"
+          >
+            + Tạo nhiệm vụ
+          </button>
+        </div>
       </div>
 
+      {viewMode === 'kanban' ? (
+      <>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex gap-4 overflow-x-auto pb-4 flex-1">
         {statuses.map((status) => {
           const col = columns?.find((c) => c.status === status);
           const tasks = col?.tasks ?? [];
 
           return (
-            <div key={status} className={`flex-shrink-0 w-72 rounded-xl p-3 ${STATUS_COLORS[status]}`}>
+            <TaskStatusColumn key={status} status={status}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-gray-800 text-sm">{STATUS_LABELS[status]}</h3>
                 <span className="bg-white text-gray-600 text-xs px-2 py-0.5 rounded-full font-medium">
@@ -612,7 +673,7 @@ export default function TasksPage() {
 
               <div className="space-y-2 min-h-[100px]">
                 {tasks.map((task) => (
-                  <TaskCard
+                  <DraggableTaskCard
                     key={task.id}
                     task={task}
                     onMove={handleMove}
@@ -622,13 +683,79 @@ export default function TasksPage() {
                   />
                 ))}
                 {tasks.length === 0 && (
-                  <p className="text-xs text-gray-400 text-center py-4">Không có nhiệm vụ</p>
+                  <div className="flex flex-col items-center py-8 text-gray-300">
+                    <CheckSquare size={28} className="mb-2" />
+                    <p className="text-xs text-gray-400">Chưa có nhiệm vụ</p>
+                  </div>
                 )}
               </div>
-            </div>
+            </TaskStatusColumn>
           );
         })}
       </div>
+      <DragOverlay>
+        {activeDragTask ? (
+          <div className="bg-white border border-indigo-400 rounded-lg p-3 shadow-lg opacity-90 w-72">
+            <p className="text-sm font-medium text-gray-900">{activeDragTask.title}</p>
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_BADGE[activeDragTask.priority]}`}>
+              {PRIORITY_LABELS[activeDragTask.priority]}
+            </span>
+          </div>
+        ) : null}
+      </DragOverlay>
+      </DndContext>
+      </>
+      ) : (
+      /* ─── List View ─────────────────────────────────────────────────── */
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden flex-1">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-100 bg-gray-50/50">
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Nhiệm vụ</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Trạng thái</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Ưu tiên</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Người thực hiện</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Dự án</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Hạn chót</th>
+              <th className="px-4 py-3 w-24" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {allTasks.length === 0 && (
+              <tr><td colSpan={7} className="text-center py-12 text-gray-400 text-sm">Chưa có nhiệm vụ nào</td></tr>
+            )}
+            {allTasks.map((task) => (
+              <tr key={task.id} onClick={() => setDetailTaskId(task.id)}
+                className="hover:bg-gray-50/50 cursor-pointer transition-colors">
+                <td className="px-4 py-3 font-medium text-gray-900">{task.title}</td>
+                <td className="px-4 py-3">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    task.status === 'DONE' ? 'bg-green-100 text-green-700' :
+                    task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
+                    task.status === 'REVIEW' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-gray-100 text-gray-600'
+                  }`}>{STATUS_LABELS[task.status]}</span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${PRIORITY_BADGE[task.priority]}`}>
+                    {PRIORITY_LABELS[task.priority]}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-gray-500 text-xs">{task.assignee?.fullName ?? '-'}</td>
+                <td className="px-4 py-3 text-indigo-600 text-xs">{task.project?.name ?? '-'}</td>
+                <td className="px-4 py-3 text-gray-500 text-xs">{task.dueDate ? new Date(task.dueDate).toLocaleDateString('vi-VN') : '-'}</td>
+                <td className="px-4 py-3">
+                  <div className="flex gap-1">
+                    <button onClick={e => { e.stopPropagation(); setEditTask(task); }} className="p-1 text-gray-400 hover:text-indigo-500"><Pencil size={13} /></button>
+                    <button onClick={e => { e.stopPropagation(); setDeleteConfirm(task); }} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={13} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      )}
 
       {/* Create modal */}
       {showCreate && (

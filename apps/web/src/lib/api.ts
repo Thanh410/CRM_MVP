@@ -1,7 +1,21 @@
 import axios from 'axios';
 
+function getBaseURL() {
+  // Server-side (SSR): always use env or localhost
+  if (typeof window === 'undefined') {
+    return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api';
+  }
+  // Client-side: if explicit API URL is set, use it
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  // Use relative "/api" — Next.js rewrites will proxy to backend
+  // This works with ngrok, LAN IP, any hostname (only 1 tunnel needed)
+  return '/api';
+}
+
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api',
+  baseURL: getBaseURL(),
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -45,7 +59,7 @@ api.interceptors.response.use(
         if (!auth?.refreshToken) throw new Error('No refresh token');
 
         const { data } = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api'}/auth/refresh`,
+          `${getBaseURL()}/auth/refresh`,
           { refreshToken: auth.refreshToken },
         );
 

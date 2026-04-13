@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { formatDate, formatCurrency, getInitials } from '@/lib/utils';
 import { toast } from 'sonner';
+import { TagSelector } from '@/components/tag-selector';
+import { EntityTimeline } from '@/components/entity-timeline';
 import {
   Plus,
   Search,
@@ -562,6 +564,18 @@ function CompanySlideOver({
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Tags */}
+            <div className="px-5 py-4 border-t border-gray-50">
+              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tags</h4>
+              <TagSelector entityType="COMPANY" entityId={company.id} />
+            </div>
+
+            {/* Timeline */}
+            <div className="px-5 py-4 border-t border-gray-50">
+              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Hoạt động</h4>
+              <EntityTimeline entityType="COMPANY" entityId={company.id} />
             </div>
 
             {/* Meta */}

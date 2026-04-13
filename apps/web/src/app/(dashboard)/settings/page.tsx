@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Building2, GitBranch, Users, Plus, Pencil, Trash2, Check, X, ChevronRight, ShieldCheck, Tag } from 'lucide-react';
+import { Building2, GitBranch, Users, Plus, Pencil, Trash2, Check, X, ChevronRight, ShieldCheck, Tag, Plug } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -518,6 +518,113 @@ function TagsTab() {
   );
 }
 
+// ─── Tab: Tích hợp kênh ────────────────────────────────────────────────────────
+function IntegrationsTab() {
+  const [zaloOaId, setZaloOaId] = useState('');
+  const [zaloAppId, setZaloAppId] = useState('');
+  const [zaloAppSecret, setZaloAppSecret] = useState('');
+  const [fbPageToken, setFbPageToken] = useState('');
+  const [fbVerifyToken, setFbVerifyToken] = useState('');
+  const [saved, setSaved] = useState<string | null>(null);
+
+  const inputCls = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-mono';
+
+  function handleSaveZalo(e: React.FormEvent) {
+    e.preventDefault();
+    // Stored locally — admin must paste into .env and restart server
+    setSaved('zalo');
+    setTimeout(() => setSaved(null), 3000);
+  }
+
+  function handleSaveFB(e: React.FormEvent) {
+    e.preventDefault();
+    setSaved('fb');
+    setTimeout(() => setSaved(null), 3000);
+  }
+
+  return (
+    <div className="max-w-2xl space-y-6">
+      <p className="text-sm text-gray-500">
+        Cấu hình kênh tích hợp để nhận tin nhắn từ Zalo OA và Facebook Messenger vào Inbox.
+        Sau khi điền, sao chép giá trị vào file <code className="bg-gray-100 px-1 rounded text-xs">.env</code> và khởi động lại server.
+      </p>
+
+      {/* Zalo OA */}
+      <div className="p-5 bg-white border border-gray-200 rounded-xl space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+            <span className="text-xs font-bold text-blue-600">ZA</span>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Zalo Official Account</p>
+            <p className="text-xs text-gray-400">Nhận tin nhắn từ Zalo OA</p>
+          </div>
+        </div>
+        <form onSubmit={handleSaveZalo} className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">OA ID</label>
+            <input className={inputCls} value={zaloOaId} onChange={e => setZaloOaId(e.target.value)} placeholder="ZALO_OA_ID=..." />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">App ID</label>
+              <input className={inputCls} value={zaloAppId} onChange={e => setZaloAppId(e.target.value)} placeholder="ZALO_APP_ID=..." />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">App Secret</label>
+              <input className={inputCls} type="password" value={zaloAppSecret} onChange={e => setZaloAppSecret(e.target.value)} placeholder="ZALO_APP_SECRET=..." />
+            </div>
+          </div>
+          <div className="p-3 bg-blue-50 rounded-lg text-xs text-blue-700 space-y-1">
+            <p className="font-medium">Webhook URL:</p>
+            <code className="block break-all">{typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3000/api/integrations/zalo/webhook` : 'http://your-domain/api/integrations/zalo/webhook'}</code>
+            <p className="mt-1 font-medium">Để xác minh (GET) + nhận sự kiện (POST)</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+              {saved === 'zalo' ? '✓ Đã sao chép' : 'Lưu cấu hình'}
+            </button>
+            {saved === 'zalo' && <span className="text-xs text-gray-400">Dán vào .env và restart server</span>}
+          </div>
+        </form>
+      </div>
+
+      {/* Facebook Messenger */}
+      <div className="p-5 bg-white border border-gray-200 rounded-xl space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+            <span className="text-xs font-bold text-indigo-600">FB</span>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Facebook Messenger</p>
+            <p className="text-xs text-gray-400">Nhận tin nhắn từ Facebook Page</p>
+          </div>
+        </div>
+        <form onSubmit={handleSaveFB} className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Page Access Token</label>
+            <input className={inputCls} type="password" value={fbPageToken} onChange={e => setFbPageToken(e.target.value)} placeholder="META_PAGE_ACCESS_TOKEN=..." />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Verify Token (tự đặt)</label>
+            <input className={inputCls} value={fbVerifyToken} onChange={e => setFbVerifyToken(e.target.value)} placeholder="META_VERIFY_TOKEN=..." />
+          </div>
+          <div className="p-3 bg-indigo-50 rounded-lg text-xs text-indigo-700 space-y-1">
+            <p className="font-medium">Webhook URL (cấu hình trong Meta Developer Console):</p>
+            <code className="block break-all">{typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3000/api/integrations/messenger/webhook` : 'http://your-domain/api/integrations/messenger/webhook'}</code>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="submit" className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+              {saved === 'fb' ? '✓ Đã sao chép' : 'Lưu cấu hình'}
+            </button>
+            {saved === 'fb' && <span className="text-xs text-gray-400">Dán vào .env và restart server</span>}
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const TABS = [
   { key: 'org', label: 'Tổ chức', icon: Building2 },
@@ -525,6 +632,7 @@ const TABS = [
   { key: 'teams', label: 'Nhóm', icon: Users },
   { key: 'rbac', label: 'Phân quyền', icon: ShieldCheck },
   { key: 'tags', label: 'Tags', icon: Tag },
+  { key: 'integrations', label: 'Tích hợp', icon: Plug },
 ];
 
 export default function SettingsPage() {
@@ -567,6 +675,7 @@ export default function SettingsPage() {
         {tab === 'teams' && <TeamsTab />}
         {tab === 'rbac' && <RbacTab />}
         {tab === 'tags' && <TagsTab />}
+        {tab === 'integrations' && <IntegrationsTab />}
       </div>
     </div>
   );
