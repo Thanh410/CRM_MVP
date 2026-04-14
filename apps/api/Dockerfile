@@ -19,14 +19,7 @@ RUN cd apps/api && pnpm db:generate
 RUN cd apps/api && pnpm build
 
 # ── Production ───────────────────────────────────────────
-FROM base AS production
-# Copy entire node_modules from builder (includes generated .prisma client)
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
-COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
-COPY --from=builder /app/packages/types/ ./packages/types/
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+FROM builder AS production
 WORKDIR /app/apps/api
 EXPOSE 3000
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/main"]
