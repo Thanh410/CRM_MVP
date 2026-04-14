@@ -20,11 +20,10 @@ RUN cd apps/api && pnpm build
 
 # ── Production ───────────────────────────────────────────
 FROM base AS production
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
+# Copy entire node_modules from builder (includes generated .prisma client)
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
-COPY --from=builder /app/apps/api/node_modules/.prisma ./apps/api/node_modules/.prisma
 COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
 COPY --from=builder /app/packages/types/ ./packages/types/
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
