@@ -11,19 +11,14 @@ COPY packages/types/package.json ./packages/types/
 RUN pnpm install --frozen-lockfile
 
 # ── Builder ──────────────────────────────────────────────
-FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
-COPY . .
+FROM deps AS builder
+COPY packages/types/ ./packages/types/
+COPY apps/api/ ./apps/api/
 RUN cd apps/api && pnpm db:generate
 RUN cd apps/api && pnpm build
 
 # ── Production ───────────────────────────────────────────
-FROM node:20-alpine AS production
-WORKDIR /app
-COPY --from=builder /app/apps/api/dist ./dist
-COPY --from=builder /app/apps/api/node_modules ./node_modules
-COPY --from=builder /app/apps/api/prisma ./prisma
-COPY --from=builder /app/apps/api/package.json ./
+FROM builder AS production
+WORKDIR /app/apps/api
 EXPOSE 3000
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]

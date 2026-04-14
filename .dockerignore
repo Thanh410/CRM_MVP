@@ -1,0 +1,15 @@
+node_modules
+.git
+.github
+.turbo
+.vercel
+.claude
+.env
+.env.*
+!.env.example
+dist
+coverage
+*.log
+docker
+docs
+tests
