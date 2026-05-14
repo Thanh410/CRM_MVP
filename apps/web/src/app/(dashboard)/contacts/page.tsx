@@ -23,7 +23,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// --- Types -------------------------------------------------------------------
 
 interface Contact {
   id: string;
@@ -95,15 +95,15 @@ const DEAL_STAGE_COLORS: Record<string, string> = {
 };
 
 const DEAL_STAGE_LABELS: Record<string, string> = {
-  LEAD: 'Tiềm năng',
-  QUALIFIED: 'Đủ điều kiện',
-  PROPOSAL: 'Đề xuất',
-  NEGOTIATION: 'Đàm phán',
-  WON: 'Thắng',
+  LEAD: 'Ti?m nang',
+  QUALIFIED: '�? di?u ki?n',
+  PROPOSAL: '�? xu?t',
+  NEGOTIATION: '��m ph�n',
+  WON: 'Th?ng',
   LOST: 'Thua',
 };
 
-// ─── Contact Modal ────────────────────────────────────────────────────────────
+// --- Contact Modal ------------------------------------------------------------
 
 function ContactModal({
   contact,
@@ -160,10 +160,10 @@ function ContactModal({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contacts'] });
-      toast.success('Tạo liên hệ thành công');
+      toast.success('T?o li�n h? th�nh c�ng');
       onClose();
     },
-    onError: () => toast.error('Tạo liên hệ thất bại'),
+    onError: () => toast.error('T?o li�n h? th?t b?i'),
   });
 
   const updateMutation = useMutation({
@@ -174,10 +174,10 @@ function ContactModal({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contacts'] });
       queryClient.invalidateQueries({ queryKey: ['contact', contact!.id] });
-      toast.success('Cập nhật thành công');
+      toast.success('C?p nh?t th�nh c�ng');
       onClose();
     },
-    onError: () => toast.error('Cập nhật thất bại'),
+    onError: () => toast.error('C?p nh?t th?t b?i'),
   });
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -185,7 +185,7 @@ function ContactModal({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.fullName.trim()) {
-      toast.error('Họ tên không được để trống');
+      toast.error('H? t�n kh�ng du?c d? tr?ng');
       return;
     }
     const payload = {
@@ -216,7 +216,7 @@ function ContactModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
           <h2 className="text-base font-semibold text-gray-900">
-            {isEdit ? 'Chỉnh sửa liên hệ' : 'Thêm liên hệ mới'}
+            {isEdit ? 'Ch?nh s?a li�n h?' : 'Th�m li�n h? m?i'}
           </h2>
           <button
             onClick={onClose}
@@ -231,12 +231,12 @@ function ContactModal({
           {/* Full Name */}
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">
-              Họ tên <span className="text-red-500">*</span>
+              H? t�n <span className="text-red-500">*</span>
             </label>
             <input
               value={form.fullName}
               onChange={(e) => set('fullName', e.target.value)}
-              placeholder="Nguyễn Văn A"
+              placeholder="Nguy?n Van A"
               className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
           </div>
@@ -254,7 +254,7 @@ function ContactModal({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Điện thoại</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">�i?n tho?i</label>
               <input
                 value={form.phone}
                 onChange={(e) => set('phone', e.target.value)}
@@ -267,7 +267,7 @@ function ContactModal({
           {/* Mobile + Job Title */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Di động</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Di d?ng</label>
               <input
                 value={form.mobile}
                 onChange={(e) => set('mobile', e.target.value)}
@@ -276,11 +276,11 @@ function ContactModal({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Chức danh</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Ch?c danh</label>
               <input
                 value={form.jobTitle}
                 onChange={(e) => set('jobTitle', e.target.value)}
-                placeholder="Giám đốc kinh doanh"
+                placeholder="Gi�m d?c kinh doanh"
                 className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
@@ -288,13 +288,13 @@ function ContactModal({
 
           {/* Company */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Công ty</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">C�ng ty</label>
             <select
               value={form.companyId}
               onChange={(e) => set('companyId', e.target.value)}
               className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white"
             >
-              <option value="">— Chọn công ty —</option>
+              <option value="">� Ch?n c�ng ty �</option>
               {companies.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -305,13 +305,13 @@ function ContactModal({
 
           {/* Assignee */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Phụ trách</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Ph? tr�ch</label>
             <select
               value={form.assignedTo}
               onChange={(e) => set('assignedTo', e.target.value)}
               className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white"
             >
-              <option value="">— Chưa phân công —</option>
+              <option value="">� Chua ph�n c�ng �</option>
               {users.map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.fullName}
@@ -322,23 +322,23 @@ function ContactModal({
 
           {/* Address */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Địa chỉ</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">�?a ch?</label>
             <input
               value={form.address}
               onChange={(e) => set('address', e.target.value)}
-              placeholder="123 Đường ABC, Quận 1, TP.HCM"
+              placeholder="123 �u?ng ABC, Qu?n 1, TP.HCM"
               className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Ghi chú</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Ghi ch�</label>
             <textarea
               value={form.description}
               onChange={(e) => set('description', e.target.value)}
               rows={3}
-              placeholder="Thông tin thêm về liên hệ..."
+              placeholder="Th�ng tin th�m v? li�n h?..."
               className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none"
             />
           </div>
@@ -350,14 +350,14 @@ function ContactModal({
               onClick={onClose}
               className="px-4 py-2 text-sm text-gray-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition"
             >
-              Hủy
+              H?y
             </button>
             <button
               type="submit"
               disabled={isPending}
               className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60 transition"
             >
-              {isPending ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo liên hệ'}
+              {isPending ? '�ang luu...' : isEdit ? 'Luu thay d?i' : 'T?o li�n h?'}
             </button>
           </div>
         </form>
@@ -366,7 +366,7 @@ function ContactModal({
   );
 }
 
-// ─── Slide-over Detail ────────────────────────────────────────────────────────
+// --- Slide-over Detail --------------------------------------------------------
 
 function ContactSlideOver({
   contactId,
@@ -396,7 +396,7 @@ function ContactSlideOver({
       <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 shrink-0">
-          <h2 className="text-base font-semibold text-gray-900">Chi tiết liên hệ</h2>
+          <h2 className="text-base font-semibold text-gray-900">Chi ti?t li�n h?</h2>
           <button
             onClick={onClose}
             className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-zinc-100 rounded-lg transition"
@@ -407,7 +407,7 @@ function ContactSlideOver({
 
         {isLoading && (
           <div className="flex items-center justify-center flex-1 text-gray-400 text-sm">
-            Đang tải...
+            �ang t?i...
           </div>
         )}
 
@@ -439,7 +439,7 @@ function ContactSlideOver({
                   onClick={() => onEdit(contact)}
                   className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs border border-zinc-200 rounded-lg hover:bg-zinc-50 transition text-gray-600"
                 >
-                  <Pencil size={12} /> Sửa
+                  <Pencil size={12} /> S?a
                 </button>
               </div>
             </div>
@@ -447,7 +447,7 @@ function ContactSlideOver({
             {/* Contact info */}
             <div className="px-5 py-4 border-b border-gray-50">
               <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                Thông tin liên hệ
+                Th�ng tin li�n h?
               </h4>
               <div className="space-y-2.5">
                 {contact.email && (
@@ -471,7 +471,7 @@ function ContactSlideOver({
                   <div className="flex items-center gap-2.5 text-sm text-gray-600">
                     <Phone size={14} className="text-gray-400 shrink-0" />
                     {contact.mobile}
-                    <span className="text-xs text-gray-400">(di động)</span>
+                    <span className="text-xs text-gray-400">(di d?ng)</span>
                   </div>
                 )}
                 {contact.address && (
@@ -483,7 +483,7 @@ function ContactSlideOver({
                 {contact.assignee && (
                   <div className="flex items-center gap-2.5 text-sm text-gray-600">
                     <User size={14} className="text-gray-400 shrink-0" />
-                    Phụ trách: <span className="font-medium">{contact.assignee.fullName}</span>
+                    Ph? tr�ch: <span className="font-medium">{contact.assignee.fullName}</span>
                   </div>
                 )}
               </div>
@@ -499,7 +499,7 @@ function ContactSlideOver({
             {contact.description && (
               <div className="px-5 py-4 border-b border-gray-50">
                 <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                  Ghi chú
+                  Ghi ch�
                 </h4>
                 <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
                   {contact.description}
@@ -516,7 +516,7 @@ function ContactSlideOver({
                 </h4>
               </div>
               {(!contact.deals || contact.deals.length === 0) ? (
-                <p className="text-sm text-gray-400 italic">Chưa có deal nào.</p>
+                <p className="text-sm text-gray-400 italic">Chua c� deal n�o.</p>
               ) : (
                 <div className="space-y-2">
                   {contact.deals.map((deal) => (
@@ -528,7 +528,7 @@ function ContactSlideOver({
                         <p className="text-sm font-medium text-gray-800 truncate">{deal.title}</p>
                         {deal.closedAt && (
                           <p className="text-xs text-gray-400 mt-0.5">
-                            Dự kiến: {formatDate(deal.closedAt)}
+                            D? ki?n: {formatDate(deal.closedAt)}
                           </p>
                         )}
                       </div>
@@ -557,7 +557,7 @@ function ContactSlideOver({
             {/* Meta */}
             <div className="px-5 py-3 border-t border-gray-50">
               <p className="text-xs text-gray-400">
-                Tạo ngày {formatDate(contact.createdAt)} · Cập nhật {formatDate(contact.updatedAt)}
+                T?o ng�y {formatDate(contact.createdAt)} � C?p nh?t {formatDate(contact.updatedAt)}
               </p>
             </div>
           </div>
@@ -567,7 +567,7 @@ function ContactSlideOver({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// --- Main Page ----------------------------------------------------------------
 
 export default function ContactsPage() {
   const queryClient = useQueryClient();
@@ -595,9 +595,9 @@ export default function ContactsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contacts'] });
-      toast.success('Đã xóa liên hệ');
+      toast.success('�� x�a li�n h?');
     },
-    onError: () => toast.error('Xóa thất bại'),
+    onError: () => toast.error('X�a th?t b?i'),
   });
 
   function openCreate() {
@@ -613,7 +613,7 @@ export default function ContactsPage() {
 
   function handleDelete(contact: Contact, e: React.MouseEvent) {
     e.stopPropagation();
-    if (window.confirm(`Xóa liên hệ "${contact.fullName}"? Hành động này không thể hoàn tác.`)) {
+    if (window.confirm(`X�a li�n h? "${contact.fullName}"? H�nh d?ng n�y kh�ng th? ho�n t�c.`)) {
       deleteMutation.mutate(contact.id);
       if (slideOverId === contact.id) setSlideOverId(null);
     }
@@ -628,14 +628,14 @@ export default function ContactsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Liên hệ</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{meta?.total ?? 0} liên hệ</p>
+          <h1 className="text-xl font-semibold text-gray-900">Li�n h?</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{meta?.total ?? 0} li�n h?</p>
         </div>
         <button
           onClick={openCreate}
           className="flex items-center gap-1.5 px-3 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition"
         >
-          <Plus size={14} /> Thêm liên hệ
+          <Plus size={14} /> Th�m li�n h?
         </button>
       </div>
 
@@ -649,7 +649,7 @@ export default function ContactsPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="Tìm tên, email, số điện thoại..."
+            placeholder="T�m t�n, email, s? di?n tho?i..."
             className="w-full pl-8 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
@@ -659,7 +659,7 @@ export default function ContactsPage() {
       <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
-            Đang tải...
+            �ang t?i...
           </div>
         ) : (
           <>
@@ -667,22 +667,22 @@ export default function ContactsPage() {
               <thead>
                 <tr className="border-b border-zinc-100 bg-zinc-50/50">
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Họ tên
+                    H? t�n
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Email / SĐT
+                    Email / S�T
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Công ty
+                    C�ng ty
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Chức danh
+                    Ch?c danh
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Phụ trách
+                    Ph? tr�ch
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Ngày tạo
+                    Ng�y t?o
                   </th>
                   <th className="px-4 py-3 w-20" />
                 </tr>
@@ -691,7 +691,7 @@ export default function ContactsPage() {
                 {contacts.length === 0 && (
                   <tr>
                     <td colSpan={7} className="text-center py-12 text-gray-400 text-sm">
-                      Chưa có liên hệ nào. Nhấn "Thêm liên hệ" để bắt đầu.
+                      Chua c� li�n h? n�o. Nh?n "Th�m li�n h?" d? b?t d?u.
                     </td>
                   </tr>
                 )}
@@ -727,19 +727,19 @@ export default function ContactsPage() {
                           <span className="truncate max-w-[140px]">{contact.company.name}</span>
                         </div>
                       ) : (
-                        <span className="text-gray-300">—</span>
+                        <span className="text-gray-300">�</span>
                       )}
                     </td>
 
                     {/* Job title */}
                     <td className="px-4 py-3 text-gray-500">
-                      {contact.jobTitle ?? <span className="text-gray-300">—</span>}
+                      {contact.jobTitle ?? <span className="text-gray-300">�</span>}
                     </td>
 
                     {/* Assignee */}
                     <td className="px-4 py-3 text-gray-500">
                       {contact.assignee?.fullName ?? (
-                        <span className="text-gray-300">Chưa phân công</span>
+                        <span className="text-gray-300">Chua ph�n c�ng</span>
                       )}
                     </td>
 
@@ -753,14 +753,14 @@ export default function ContactsPage() {
                       <div className="flex items-center gap-1 justify-end">
                         <button
                           onClick={(e) => openEdit(contact, e)}
-                          title="Chỉnh sửa"
+                          title="Ch?nh s?a"
                           className="p-1.5 text-gray-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition"
                         >
                           <Pencil size={14} />
                         </button>
                         <button
                           onClick={(e) => handleDelete(contact, e)}
-                          title="Xóa"
+                          title="X�a"
                           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
                         >
                           <Trash2 size={14} />
@@ -776,7 +776,7 @@ export default function ContactsPage() {
             {meta && meta.total > 0 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100">
                 <span className="text-xs text-gray-400">
-                  Hiển thị {(page - 1) * 20 + 1}–{Math.min(page * 20, meta.total)} / {meta.total}
+                  Hi?n th? {(page - 1) * 20 + 1}�{Math.min(page * 20, meta.total)} / {meta.total}
                 </span>
                 <div className="flex items-center gap-1">
                   <button

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useRef } from 'react';
 import { Pencil, Trash2, MessageSquare, X, Eye, UserPlus, LayoutGrid, List, CheckSquare } from 'lucide-react';
@@ -23,10 +23,10 @@ import { EntityTimeline } from '@/components/entity-timeline';
 import { toast } from 'sonner';
 
 const STATUS_LABELS: Record<string, string> = {
-  TODO: 'Cáº§n lÃ m',
-  IN_PROGRESS: 'Äang lÃ m',
-  REVIEW: 'Äang xem xÃ©t',
-  DONE: 'HoÃ n thÃ nh',
+  TODO: 'Cần làm',
+  IN_PROGRESS: 'Đang làm',
+  REVIEW: 'Đang xem xét',
+  DONE: 'Hoàn thành',
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -44,13 +44,13 @@ const PRIORITY_BADGE: Record<string, string> = {
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
-  LOW: 'Tháº¥p',
-  MEDIUM: 'Trung bÃ¬nh',
+  LOW: 'Thấp',
+  MEDIUM: 'Trung bình',
   HIGH: 'Cao',
-  URGENT: 'Kháº©n cáº¥p',
+  URGENT: 'Khẩn cấp',
 };
 
-// â”€â”€â”€ Users hook (inline) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Users hook (inline) ─────────────────────────────────────────────────────
 function useUsers() {
   return useQuery({
     queryKey: ['users', 'select'],
@@ -61,7 +61,7 @@ function useUsers() {
   });
 }
 
-// â”€â”€â”€ TaskEditModal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── TaskEditModal ─────────────────────────────────────────────────────────
 function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
   const [form, setForm] = useState({
     title: task.title,
@@ -90,7 +90,7 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
         projectId: form.projectId || undefined,
       } as any,
     });
-    toast.success('ÄÃ£ cáº­p nháº­t nhiá»‡m vá»¥');
+    toast.success('Đã cập nhật nhiệm vụ');
     onClose();
   };
 
@@ -101,10 +101,10 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold mb-4">Chá»‰nh sá»­a nhiá»‡m vá»¥</h2>
+        <h2 className="text-lg font-semibold mb-4">Chỉnh sửa nhiệm vụ</h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">TiÃªu Ä‘á» *</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">Tiêu đề *</label>
             <input
               className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900 focus:border-transparent"
               value={form.title}
@@ -114,19 +114,19 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">MÃ´ táº£</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">Mô tả</label>
             <textarea
               className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900 focus:border-transparent resize-none"
               rows={3}
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              placeholder="MÃ´ táº£ nhiá»‡m vá»¥..."
+              placeholder="Mô tả nhiệm vụ..."
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Æ¯u tiÃªn</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Ưu tiên</label>
               <select
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900"
                 value={form.priority}
@@ -138,7 +138,7 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Háº¡n chÃ³t</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Hạn chót</label>
               <input
                 type="date"
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900"
@@ -149,13 +149,13 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">NgÆ°á»i thá»±c hiá»‡n</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">Người thực hiện</label>
             <select
               className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900"
               value={form.assigneeId}
               onChange={(e) => setForm((f) => ({ ...f, assigneeId: e.target.value }))}
             >
-              <option value="">-- ChÆ°a gÃ¡n --</option>
+              <option value="">-- Chưa gán --</option>
               {(users ?? []).map((u: any) => (
                 <option key={u.id} value={u.id}>{u.fullName}</option>
               ))}
@@ -163,13 +163,13 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Dá»± Ã¡n</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">Dự án</label>
             <select
               className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900"
               value={form.projectId}
               onChange={(e) => setForm((f) => ({ ...f, projectId: e.target.value }))}
             >
-              <option value="">-- KhÃ´ng gÃ¡n --</option>
+              <option value="">-- Không gán --</option>
               {(projects ?? []).map((p: any) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
@@ -182,14 +182,14 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
               disabled={update.isPending}
               className="flex-1 bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-50"
             >
-              {update.isPending ? 'Äang lÆ°u...' : 'LÆ°u thay Ä‘á»•i'}
+              {update.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
             <button
               type="button"
               onClick={onClose}
               className="flex-1 border border-zinc-300 rounded-lg py-2 text-sm font-medium hover:bg-zinc-50"
             >
-              Há»§y
+              Hủy
             </button>
           </div>
         </form>
@@ -198,7 +198,7 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
   );
 }
 
-// â”€â”€â”€ TaskDetailSlideOver â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── TaskDetailSlideOver ───────────────────────────────────────────────────
 function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () => void }) {
   const { data: task, isLoading } = useTask(taskId);
   const addComment = useAddTaskComment();
@@ -213,7 +213,7 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
     if (!comment.trim()) return;
     await addComment.mutateAsync({ id: taskId, content: comment });
     setComment('');
-    toast.success('ÄÃ£ thÃªm bÃ¬nh luáº­n');
+    toast.success('Đã thêm bình luận');
   };
 
   return (
@@ -223,7 +223,7 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="font-semibold text-zinc-900 truncate pr-4">
-            {isLoading ? 'Äang táº£i...' : task?.title}
+            {isLoading ? 'Đang tải...' : task?.title}
           </h2>
           <button onClick={onClose} className="p-1 hover:bg-zinc-100 rounded-lg">
             <X className="w-5 h-5 text-zinc-500" />
@@ -251,13 +251,13 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
               )}
               <div className="flex gap-4 text-xs text-zinc-500 flex-wrap">
                 {task.assignee && (
-                  <span>ðŸ‘¤ {task.assignee.fullName}</span>
+                  <span>👤 {task.assignee.fullName}</span>
                 )}
                 {task.dueDate && (
-                  <span>ðŸ“… {new Date(task.dueDate).toLocaleDateString('vi-VN')}</span>
+                  <span>📅 {new Date(task.dueDate).toLocaleDateString('vi-VN')}</span>
                 )}
                 {task.project && (
-                  <span>ðŸ“ {task.project.name}</span>
+                  <span>📁 {task.project.name}</span>
                 )}
               </div>
             </div>
@@ -266,7 +266,7 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
             <div className="p-4 border-b">
               <h3 className="text-sm font-semibold text-zinc-700 mb-3 flex items-center gap-2">
                 <MessageSquare className="w-4 h-4" />
-                BÃ¬nh luáº­n ({task.comments?.length ?? 0})
+                Bình luận ({task.comments?.length ?? 0})
               </h3>
 
               <div className="space-y-3 mb-4">
@@ -277,7 +277,7 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-xs font-medium text-gray-800">{c.author?.fullName ?? 'áº¨n danh'}</span>
+                        <span className="text-xs font-medium text-gray-800">{c.author?.fullName ?? 'Ẩn danh'}</span>
                         <span className="text-xs text-zinc-400">
                           {new Date(c.createdAt).toLocaleString('vi-VN')}
                         </span>
@@ -287,7 +287,7 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
                   </div>
                 ))}
                 {(!task.comments || task.comments.length === 0) && (
-                  <p className="text-xs text-zinc-400 text-center py-2">ChÆ°a cÃ³ bÃ¬nh luáº­n</p>
+                  <p className="text-xs text-zinc-400 text-center py-2">Chưa có bình luận</p>
                 )}
               </div>
 
@@ -297,14 +297,14 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
                   className="flex-1 border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900 focus:border-transparent"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  placeholder="ThÃªm bÃ¬nh luáº­n..."
+                  placeholder="Thêm bình luận..."
                 />
                 <button
                   type="submit"
                   disabled={addComment.isPending || !comment.trim()}
                   className="bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-50"
                 >
-                  Gá»­i
+                  Gửi
                 </button>
               </form>
             </div>
@@ -314,14 +314,14 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
                   <Eye className="w-4 h-4" />
-                  NgÆ°á»i theo dÃµi ({task.watchers?.length ?? 0})
+                  Người theo dõi ({task.watchers?.length ?? 0})
                 </h3>
                 <button
                   onClick={() => setShowWatcherPicker(v => !v)}
                   className="flex items-center gap-1 text-xs text-zinc-900 hover:text-zinc-900 px-2 py-1 rounded-lg hover:bg-zinc-100"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
-                  ThÃªm
+                  Thêm
                 </button>
               </div>
 
@@ -342,7 +342,7 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
                       </button>
                     ))}
                   {(allUsers as any[]).filter((u: any) => !task.watchers?.some(w => w.id === u.id)).length === 0 && (
-                    <p className="text-xs text-zinc-400 text-center py-3">Táº¥t cáº£ Ä‘Ã£ theo dÃµi</p>
+                    <p className="text-xs text-zinc-400 text-center py-3">Tất cả đã theo dõi</p>
                   )}
                 </div>
               )}
@@ -365,7 +365,7 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-zinc-400">ChÆ°a cÃ³ ngÆ°á»i theo dÃµi</p>
+                <p className="text-xs text-zinc-400">Chưa có người theo dõi</p>
               )}
             </div>
 
@@ -380,7 +380,7 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
   );
 }
 
-// â”€â”€â”€ DnD helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── DnD helpers ──────────────────────────────────────────────────────────────
 function TaskStatusColumn({ status, children }: { status: string; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
@@ -412,7 +412,7 @@ function DraggableTaskCard(props: Omit<TaskCardProps, 'dragListeners'>) {
   );
 }
 
-// â”€â”€â”€ TaskCard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── TaskCard ──────────────────────────────────────────────────────────────
 function TaskCard({
   task,
   onMove,
@@ -429,14 +429,14 @@ function TaskCard({
         <button
           onClick={(e) => { e.stopPropagation(); onEdit(task); }}
           className="p-1 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900"
-          title="Chá»‰nh sá»­a"
+          title="Chỉnh sửa"
         >
           <Pencil className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(task); }}
           className="p-1 rounded hover:bg-red-50 text-zinc-400 hover:text-red-600"
-          title="XÃ³a"
+          title="Xóa"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -456,12 +456,12 @@ function TaskCard({
         </div>
 
         {task.project && (
-          <p className="text-xs text-zinc-900 mb-1">ðŸ“ {task.project.name}</p>
+          <p className="text-xs text-zinc-900 mb-1">📁 {task.project.name}</p>
         )}
 
         {task.dueDate && (
           <p className="text-xs text-zinc-400 mb-2">
-            ðŸ“… {new Date(task.dueDate).toLocaleDateString('vi-VN')}
+            📅 {new Date(task.dueDate).toLocaleDateString('vi-VN')}
           </p>
         )}
 
@@ -476,8 +476,8 @@ function TaskCard({
 
         {task._count && (task._count.subtasks > 0 || task._count.comments > 0) && (
           <div className="flex gap-2 text-xs text-zinc-400 mb-2">
-            {task._count.subtasks > 0 && <span>â—» {task._count.subtasks} subtask</span>}
-            {task._count.comments > 0 && <span>ðŸ’¬ {task._count.comments}</span>}
+            {task._count.subtasks > 0 && <span>◻ {task._count.subtasks} subtask</span>}
+            {task._count.comments > 0 && <span>💬 {task._count.comments}</span>}
           </div>
         )}
       </div>
@@ -491,7 +491,7 @@ function TaskCard({
               onClick={(e) => { e.stopPropagation(); onMove(task.id, s); }}
               className="text-xs px-2 py-0.5 rounded border border-zinc-200 hover:border-zinc-400 hover:text-zinc-900 transition-colors"
             >
-              â†’ {STATUS_LABELS[s]}
+              → {STATUS_LABELS[s]}
             </button>
           ))}
       </div>
@@ -499,7 +499,7 @@ function TaskCard({
   );
 }
 
-// â”€â”€â”€ CreateTaskModal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── CreateTaskModal ────────────────────────────────────────────────────────
 function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState('MEDIUM');
@@ -524,7 +524,7 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
       projectId: projectId || undefined,
       watcherIds: watcherIds.length > 0 ? watcherIds : undefined,
     } as any);
-    toast.success('ÄÃ£ táº¡o nhiá»‡m vá»¥');
+    toast.success('Đã tạo nhiệm vụ');
     onCreated();
     onClose();
   };
@@ -532,21 +532,21 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold mb-4">Táº¡o nhiá»‡m vá»¥ má»›i</h2>
+        <h2 className="text-lg font-semibold mb-4">Tạo nhiệm vụ mới</h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">TiÃªu Ä‘á» *</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">Tiêu đề *</label>
             <input
               className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900 focus:border-transparent"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Nháº­p tiÃªu Ä‘á» nhiá»‡m vá»¥..."
+              placeholder="Nhập tiêu đề nhiệm vụ..."
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Má»©c Ä‘á»™ Æ°u tiÃªn</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">Mức độ ưu tiên</label>
             <select
               className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900"
               value={priority}
@@ -560,13 +560,13 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
           {projects && projects.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Dá»± Ã¡n</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Dự án</label>
               <select
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900"
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
               >
-                <option value="">-- KhÃ´ng gÃ¡n dá»± Ã¡n --</option>
+                <option value="">-- Không gán dự án --</option>
                 {projects.map((p: any) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
@@ -576,7 +576,7 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
           {allUsers && allUsers.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">NgÆ°á»i theo dÃµi</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Người theo dõi</label>
               <div className="flex flex-wrap gap-1.5">
                 {allUsers.map((u: any) => {
                   const isSelected = watcherIds.includes(u.id);
@@ -605,10 +605,10 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
               disabled={createTask.isPending}
               className="flex-1 bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-50"
             >
-              {createTask.isPending ? 'Äang táº¡o...' : 'Táº¡o nhiá»‡m vá»¥'}
+              {createTask.isPending ? 'Đang tạo...' : 'Tạo nhiệm vụ'}
             </button>
             <button type="button" onClick={onClose} className="flex-1 border border-zinc-300 rounded-lg py-2 text-sm font-medium hover:bg-zinc-50">
-              Há»§y
+              Hủy
             </button>
           </div>
         </form>
@@ -617,7 +617,7 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
   );
 }
 
-// â”€â”€â”€ Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Page ──────────────────────────────────────────────────────────────────
 export default function TasksPage() {
   const { data: columns, isLoading, refetch } = useTasksKanban();
   const moveStatus = useMoveTaskStatus();
@@ -652,7 +652,7 @@ export default function TasksPage() {
 
   const handleDelete = async (task: Task) => {
     await deleteTask.mutateAsync(task.id);
-    toast.success('ÄÃ£ xÃ³a nhiá»‡m vá»¥');
+    toast.success('Đã xóa nhiệm vụ');
     setDeleteConfirm(null);
   };
 
@@ -671,15 +671,15 @@ export default function TasksPage() {
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Nhiá»‡m vá»¥</h1>
-          <p className="text-zinc-500 text-sm mt-1">Quáº£n lÃ½ nhiá»‡m vá»¥ theo {viewMode === 'kanban' ? 'báº£ng Kanban' : 'danh sÃ¡ch'}</p>
+          <h1 className="text-2xl font-bold text-zinc-900">Nhiệm vụ</h1>
+          <p className="text-zinc-500 text-sm mt-1">Quản lý nhiệm vụ theo {viewMode === 'kanban' ? 'bảng Kanban' : 'danh sách'}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex border border-zinc-200 rounded-lg overflow-hidden">
             <button onClick={() => setViewMode('kanban')} className={`px-2.5 py-2 ${viewMode === 'kanban' ? 'bg-zinc-900/10 text-zinc-900' : 'text-zinc-400 hover:text-zinc-600'}`} title="Kanban">
               <LayoutGrid size={15} />
             </button>
-            <button onClick={() => setViewMode('list')} className={`px-2.5 py-2 border-l border-zinc-200 ${viewMode === 'list' ? 'bg-zinc-900/10 text-zinc-900' : 'text-zinc-400 hover:text-zinc-600'}`} title="Danh sÃ¡ch">
+            <button onClick={() => setViewMode('list')} className={`px-2.5 py-2 border-l border-zinc-200 ${viewMode === 'list' ? 'bg-zinc-900/10 text-zinc-900' : 'text-zinc-400 hover:text-zinc-600'}`} title="Danh sách">
               <List size={15} />
             </button>
           </div>
@@ -687,7 +687,7 @@ export default function TasksPage() {
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-zinc-700"
           >
-            + Táº¡o nhiá»‡m vá»¥
+            + Tạo nhiệm vụ
           </button>
         </div>
       </div>
@@ -723,7 +723,7 @@ export default function TasksPage() {
                 {tasks.length === 0 && (
                   <div className="flex flex-col items-center py-8 text-zinc-300">
                     <CheckSquare size={28} className="mb-2" />
-                    <p className="text-xs text-zinc-400">ChÆ°a cÃ³ nhiá»‡m vá»¥</p>
+                    <p className="text-xs text-zinc-400">Chưa có nhiệm vụ</p>
                   </div>
                 )}
               </div>
@@ -744,23 +744,23 @@ export default function TasksPage() {
       </DndContext>
       </>
       ) : (
-      /* â”€â”€â”€ List View â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+      /* ─── List View ─────────────────────────────────────────────────── */
       <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden flex-1">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-zinc-100 bg-zinc-50/50">
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Nhiá»‡m vá»¥</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Tráº¡ng thÃ¡i</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Æ¯u tiÃªn</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">NgÆ°á»i thá»±c hiá»‡n</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Dá»± Ã¡n</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Háº¡n chÃ³t</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Nhiệm vụ</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Trạng thái</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Ưu tiên</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Người thực hiện</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Dự án</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Hạn chót</th>
               <th className="px-4 py-3 w-24" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
             {allTasks.length === 0 && (
-              <tr><td colSpan={7} className="text-center py-12 text-zinc-400 text-sm">ChÆ°a cÃ³ nhiá»‡m vá»¥ nÃ o</td></tr>
+              <tr><td colSpan={7} className="text-center py-12 text-zinc-400 text-sm">Chưa có nhiệm vụ nào</td></tr>
             )}
             {allTasks.map((task) => (
               <tr key={task.id} onClick={() => setDetailTaskId(task.id)}
@@ -809,9 +809,9 @@ export default function TasksPage() {
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
-            <h2 className="text-lg font-semibold mb-2">XÃ³a nhiá»‡m vá»¥?</h2>
+            <h2 className="text-lg font-semibold mb-2">Xóa nhiệm vụ?</h2>
             <p className="text-sm text-zinc-600 mb-4">
-              Báº¡n cÃ³ cháº¯c muá»‘n xÃ³a <strong>{deleteConfirm.title}</strong>? HÃ nh Ä‘á»™ng nÃ y khÃ´ng thá»ƒ hoÃ n tÃ¡c.
+              Bạn có chắc muốn xóa <strong>{deleteConfirm.title}</strong>? Hành động này không thể hoàn tác.
             </p>
             <div className="flex gap-2">
               <button
@@ -819,13 +819,13 @@ export default function TasksPage() {
                 disabled={deleteTask.isPending}
                 className="flex-1 bg-red-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-red-700 disabled:opacity-50"
               >
-                {deleteTask.isPending ? 'Äang xÃ³a...' : 'XÃ³a'}
+                {deleteTask.isPending ? 'Đang xóa...' : 'Xóa'}
               </button>
               <button
                 onClick={() => setDeleteConfirm(null)}
                 className="flex-1 border border-zinc-300 rounded-lg py-2 text-sm font-medium hover:bg-zinc-50"
               >
-                Há»§y
+                Hủy
               </button>
             </div>
           </div>

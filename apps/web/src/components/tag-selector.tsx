@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import { Plus, X, Check, Tag as TagIcon } from 'lucide-react';
@@ -73,7 +73,7 @@ export function TagSelector({ entityType, entityId }: TagSelectorProps) {
       {/* Applied tags */}
       <div className="flex flex-wrap gap-1.5 items-center">
         {isLoading ? (
-          <span className="text-xs text-zinc-400">Äang táº£i...</span>
+          <span className="text-xs text-zinc-400">Đang tải...</span>
         ) : (
           entityTags.map(tag => (
             <span
@@ -111,7 +111,7 @@ export function TagSelector({ entityType, entityId }: TagSelectorProps) {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && isNew) handleCreateAndAdd(); }}
-                placeholder="TÃ¬m hoáº·c táº¡o tag..."
+                placeholder="Tìm hoặc tạo tag..."
                 className="flex-1 text-xs outline-none placeholder-gray-400"
               />
             </div>
@@ -120,7 +120,7 @@ export function TagSelector({ entityType, entityId }: TagSelectorProps) {
           {/* Color picker (only shown when creating new) */}
           {isNew && (
             <div className="px-3 py-2 border-b border-zinc-100">
-              <p className="text-xs text-zinc-400 mb-1.5">MÃ u sáº¯c</p>
+              <p className="text-xs text-zinc-400 mb-1.5">Màu sắc</p>
               <div className="flex gap-1.5 flex-wrap">
                 {PRESET_COLORS.map(c => (
                   <button
@@ -146,12 +146,12 @@ export function TagSelector({ entityType, entityId }: TagSelectorProps) {
                   className="w-3.5 h-3.5 rounded-full shrink-0"
                   style={{ backgroundColor: color }}
                 />
-                Táº¡o "{input.trim()}"
-                <span className="ml-auto text-zinc-400 text-[10px]">â†µ Enter</span>
+                Tạo "{input.trim()}"
+                <span className="ml-auto text-zinc-400 text-[10px]">↵ Enter</span>
               </button>
             )}
             {filtered.length === 0 && !isNew && (
-              <p className="px-3 py-3 text-xs text-zinc-400 text-center">KhÃ´ng tÃ¬m tháº¥y tag</p>
+              <p className="px-3 py-3 text-xs text-zinc-400 text-center">Không tìm thấy tag</p>
             )}
             {filtered.map(tag => (
               <button

@@ -12,11 +12,11 @@ import { api } from '@/lib/api';
 
 const schema = z
   .object({
-    newPassword: z.string().min(8, 'Mật khẩu tối thiểu 8 ký tự'),
+    newPassword: z.string().min(8, 'M?t kh?u t?i thi?u 8 k� t?'),
     confirmPassword: z.string(),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {
-    message: 'Mật khẩu xác nhận không khớp',
+    message: 'M?t kh?u x�c nh?n kh�ng kh?p',
     path: ['confirmPassword'],
   });
 
@@ -56,9 +56,9 @@ function ResetPasswordContent() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50">
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center max-w-sm">
-          <p className="text-red-500 font-medium mb-4">Link không hợp lệ hoặc đã hết hạn.</p>
+          <p className="text-red-500 font-medium mb-4">Link kh�ng h?p l? ho?c d� h?t h?n.</p>
           <Link href="/forgot-password" className="text-sm text-indigo-600 hover:underline">
-            Yêu cầu link mới
+            Y�u c?u link m?i
           </Link>
         </div>
       </div>
@@ -74,10 +74,10 @@ function ResetPasswordContent() {
       setSuccess(true);
     } catch (err: any) {
       const msg = err.response?.data?.message;
-      if (msg?.includes('hết hạn') || msg?.includes('hợp lệ')) {
-        toast.error('Link đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu link mới.');
+      if (msg?.includes('h?t h?n') || msg?.includes('h?p l?')) {
+        toast.error('Link d?t l?i m?t kh?u d� h?t h?n. Vui l�ng y�u c?u link m?i.');
       } else {
-        toast.error(msg ?? 'Có lỗi xảy ra');
+        toast.error(msg ?? 'C� l?i x?y ra');
       }
     }
   };
@@ -97,9 +97,9 @@ function ResetPasswordContent() {
           {!success ? (
             <>
               <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Đặt lại mật khẩu</h2>
+                <h2 className="text-xl font-semibold text-gray-900">�?t l?i m?t kh?u</h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  Nhập mật khẩu mới cho tài khoản của bạn.
+                  Nh?p m?t kh?u m?i cho t�i kho?n c?a b?n.
                 </p>
               </div>
 
@@ -107,14 +107,14 @@ function ResetPasswordContent() {
                 {/* New Password */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Mật khẩu mới
+                    M?t kh?u m?i
                   </label>
                   <div className="relative">
                     <input
                       {...register('newPassword')}
                       type={showPassword ? 'text' : 'password'}
                       autoComplete="new-password"
-                      placeholder="Tối thiểu 8 ký tự"
+                      placeholder="T?i thi?u 8 k� t?"
                       className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition pr-10"
                     />
                     <button
@@ -133,14 +133,14 @@ function ResetPasswordContent() {
                 {/* Confirm Password */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Xác nhận mật khẩu
+                    X�c nh?n m?t kh?u
                   </label>
                   <div className="relative">
                     <input
                       {...register('confirmPassword')}
                       type={showConfirm ? 'text' : 'password'}
                       autoComplete="new-password"
-                      placeholder="Nhập lại mật khẩu mới"
+                      placeholder="Nh?p l?i m?t kh?u m?i"
                       className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition pr-10"
                     />
                     <button
@@ -162,7 +162,7 @@ function ResetPasswordContent() {
                   className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm transition flex items-center justify-center gap-2"
                 >
                   {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                  {isSubmitting ? 'Đang xử lý...' : 'Đặt lại mật khẩu'}
+                  {isSubmitting ? '�ang x? l�...' : '�?t l?i m?t kh?u'}
                 </button>
               </form>
             </>
@@ -172,15 +172,15 @@ function ResetPasswordContent() {
               <div className="inline-flex items-center justify-center w-14 h-14 bg-green-100 rounded-full mb-4">
                 <CheckCircle size={28} className="text-green-600" />
               </div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Đặt lại thành công!</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">�?t l?i th�nh c�ng!</h2>
               <p className="text-sm text-gray-500 mb-6">
-                Mật khẩu của bạn đã được cập nhật. Vui lòng đăng nhập lại.
+                M?t kh?u c?a b?n d� du?c c?p nh?t. Vui l�ng dang nh?p l?i.
               </p>
               <button
                 onClick={() => router.push('/login')}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm transition"
               >
-                Đăng nhập ngay
+                �ang nh?p ngay
               </button>
             </div>
           )}
@@ -192,7 +192,7 @@ function ResetPasswordContent() {
                 className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700"
               >
                 <ArrowLeft size={14} />
-                Quay lại đăng nhập
+                Quay l?i dang nh?p
               </Link>
             </div>
           )}

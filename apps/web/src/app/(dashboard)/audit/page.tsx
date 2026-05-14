@@ -1,11 +1,11 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search, ChevronLeft, ChevronRight, Shield } from 'lucide-react';
 import { api } from '@/lib/api';
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Types ─────────────────────────────────────────────────────────────────────
 interface AuditLog {
   id: string;
   action: string;
@@ -23,7 +23,7 @@ interface PagedResult {
   meta: { total: number; page: number; limit: number; totalPages: number };
 }
 
-// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Constants ─────────────────────────────────────────────────────────────────
 const ACTION_BADGE: Record<string, string> = {
   CREATE: 'bg-green-100 text-green-700',
   UPDATE: 'bg-blue-100 text-blue-700',
@@ -35,18 +35,18 @@ const ACTION_BADGE: Record<string, string> = {
 };
 
 const ACTION_LABELS: Record<string, string> = {
-  CREATE: 'Táº¡o', UPDATE: 'Cáº­p nháº­t', DELETE: 'XÃ³a',
-  LOGIN: 'ÄÄƒng nháº­p', LOGOUT: 'ÄÄƒng xuáº¥t',
-  EXPORT: 'Xuáº¥t', IMPORT: 'Nháº­p',
+  CREATE: 'Tạo', UPDATE: 'Cập nhật', DELETE: 'Xóa',
+  LOGIN: 'Đăng nhập', LOGOUT: 'Đăng xuất',
+  EXPORT: 'Xuất', IMPORT: 'Nhập',
 };
 
 const RESOURCE_LABELS: Record<string, string> = {
-  lead: 'Lead', contact: 'LiÃªn há»‡', company: 'CÃ´ng ty', deal: 'CÆ¡ há»™i',
-  user: 'NgÆ°á»i dÃ¹ng', task: 'Nhiá»‡m vá»¥', project: 'Dá»± Ã¡n',
-  campaign: 'Chiáº¿n dá»‹ch', conversation: 'Há»™i thoáº¡i', auth: 'XÃ¡c thá»±c',
+  lead: 'Lead', contact: 'Liên hệ', company: 'Công ty', deal: 'Cơ hội',
+  user: 'Người dùng', task: 'Nhiệm vụ', project: 'Dự án',
+  campaign: 'Chiến dịch', conversation: 'Hội thoại', auth: 'Xác thực',
 };
 
-// â”€â”€â”€ Changes Viewer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Changes Viewer ─────────────────────────────────────────────────────────────
 function ChangesViewer({ changes }: { changes: Record<string, any> }) {
   const [open, setOpen] = useState(false);
   const keys = Object.keys(changes);
@@ -54,7 +54,7 @@ function ChangesViewer({ changes }: { changes: Record<string, any> }) {
   return (
     <div className="mt-1">
       <button onClick={() => setOpen(v => !v)} className="text-xs text-zinc-900 hover:underline">
-        {open ? 'áº¨n' : `Xem thay Ä‘á»•i (${keys.length} trÆ°á»ng)`}
+        {open ? 'Ẩn' : `Xem thay đổi (${keys.length} trường)`}
       </button>
       {open && (
         <div className="mt-1 text-xs bg-zinc-50 border border-zinc-200 rounded-lg p-2 space-y-1 max-w-sm">
@@ -70,7 +70,7 @@ function ChangesViewer({ changes }: { changes: Record<string, any> }) {
   );
 }
 
-// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function AuditPage() {
   const [page, setPage] = useState(1);
   const [resource, setResource] = useState('');
@@ -98,13 +98,13 @@ export default function AuditPage() {
             <Shield size={18} className="text-zinc-900" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900">Nháº­t kÃ½ há»‡ thá»‘ng</h1>
-            <p className="text-zinc-500 text-sm mt-0.5">Theo dÃµi má»i thao tÃ¡c trong tá»• chá»©c</p>
+            <h1 className="text-2xl font-bold text-zinc-900">Nhật ký hệ thống</h1>
+            <p className="text-zinc-500 text-sm mt-0.5">Theo dõi mọi thao tác trong tổ chức</p>
           </div>
         </div>
         {data && (
           <span className="text-sm text-zinc-500">
-            Tá»•ng <span className="font-semibold text-zinc-900">{(data.meta?.total ?? 0).toLocaleString()}</span> báº£n ghi
+            Tổng <span className="font-semibold text-zinc-900">{(data.meta?.total ?? 0).toLocaleString()}</span> bản ghi
           </span>
         )}
       </div>
@@ -115,7 +115,7 @@ export default function AuditPage() {
           {(['', ...Object.keys(RESOURCE_LABELS)] as string[]).map(r => (
             <button key={r} onClick={() => { setResource(r); setPage(1); }}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${resource === r ? 'bg-zinc-900 text-white' : 'bg-white border border-zinc-200 text-zinc-600 hover:border-indigo-300'}`}>
-              {r ? RESOURCE_LABELS[r] ?? r : 'Táº¥t cáº£'}
+              {r ? RESOURCE_LABELS[r] ?? r : 'Tất cả'}
             </button>
           ))}
         </div>
@@ -127,11 +127,11 @@ export default function AuditPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-100 bg-zinc-50">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider">HÃ nh Ä‘á»™ng</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider">TÃ i nguyÃªn</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider">NgÆ°á»i dÃ¹ng</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Hành động</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Tài nguyên</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Người dùng</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider">IP</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Thá»i gian</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Thời gian</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -140,7 +140,7 @@ export default function AuditPage() {
                   <td colSpan={5} className="text-center py-12 text-zinc-400">
                     <div className="flex items-center justify-center gap-2">
                       <div className="animate-spin w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full" />
-                      Äang táº£i...
+                      Đang tải...
                     </div>
                   </td>
                 </tr>
@@ -148,7 +148,7 @@ export default function AuditPage() {
                 <tr>
                   <td colSpan={5} className="text-center py-16 text-zinc-400">
                     <Shield size={32} className="mx-auto mb-2 text-zinc-300" />
-                    <p>ChÆ°a cÃ³ báº£n ghi nÃ o</p>
+                    <p>Chưa có bản ghi nào</p>
                   </td>
                 </tr>
               ) : (
@@ -182,11 +182,11 @@ export default function AuditPage() {
                           </div>
                         </div>
                       ) : (
-                        <span className="text-xs text-zinc-400 italic">Há»‡ thá»‘ng</span>
+                        <span className="text-xs text-zinc-400 italic">Hệ thống</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs text-zinc-500 font-mono">{log.ip ?? 'â€”'}</span>
+                      <span className="text-xs text-zinc-500 font-mono">{log.ip ?? '—'}</span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <p className="text-zinc-700">{new Date(log.createdAt).toLocaleDateString('vi-VN')}</p>
