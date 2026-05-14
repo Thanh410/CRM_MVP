@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Building2, GitBranch, Users, Plus, Pencil, Trash2, Check, X, ChevronRight, ShieldCheck, Tag, Plug } from 'lucide-react';
+import { Building2, GitBranch, Users, Plus, Pencil, Trash2, Check, X, ChevronRight, ShieldCheck, Tag, Plug, CheckSquare, Square, MinusSquare, Search } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -278,11 +278,41 @@ function TeamsTab() {
 interface Permission { id: string; resource: string; action: string; description?: string; }
 interface RbacRole { id: string; name: string; displayName: string; permissions?: { permission: Permission }[]; }
 
+const RESOURCE_LABELS: Record<string, string> = {
+  users: 'Người dùng',
+  organization: 'Tổ chức',
+  leads: 'Khách hàng tiềm năng',
+  contacts: 'Liên hệ',
+  companies: 'Công ty',
+  deals: 'Cơ hội',
+  tasks: 'Nhiệm vụ',
+  projects: 'Dự án',
+  campaigns: 'Chiến dịch',
+  conversations: 'Hội thoại',
+  reports: 'Báo cáo',
+  audit: 'Nhật ký',
+  integrations: 'Tích hợp',
+  pipelines: 'Pipeline',
+  custom_fields: 'Trường tùy chỉnh',
+};
+
+const ACTION_LABELS: Record<string, string> = {
+  create: 'Tạo',
+  read: 'Xem',
+  update: 'Sửa',
+  delete: 'Xóa',
+  assign: 'Giao',
+  export: 'Xuất',
+  reply: 'Trả lời',
+  manage: 'Quản lý',
+};
+
 function RbacTab() {
   const qc = useQueryClient();
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [pendingPerms, setPendingPerms] = useState<Set<string>>(new Set());
   const [dirty, setDirty] = useState(false);
+  const [search, setSearch] = useState('');
 
   const { data: roles = [], isLoading: rolesLoading } = useQuery<RbacRole[]>({
     queryKey: ['rbac-roles'],
@@ -296,7 +326,6 @@ function RbacTab() {
 
   const selectedRole = roles.find(r => r.id === selectedRoleId);
 
-  // When role is selected, seed pendingPerms from its current permissions
   const handleSelectRole = (role: RbacRole) => {
     setSelectedRoleId(role.id);
     const current = new Set((role.permissions ?? []).map(rp => rp.permission.id));
@@ -307,8 +336,20 @@ function RbacTab() {
   const togglePerm = (permId: string) => {
     setPendingPerms(prev => {
       const next = new Set(prev);
-      if (next.has(permId)) next.delete(permId);
-      else next.add(permId);
+      if (next.has(permId)) next.delete(permId); else next.add(permId);
+      return next;
+    });
+    setDirty(true);
+  };
+
+  /** Toggle all perms in a list (select all if any unselected, else deselect all) */
+  const toggleBulk = (perms: Permission[]) => {
+    const ids = perms.map(p => p.id);
+    const allSelected = ids.every(id => pendingPerms.has(id));
+    setPendingPerms(prev => {
+      const next = new Set(prev);
+      if (allSelected) ids.forEach(id => next.delete(id));
+      else ids.forEach(id => next.add(id));
       return next;
     });
     setDirty(true);
@@ -330,99 +371,257 @@ function RbacTab() {
     updatePermsMutation.mutate({ roleId: selectedRoleId, permissionIds: Array.from(pendingPerms) });
   };
 
-  // Group permissions by resource
-  const permsByResource = allPermissions.reduce<Record<string, Permission[]>>((acc, p) => {
-    if (!acc[p.resource]) acc[p.resource] = [];
-    acc[p.resource].push(p);
-    return acc;
-  }, {});
+  // Build matrix: rows = resources, columns = unique actions (sorted by frequency)
+  const matrix = useMemo(() => {
+    const resources = Array.from(new Set(allPermissions.map(p => p.resource)));
+    const actions = Array.from(new Set(allPermissions.map(p => p.action)));
+    // Sort actions: standard CRUD first, then others
+    const ORDER = ['create', 'read', 'update', 'delete', 'assign', 'export', 'reply', 'manage'];
+    actions.sort((a, b) => {
+      const ia = ORDER.indexOf(a); const ib = ORDER.indexOf(b);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
+
+    const filtered = search
+      ? resources.filter(r =>
+          r.toLowerCase().includes(search.toLowerCase()) ||
+          (RESOURCE_LABELS[r] ?? '').toLowerCase().includes(search.toLowerCase()),
+        )
+      : resources;
+
+    return { resources: filtered, actions };
+  }, [allPermissions, search]);
+
+  const findPerm = (resource: string, action: string) =>
+    allPermissions.find(p => p.resource === resource && p.action === action);
+
+  // Stats: row + column counters
+  const rowStats = (resource: string) => {
+    const perms = allPermissions.filter(p => p.resource === resource);
+    return { total: perms.length, selected: perms.filter(p => pendingPerms.has(p.id)).length, perms };
+  };
+  const colStats = (action: string) => {
+    const perms = allPermissions.filter(p => p.action === action);
+    return { total: perms.length, selected: perms.filter(p => pendingPerms.has(p.id)).length, perms };
+  };
+
+  // Tristate checkbox icon
+  const TriCheck = ({ selected, total }: { selected: number; total: number }) => {
+    if (selected === 0) return <Square size={14} className="text-zinc-300" />;
+    if (selected === total) return <CheckSquare size={14} className="text-zinc-900" />;
+    return <MinusSquare size={14} className="text-indigo-500" />;
+  };
 
   return (
     <div className="flex gap-6 min-h-[400px]">
-      {/* Role list */}
-      <div className="w-56 shrink-0 border border-zinc-200 rounded-xl overflow-hidden">
-        <div className="px-3 py-2.5 border-b border-zinc-100 bg-zinc-50">
-          <p className="text-xs font-semibold text-zinc-600 uppercase tracking-wide">Vai trò</p>
-        </div>
-        {rolesLoading ? (
-          <div className="p-4 text-sm text-zinc-400">Đang tải...</div>
-        ) : (
-          <div className="divide-y divide-gray-50">
-            {roles.map(role => (
-              <button
-                key={role.id}
-                onClick={() => handleSelectRole(role)}
-                className={`w-full text-left px-3 py-2.5 text-sm transition-colors ${
-                  selectedRoleId === role.id
-                    ? 'bg-zinc-50 text-indigo-700 font-medium'
-                    : 'text-zinc-700 hover:bg-zinc-50'
-                }`}
-              >
-                {role.displayName ?? role.name}
-              </button>
-            ))}
+      {/* ── Role list ─────────────────────────────────────── */}
+      <div className="w-56 shrink-0">
+        <div className="border border-zinc-200 rounded-xl overflow-hidden">
+          <div className="px-3 py-2.5 border-b border-zinc-100 bg-zinc-50/70">
+            <p className="text-xs font-semibold text-zinc-600 uppercase tracking-wide">Vai trò</p>
           </div>
-        )}
+          {rolesLoading ? (
+            <div className="p-4 text-sm text-zinc-400">Đang tải...</div>
+          ) : (
+            <div className="divide-y divide-zinc-100">
+              {roles.map(role => {
+                const isActive = selectedRoleId === role.id;
+                const permCount = (role.permissions ?? []).length;
+                return (
+                  <button
+                    key={role.id}
+                    onClick={() => handleSelectRole(role)}
+                    className={`w-full text-left px-3 py-2.5 text-sm transition-colors ${
+                      isActive ? 'bg-zinc-900 text-white' : 'text-zinc-700 hover:bg-zinc-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium truncate">{role.displayName ?? role.name}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${
+                        isActive ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-500'
+                      }`}>{permCount}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Permissions checklist */}
-      <div className="flex-1">
+      {/* ── Permissions matrix ────────────────────────────── */}
+      <div className="flex-1 min-w-0">
         {!selectedRole ? (
-          <div className="flex flex-col items-center justify-center h-full text-zinc-400 py-12">
+          <div className="flex flex-col items-center justify-center h-full text-zinc-400 py-12 border border-dashed border-zinc-200 rounded-xl">
             <ShieldCheck size={36} className="mb-3 opacity-30" />
-            <p className="text-sm">Chọn một vai trò để xem và chỉnh sửa quyền</p>
+            <p className="text-sm">Chọn một vai trò bên trái để xem và chỉnh sửa quyền</p>
           </div>
         ) : (
-          <div>
-            <div className="flex items-center justify-between mb-4">
+          <div className="space-y-4">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-medium text-zinc-900">{selectedRole.displayName ?? selectedRole.name}</p>
-                <p className="text-xs text-zinc-400 mt-0.5">{pendingPerms.size} / {allPermissions.length} quyền được cấp</p>
+                <p className="font-semibold text-zinc-900">{selectedRole.displayName ?? selectedRole.name}</p>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  <span className="font-medium text-zinc-700">{pendingPerms.size}</span> / {allPermissions.length} quyền được cấp
+                </p>
               </div>
-              {dirty && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => { handleSelectRole(selectedRole); }}
-                    className="px-3 py-1.5 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50"
-                  >Hủy</button>
-                  <button
-                    onClick={handleSave}
-                    disabled={updatePermsMutation.isPending}
-                    className="px-3 py-1.5 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60"
-                  >{updatePermsMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}</button>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => toggleBulk(allPermissions)}
+                  className="px-3 py-1.5 text-xs text-zinc-700 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition flex items-center gap-1.5"
+                  title="Chọn / bỏ chọn tất cả"
+                >
+                  {pendingPerms.size === allPermissions.length ? (
+                    <><Square size={12} /> Bỏ tất cả</>
+                  ) : (
+                    <><CheckSquare size={12} /> Chọn tất cả</>
+                  )}
+                </button>
+                {dirty && (
+                  <>
+                    <button
+                      onClick={() => handleSelectRole(selectedRole)}
+                      className="px-3 py-1.5 text-xs text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50"
+                    >Hủy</button>
+                    <button
+                      onClick={handleSave}
+                      disabled={updatePermsMutation.isPending}
+                      className="px-3 py-1.5 text-xs bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60 flex items-center gap-1.5"
+                    >
+                      <Check size={12} />
+                      {updatePermsMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
+            {/* Search */}
+            <div className="relative max-w-xs">
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Tìm tài nguyên..."
+                className="w-full pl-8 pr-3 py-1.5 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              />
+            </div>
+
+            {/* Matrix */}
             {permsLoading ? (
               <div className="text-sm text-zinc-400">Đang tải quyền...</div>
             ) : (
-              <div className="space-y-5">
-                {Object.entries(permsByResource).map(([resource, perms]) => (
-                  <div key={resource} className="border border-zinc-200 rounded-xl overflow-hidden">
-                    <div className="px-4 py-2 bg-zinc-50 border-b border-zinc-100">
-                      <p className="text-xs font-semibold text-zinc-600 uppercase tracking-wide">{resource}</p>
-                    </div>
-                    <div className="divide-y divide-gray-50">
-                      {perms.map(perm => (
-                        <label key={perm.id} className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-zinc-50 transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={pendingPerms.has(perm.id)}
-                            onChange={() => togglePerm(perm.id)}
-                            className="w-4 h-4 rounded text-zinc-900 border-gray-300 focus:ring-indigo-500"
-                          />
-                          <div>
-                            <p className="text-sm text-gray-800">{perm.action}</p>
-                            {perm.description && <p className="text-xs text-zinc-400">{perm.description}</p>}
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+              <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="bg-zinc-50/70 border-b border-zinc-200">
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-600 uppercase tracking-wide sticky left-0 bg-zinc-50/70 z-10 min-w-[180px]">
+                          Tài nguyên
+                        </th>
+                        {matrix.actions.map(action => {
+                          const stats = colStats(action);
+                          return (
+                            <th key={action} className="px-2 py-3 text-center min-w-[80px]">
+                              <button
+                                onClick={() => toggleBulk(stats.perms)}
+                                className="flex flex-col items-center gap-1 mx-auto text-zinc-700 hover:text-zinc-900 group"
+                                title={`Chọn/bỏ tất cả "${ACTION_LABELS[action] ?? action}"`}
+                              >
+                                <span className="text-xs font-semibold uppercase tracking-wide">
+                                  {ACTION_LABELS[action] ?? action}
+                                </span>
+                                <span className="flex items-center gap-1 text-[10px] text-zinc-400 group-hover:text-zinc-600">
+                                  <TriCheck selected={stats.selected} total={stats.total} />
+                                  <span>{stats.selected}/{stats.total}</span>
+                                </span>
+                              </button>
+                            </th>
+                          );
+                        })}
+                        <th className="px-3 py-3 text-center min-w-[60px]">
+                          <span className="text-xs font-semibold text-zinc-600 uppercase tracking-wide">Tổng</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {matrix.resources.map((resource, idx) => {
+                        const stats = rowStats(resource);
+                        return (
+                          <tr key={resource} className={idx % 2 === 0 ? 'bg-white' : 'bg-zinc-50/30'}>
+                            {/* Resource name + bulk toggle */}
+                            <td className="px-4 py-2.5 sticky left-0 bg-inherit z-10">
+                              <button
+                                onClick={() => toggleBulk(stats.perms)}
+                                className="flex items-center gap-2.5 text-left hover:bg-zinc-100 -mx-2 px-2 py-1 rounded transition w-full"
+                                title="Chọn/bỏ tất cả quyền của tài nguyên này"
+                              >
+                                <TriCheck selected={stats.selected} total={stats.total} />
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium text-zinc-900 truncate">
+                                    {RESOURCE_LABELS[resource] ?? resource}
+                                  </p>
+                                  <p className="text-[10px] text-zinc-400 font-mono">{resource}</p>
+                                </div>
+                              </button>
+                            </td>
+
+                            {/* Permission cells */}
+                            {matrix.actions.map(action => {
+                              const perm = findPerm(resource, action);
+                              if (!perm) {
+                                return (
+                                  <td key={action} className="px-2 py-2.5 text-center">
+                                    <span className="text-zinc-200 select-none">—</span>
+                                  </td>
+                                );
+                              }
+                              const checked = pendingPerms.has(perm.id);
+                              return (
+                                <td key={action} className="px-2 py-2.5 text-center">
+                                  <label className="inline-flex items-center justify-center cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={() => togglePerm(perm.id)}
+                                      className="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-1 focus:ring-zinc-900 cursor-pointer accent-zinc-900"
+                                    />
+                                  </label>
+                                </td>
+                              );
+                            })}
+
+                            {/* Row total */}
+                            <td className="px-3 py-2.5 text-center">
+                              <span className={`text-xs font-medium ${
+                                stats.selected === 0 ? 'text-zinc-300' :
+                                stats.selected === stats.total ? 'text-emerald-600' : 'text-indigo-600'
+                              }`}>
+                                {stats.selected}/{stats.total}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {matrix.resources.length === 0 && (
+                        <tr>
+                          <td colSpan={matrix.actions.length + 2} className="text-center py-12 text-sm text-zinc-400">
+                            Không tìm thấy tài nguyên nào khớp "{search}"
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
+
+            {/* Hint */}
+            <div className="text-xs text-zinc-400 flex items-center gap-1.5 px-1">
+              <ShieldCheck size={12} />
+              <span>Click vào tên tài nguyên hoặc tên action để chọn/bỏ tất cả trong hàng/cột đó.</span>
+            </div>
           </div>
         )}
       </div>
