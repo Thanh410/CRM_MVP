@@ -30,13 +30,33 @@ export class ConversationsService {
   async findOne(orgId: string, id: string) {
     const convo = await this.prisma.conversation.findFirst({
       where: { id, orgId, deletedAt: null },
-      include: {
+      select: {
+        id: true,
+        orgId: true,
+        contactId: true,
+        leadId: true,
+        assignedTo: true,
+        status: true,
+        lastMessageAt: true,
+        createdAt: true,
+        updatedAt: true,
         contact: { select: { id: true, fullName: true, phone: true } },
         assignee: { select: { id: true, fullName: true, avatar: true } },
-        channelAccount: true,
-        participants: { include: { user: { select: { id: true, fullName: true, avatar: true } } } },
+        // Channel account: KHÔNG select credentialsEnc (sensitive data)
+        channelAccount: {
+          select: { id: true, name: true, channel: true, isActive: true },
+        },
+        participants: {
+          select: {
+            userId: true,
+            joinedAt: true,
+            user: { select: { id: true, fullName: true, avatar: true } },
+          },
+        },
+        // Limit 50 messages mới nhất, sort DESC để pagination ngược thuận lợi
         messages: {
-          orderBy: { sentAt: 'asc' },
+          orderBy: { sentAt: 'desc' },
+          take: 50,
           select: {
             id: true,
             direction: true,
@@ -49,7 +69,9 @@ export class ConversationsService {
       },
     });
     if (!convo) throw new NotFoundException('Conversation not found');
-    return convo;
+
+    // Đảo lại sort ASC cho frontend hiển thị từ cũ → mới
+    return { ...convo, messages: convo.messages.reverse() };
   }
 
   async assign(orgId: string, id: string, assigneeId: string) {
