@@ -20,6 +20,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { EntityTimeline } from '@/components/entity-timeline';
+import { DatePicker } from '@/components/ui/date-picker';
 import { toast } from 'sonner';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -139,11 +140,9 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">Hạn chót</label>
-              <input
-                type="date"
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900"
+              <DatePicker
                 value={form.dueDate}
-                onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))}
+                onChange={(v) => setForm((f) => ({ ...f, dueDate: v }))}
               />
             </div>
           </div>

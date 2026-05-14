@@ -11,6 +11,10 @@ import {
   Target,
   BarChart3,
 } from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from "recharts";
 
 export default function DashboardPage() {
   const { data: dash, isLoading } = useQuery({
@@ -142,194 +146,98 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Leads by Source */}
+        {/* Leads by Source — Recharts BarChart */}
         <div className="bg-white rounded-xl border border-zinc-200 p-5">
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 size={16} className="text-emerald-600" />
-            <h2 className="text-sm font-semibold text-zinc-900">
-              Lead theo nguồn
-            </h2>
+            <h2 className="text-sm font-semibold text-zinc-900">Lead theo nguồn</h2>
           </div>
-          <div className="space-y-3">
-            {bySource.length === 0 && !isLoading && (
-              <p className="text-sm text-zinc-400 text-center py-6">
-                Chưa có dữ liệu
-              </p>
-            )}
-            {(() => {
-              const maxCount = Math.max(
-                1,
-                ...bySource.map((s: any) => s._count?.source ?? 0),
-              );
-              return bySource.map((s: any) => {
-                const count = s._count?.source ?? 0;
-                const sourceLabels: Record<string, string> = {
-                  website: "Website",
-                  referral: "Giới thiệu",
-                  facebook: "Facebook",
-                  zalo: "Zalo",
-                  cold_call: "Cold Call",
-                  other: "Khác",
-                };
-                return (
-                  <div key={s.source ?? "unknown"}>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="font-medium text-gray-700">
-                        {sourceLabels[s.source] ?? s.source ?? "Không rõ"}
-                      </span>
-                      <span className="text-zinc-500">{count} lead</span>
-                    </div>
-                    <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                        style={{ width: `${(count / maxCount) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              });
-            })()}
-          </div>
+          {bySource.length === 0 && !isLoading ? (
+            <p className="text-sm text-zinc-400 text-center py-6">Chưa có dữ liệu</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart
+                data={bySource.map((s: any) => ({
+                  name: { website: 'Website', referral: 'Giới thiệu', facebook: 'Facebook', zalo: 'Zalo', cold_call: 'Cold Call', other: 'Khác' }[s.source as string] ?? s.source ?? 'Khác',
+                  value: s._count?.source ?? 0,
+                }))}
+                layout="vertical"
+                margin={{ top: 0, right: 8, left: 8, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f4f4f5" />
+                <XAxis type="number" tick={{ fontSize: 11, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#52525b' }} axisLine={false} tickLine={false} width={72} />
+                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e4e4e7', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} cursor={{ fill: '#f4f4f5' }} formatter={(v: any) => [`${v} lead`, 'Số lượng']} />
+                <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} maxBarSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
 
-      {/* Leads breakdown */}
+      {/* Lead Status — PieChart */}
       {dash?.leads?.byStatus && (
         <div className="bg-white rounded-xl border border-zinc-200 p-5">
-          <h2 className="text-sm font-semibold text-zinc-900 mb-4">
-            Trạng thái Lead
-          </h2>
-          <div className="flex flex-wrap gap-3">
-            {dash.leads.byStatus.map((s: any) => {
-              const labels: Record<string, string> = {
-                NEW: "Mới",
-                CONTACTED: "Đã liên hệ",
-                QUALIFIED: "Đủ điều kiện",
-                UNQUALIFIED: "Không phù hợp",
-                CONVERTED: "Đã chuyển đổi",
-              };
-              const colors: Record<string, string> = {
-                NEW: "bg-blue-50 text-blue-700",
-                CONTACTED: "bg-amber-50 text-amber-700",
-                QUALIFIED: "bg-emerald-50 text-emerald-700",
-                UNQUALIFIED: "bg-red-50 text-red-700",
-                CONVERTED: "bg-indigo-50 text-indigo-700",
-              };
-              return (
-                <div
-                  key={s.status}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg ${colors[s.status] ?? "bg-gray-50 text-gray-700"}`}
-                >
-                  <span className="text-sm font-bold">{s.count}</span>
-                  <span className="text-xs">
-                    {labels[s.status] ?? s.status}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+          <h2 className="text-sm font-semibold text-zinc-900 mb-4">Trạng thái Lead</h2>
+          <ResponsiveContainer width="100%" height={180}>
+            <PieChart>
+              <Pie
+                data={dash.leads.byStatus.map((s: any) => ({
+                  name: { NEW: 'Mới', CONTACTED: 'Đã liên hệ', QUALIFIED: 'Đủ điều kiện', UNQUALIFIED: 'Không phù hợp', CONVERTED: 'Đã chuyển đổi' }[s.status as string] ?? s.status,
+                  value: s.count,
+                }))}
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={75}
+                paddingAngle={3}
+                dataKey="value"
+              >
+                {dash.leads.byStatus.map((_: any, i: number) => (
+                  <Cell key={i} fill={['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#6366f1'][i % 5]} />
+                ))}
+              </Pie>
+              <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e4e4e7' }} formatter={(v: any) => [`${v} lead`, '']} />
+              <Legend iconSize={8} iconType="circle" wrapperStyle={{ fontSize: 11, color: '#71717a' }} />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Activities Timeline chart */}
+        {/* Activities Timeline — Recharts Stacked BarChart */}
         <div className="bg-white rounded-xl border border-zinc-200 p-5">
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 size={16} className="text-amber-600" />
-            <h2 className="text-sm font-semibold text-zinc-900">
-              Hoạt động theo ngày (7 ngày)
-            </h2>
+            <h2 className="text-sm font-semibold text-zinc-900">Hoạt động theo ngày (7 ngày)</h2>
           </div>
           {activitiesTimeline.length === 0 ? (
-            <p className="text-sm text-zinc-400 text-center py-6">
-              Chưa có dữ liệu
-            </p>
+            <p className="text-sm text-zinc-400 text-center py-6">Chưa có dữ liệu</p>
           ) : (
-            <div className="space-y-1">
-              {(() => {
-                const typeColors: Record<string, string> = {
-                  CALL: "bg-blue-400",
-                  EMAIL: "bg-violet-400",
-                  MEETING: "bg-amber-400",
-                  NOTE: "bg-gray-400",
-                  TASK: "bg-green-400",
-                  OTHER: "bg-slate-400",
-                };
-                const typeLabels: Record<string, string> = {
-                  CALL: "Gọi",
-                  EMAIL: "Email",
-                  MEETING: "Họp",
-                  NOTE: "Ghi chú",
-                  TASK: "Task",
-                  OTHER: "Khác",
-                };
-                // Find max total per day for scaling
-                const maxTotal = Math.max(
-                  1,
-                  ...activitiesTimeline.map((d: any) => {
-                    const byType = d.byType ?? {};
-                    return Object.values(byType).reduce(
-                      (s: number, v: any) => s + (v as number),
-                      0,
-                    );
-                  }),
-                );
-                return activitiesTimeline.map((d: any) => {
-                  const byType = d.byType ?? {};
-                  const total = Object.values(byType).reduce(
-                    (s: number, v: any) => s + (v as number),
-                    0,
-                  );
-                  return (
-                    <div key={d.date}>
-                      <div className="flex items-center justify-between text-xs mb-0.5">
-                        <span className="text-zinc-500 w-20 shrink-0">
-                          {new Date(d.date).toLocaleDateString("vi-VN", {
-                            weekday: "short",
-                            month: "numeric",
-                            day: "numeric",
-                          })}
-                        </span>
-                        <div className="flex-1 mx-2 h-4 bg-zinc-100 rounded overflow-hidden flex">
-                          {Object.entries(byType).map(
-                            ([type, count]: [string, any]) => (
-                              <div
-                                key={type}
-                                className={`h-full ${typeColors[type] ?? "bg-gray-400"} transition-all`}
-                                style={{
-                                  width: `${(count / maxTotal) * 100}%`,
-                                }}
-                                title={`${typeLabels[type] ?? type}: ${count}`}
-                              />
-                            ),
-                          )}
-                        </div>
-                        <span className="text-zinc-500 w-6 text-right">
-                          {(total as number).toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
-              <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-zinc-100">
-                {[
-                  ["CALL", "Gọi", "bg-blue-400"],
-                  ["EMAIL", "Email", "bg-violet-400"],
-                  ["MEETING", "Họp", "bg-amber-400"],
-                  ["TASK", "Task", "bg-green-400"],
-                  ["OTHER", "Khác", "bg-slate-400"],
-                ].map(([, label, cls]) => (
-                  <div
-                    key={label}
-                    className="flex items-center gap-1 text-xs text-zinc-500"
-                  >
-                    <div className={`w-2.5 h-2.5 rounded-sm ${cls}`} />
-                    {label}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart
+                data={activitiesTimeline.map((d: any) => ({
+                  date: new Date(d.date).toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric' }),
+                  Gọi: d.byType?.CALL ?? 0,
+                  Email: d.byType?.EMAIL ?? 0,
+                  Họp: d.byType?.MEETING ?? 0,
+                  Task: d.byType?.TASK ?? 0,
+                  Khác: d.byType?.OTHER ?? 0,
+                }))}
+                margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#a1a1aa' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e4e4e7', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} cursor={{ fill: '#f9f9f9' }} />
+                <Legend iconSize={8} iconType="circle" wrapperStyle={{ fontSize: 11, color: '#71717a', paddingTop: 8 }} />
+                <Bar dataKey="Gọi" stackId="a" fill="#60a5fa" radius={[0,0,0,0]} maxBarSize={32} />
+                <Bar dataKey="Email" stackId="a" fill="#a78bfa" radius={[0,0,0,0]} maxBarSize={32} />
+                <Bar dataKey="Họp" stackId="a" fill="#fbbf24" radius={[0,0,0,0]} maxBarSize={32} />
+                <Bar dataKey="Task" stackId="a" fill="#34d399" radius={[0,0,0,0]} maxBarSize={32} />
+                <Bar dataKey="Khác" stackId="a" fill="#94a3b8" radius={[4,4,0,0]} maxBarSize={32} />
+              </BarChart>
+            </ResponsiveContainer>
           )}
         </div>
 

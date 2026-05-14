@@ -9,6 +9,7 @@ import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSe
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { EntityTimeline } from '@/components/entity-timeline';
 import { TagSelector } from '@/components/tag-selector';
+import { DatePicker } from '@/components/ui/date-picker';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -73,7 +74,7 @@ function DealEditModal({ deal, onClose }: { deal: any; onClose: () => void }) {
             </div>
             <div>
               <label className={labelCls}>Ngày chốt dự kiến</label>
-              <input className={inputCls} type="date" value={form.closeDate} onChange={set('closeDate')} />
+              <DatePicker value={form.closeDate} onChange={v => setForm(p => ({ ...p, closeDate: v }))} />
             </div>
           </div>
           <div>

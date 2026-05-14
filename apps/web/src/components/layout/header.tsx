@@ -7,7 +7,7 @@ import { getInitials, formatDate } from '@/lib/utils';
 import { useNotifications, useMarkRead, useMarkAllRead, useDeleteNotification } from '@/hooks/use-notifications';
 import { useRouter } from 'next/navigation';
 
-export function Header() {
+export function Header({ onOpenSearch }: { onOpenSearch?: () => void }) {
   const user = useAuthStore((s) => s.user);
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,24 +31,18 @@ export function Header() {
 
   return (
     <header className="h-14 bg-white border-b border-zinc-200 flex items-center px-6 gap-4 shrink-0">
-      {/* Search */}
+      {/* Search — opens CommandPalette */}
       <div className="flex-1 max-w-md">
-        <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && searchQuery.trim()) {
-                router.push(`/leads?q=${encodeURIComponent(searchQuery.trim())}`);
-                setSearchQuery('');
-              }
-            }}
-            placeholder="Tìm kiếm... (Enter)"
-            className="w-full pl-9 pr-3 py-1.5 text-sm bg-zinc-50 border border-zinc-200 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 placeholder:text-zinc-400 transition"
-          />
-        </div>
+        <button
+          onClick={onOpenSearch}
+          className="w-full flex items-center gap-2 pl-3 pr-2 py-1.5 text-sm bg-zinc-50 border border-zinc-200 rounded-md hover:border-zinc-300 hover:bg-zinc-100 transition text-zinc-400 group"
+        >
+          <Search size={14} className="shrink-0" />
+          <span className="flex-1 text-left text-zinc-400">Tìm kiếm...</span>
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-white border border-zinc-200 text-zinc-500 group-hover:border-zinc-300 transition">
+            <span className="text-[11px]">⌘</span>K
+          </kbd>
+        </button>
       </div>
 
       <div className="flex items-center gap-2 ml-auto">
