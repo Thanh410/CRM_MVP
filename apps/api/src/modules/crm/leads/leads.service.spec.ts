@@ -3,6 +3,7 @@ import { NotFoundException, ConflictException, BadRequestException } from '@nest
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { LeadsService } from './leads.service';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { NotificationsService } from '../../notifications/notifications.service';
 
 // ── Mock data ─────────────────────────────────────────────
 const orgId = 'org-1';
@@ -50,6 +51,12 @@ const mockPrisma = {
 
 const mockEventEmitter = { emit: jest.fn() };
 
+const mockNotifications = {
+  notifyUser: jest.fn(),
+  notifyMany: jest.fn(),
+  create: jest.fn(),
+};
+
 // ── Test Suite ────────────────────────────────────────────
 describe('LeadsService', () => {
   let service: LeadsService;
@@ -62,6 +69,7 @@ describe('LeadsService', () => {
         LeadsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EventEmitter2, useValue: mockEventEmitter },
+        { provide: NotificationsService, useValue: mockNotifications },
       ],
     }).compile();
 

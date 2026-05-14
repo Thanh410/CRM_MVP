@@ -86,8 +86,32 @@
     "rootDir": "src",
     "testRegex": "^(?!.*\\.integration\\.).*\\.spec\\.ts$",
     "transform": { "^.+\\.(t|j)s$": "ts-jest" },
-    "collectCoverageFrom": ["**/*.(t|j)s"],
+    "collectCoverageFrom": [
+      "**/*.service.ts",
+      "**/services/*.ts",
+      "common/**/*.ts",
+      "config/**/*.ts",
+      "!**/*.module.ts",
+      "!**/*.controller.ts",
+      "!**/dto/**",
+      "!**/decorators/**",
+      "!**/guards/**",
+      "!**/filters/**",
+      "!**/interceptors/**",
+      "!main.ts",
+      "!app.module.ts",
+      "!health.controller.ts"
+    ],
     "coverageDirectory": "../coverage",
+    "coverageReporters": ["text", "html", "lcov"],
+    "coverageThreshold": {
+      "global": {
+        "statements": 40,
+        "branches": 35,
+        "functions": 40,
+        "lines": 40
+      }
+    },
     "testEnvironment": "node",
     "moduleNameMapper": {
       "^@crm/types(.*)$": "<rootDir>/../../packages/types/src$1"
