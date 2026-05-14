@@ -6,12 +6,12 @@ import { Building2, GitBranch, Users, Plus, Pencil, Trash2, Check, X, ChevronRig
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Types ─────────────────────────────────────────────────────────────────────
 interface Org { id: string; name: string; email?: string; phone?: string; website?: string; address?: string; logo?: string; }
 interface Dept { id: string; name: string; description?: string; parentId?: string | null; children?: Dept[]; }
 interface Team { id: string; name: string; description?: string; deptId?: string | null; dept?: { id: string; name: string }; }
 
-// â”€â”€â”€ Tab: Tá»• chá»©c â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Tab: Tổ chức ──────────────────────────────────────────────────────────────
 function OrgTab() {
   const qc = useQueryClient();
   const { data: org, isLoading } = useQuery<Org>({
@@ -28,11 +28,11 @@ function OrgTab() {
 
   const updateMutation = useMutation({
     mutationFn: (payload: Partial<Org>) => api.patch('/organizations/me', payload).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['org-me'] }); toast.success('LÆ°u thÃ nh cÃ´ng'); setDirty(false); },
-    onError: () => toast.error('LÆ°u tháº¥t báº¡i'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['org-me'] }); toast.success('Lưu thành công'); setDirty(false); },
+    onError: () => toast.error('Lưu thất bại'),
   });
 
-  if (isLoading) return <div className="text-sm text-zinc-400 py-6 text-center">Äang táº£i...</div>;
+  if (isLoading) return <div className="text-sm text-zinc-400 py-6 text-center">Đang tải...</div>;
   if (!org) return null;
 
   const val = (k: keyof Org) => (dirty && form[k] !== undefined ? form[k] : org[k]) ?? '';
@@ -42,7 +42,7 @@ function OrgTab() {
   return (
     <div className="max-w-lg space-y-4">
       <div>
-        <label className="block text-xs font-medium text-zinc-600 mb-1">TÃªn tá»• chá»©c *</label>
+        <label className="block text-xs font-medium text-zinc-600 mb-1">Tên tổ chức *</label>
         <input className={inputCls} value={val('name') as string} onChange={set('name')} />
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -51,7 +51,7 @@ function OrgTab() {
           <input className={inputCls} type="email" value={val('email') as string} onChange={set('email')} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-zinc-600 mb-1">Äiá»‡n thoáº¡i</label>
+          <label className="block text-xs font-medium text-zinc-600 mb-1">Điện thoại</label>
           <input className={inputCls} value={val('phone') as string} onChange={set('phone')} />
         </div>
       </div>
@@ -60,7 +60,7 @@ function OrgTab() {
         <input className={inputCls} value={val('website') as string} onChange={set('website')} placeholder="https://company.com" />
       </div>
       <div>
-        <label className="block text-xs font-medium text-zinc-600 mb-1">Äá»‹a chá»‰</label>
+        <label className="block text-xs font-medium text-zinc-600 mb-1">Địa chỉ</label>
         <input className={inputCls} value={val('address') as string} onChange={set('address')} />
       </div>
       {dirty && (
@@ -68,19 +68,19 @@ function OrgTab() {
           <button
             onClick={() => { setForm({}); setDirty(false); }}
             className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50"
-          >Há»§y</button>
+          >Hủy</button>
           <button
             onClick={() => updateMutation.mutate(form)}
             disabled={updateMutation.isPending}
             className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60"
-          >{updateMutation.isPending ? 'Äang lÆ°u...' : 'LÆ°u thay Ä‘á»•i'}</button>
+          >{updateMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}</button>
         </div>
       )}
     </div>
   );
 }
 
-// â”€â”€â”€ Tab: PhÃ²ng ban â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Tab: Phòng ban ────────────────────────────────────────────────────────────
 function DeptsTab() {
   const qc = useQueryClient();
   const [addingParentId, setAddingParentId] = useState<string | null | undefined>(undefined); // undefined = closed, null = top-level
@@ -95,24 +95,24 @@ function DeptsTab() {
 
   const createMutation = useMutation({
     mutationFn: (payload: any) => api.post('/organizations/departments', payload).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['depts-full'] }); qc.invalidateQueries({ queryKey: ['depts'] }); toast.success('ThÃªm phÃ²ng ban thÃ nh cÃ´ng'); setAddingParentId(undefined); setNewName(''); setNewDesc(''); },
-    onError: () => toast.error('Táº¡o tháº¥t báº¡i'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['depts-full'] }); qc.invalidateQueries({ queryKey: ['depts'] }); toast.success('Thêm phòng ban thành công'); setAddingParentId(undefined); setNewName(''); setNewDesc(''); },
+    onError: () => toast.error('Tạo thất bại'),
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, ...data }: { id: string; name: string; description?: string }) => api.patch(`/organizations/departments/${id}`, data).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['depts-full'] }); qc.invalidateQueries({ queryKey: ['depts'] }); toast.success('Cáº­p nháº­t thÃ nh cÃ´ng'); setEditingId(null); },
-    onError: () => toast.error('Cáº­p nháº­t tháº¥t báº¡i'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['depts-full'] }); qc.invalidateQueries({ queryKey: ['depts'] }); toast.success('Cập nhật thành công'); setEditingId(null); },
+    onError: () => toast.error('Cập nhật thất bại'),
   });
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/organizations/departments/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['depts-full'] }); qc.invalidateQueries({ queryKey: ['depts'] }); toast.success('ÄÃ£ xÃ³a phÃ²ng ban'); },
-    onError: () => toast.error('XÃ³a tháº¥t báº¡i'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['depts-full'] }); qc.invalidateQueries({ queryKey: ['depts'] }); toast.success('Đã xóa phòng ban'); },
+    onError: () => toast.error('Xóa thất bại'),
   });
 
   const AddInlineForm = ({ parentId }: { parentId?: string | null }) => (
     <div className="flex items-center gap-2 mt-1 ml-4">
       <input
-        value={newName} onChange={e => setNewName(e.target.value)} placeholder="TÃªn phÃ²ng ban..."
+        value={newName} onChange={e => setNewName(e.target.value)} placeholder="Tên phòng ban..."
         className="flex-1 px-2.5 py-1.5 text-xs border border-indigo-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
         onKeyDown={e => { if (e.key === 'Enter' && newName.trim()) createMutation.mutate({ name: newName.trim(), description: newDesc || undefined, parentId: parentId ?? undefined }); if (e.key === 'Escape') setAddingParentId(undefined); }}
         autoFocus
@@ -145,9 +145,9 @@ function DeptsTab() {
             <>
               <span className="flex-1 text-sm text-gray-800">{dept.name}</span>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => { setAddingParentId(dept.id); setNewName(''); }} className="p-1 text-zinc-400 hover:text-zinc-900 rounded" title="ThÃªm phÃ²ng ban con"><Plus size={13} /></button>
+                <button onClick={() => { setAddingParentId(dept.id); setNewName(''); }} className="p-1 text-zinc-400 hover:text-zinc-900 rounded" title="Thêm phòng ban con"><Plus size={13} /></button>
                 <button onClick={() => { setEditingId(dept.id); setEditName(dept.name); }} className="p-1 text-zinc-400 hover:text-zinc-900 rounded"><Pencil size={12} /></button>
-                <button onClick={() => window.confirm(`XÃ³a "${dept.name}"?`) && deleteMutation.mutate(dept.id)} className="p-1 text-zinc-400 hover:text-red-500 rounded"><Trash2 size={12} /></button>
+                <button onClick={() => window.confirm(`Xóa "${dept.name}"?`) && deleteMutation.mutate(dept.id)} className="p-1 text-zinc-400 hover:text-red-500 rounded"><Trash2 size={12} /></button>
               </div>
             </>
           )}
@@ -161,17 +161,17 @@ function DeptsTab() {
   return (
     <div className="max-w-lg">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-zinc-500">{depts.length} phÃ²ng ban</p>
+        <p className="text-sm text-zinc-500">{depts.length} phòng ban</p>
         <button onClick={() => { setAddingParentId(null); setNewName(''); }}
           className="flex items-center gap-1 px-3 py-1.5 text-xs bg-zinc-900 text-white rounded-lg hover:bg-zinc-700">
-          <Plus size={13} />ThÃªm phÃ²ng ban
+          <Plus size={13} />Thêm phòng ban
         </button>
       </div>
       {addingParentId === null && <div className="mb-2"><AddInlineForm parentId={null} /></div>}
       {isLoading ? (
-        <div className="text-sm text-zinc-400 py-6 text-center">Äang táº£i...</div>
+        <div className="text-sm text-zinc-400 py-6 text-center">Đang tải...</div>
       ) : depts.length === 0 ? (
-        <div className="text-sm text-zinc-400 py-8 text-center">ChÆ°a cÃ³ phÃ²ng ban nÃ o</div>
+        <div className="text-sm text-zinc-400 py-8 text-center">Chưa có phòng ban nào</div>
       ) : (
         <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
           {depts.map(d => <DeptRow key={d.id} dept={d} />)}
@@ -181,7 +181,7 @@ function DeptsTab() {
   );
 }
 
-// â”€â”€â”€ Tab: NhÃ³m â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Tab: Nhóm ────────────────────────────────────────────────────────────────
 function TeamsTab() {
   const qc = useQueryClient();
   const [adding, setAdding] = useState(false);
@@ -198,13 +198,13 @@ function TeamsTab() {
 
   const createMutation = useMutation({
     mutationFn: (payload: any) => api.post('/organizations/teams', payload).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['teams-full'] }); qc.invalidateQueries({ queryKey: ['teams'] }); toast.success('Táº¡o nhÃ³m thÃ nh cÃ´ng'); setAdding(false); setNewForm({ name: '', description: '', deptId: '' }); },
-    onError: () => toast.error('Táº¡o tháº¥t báº¡i'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['teams-full'] }); qc.invalidateQueries({ queryKey: ['teams'] }); toast.success('Tạo nhóm thành công'); setAdding(false); setNewForm({ name: '', description: '', deptId: '' }); },
+    onError: () => toast.error('Tạo thất bại'),
   });
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/organizations/teams/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['teams-full'] }); qc.invalidateQueries({ queryKey: ['teams'] }); toast.success('ÄÃ£ xÃ³a nhÃ³m'); },
-    onError: () => toast.error('XÃ³a tháº¥t báº¡i'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['teams-full'] }); qc.invalidateQueries({ queryKey: ['teams'] }); toast.success('Đã xóa nhóm'); },
+    onError: () => toast.error('Xóa thất bại'),
   });
 
   const inputCls = 'px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900';
@@ -212,41 +212,41 @@ function TeamsTab() {
   return (
     <div className="max-w-lg">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-zinc-500">{teams.length} nhÃ³m</p>
+        <p className="text-sm text-zinc-500">{teams.length} nhóm</p>
         <button onClick={() => setAdding(a => !a)}
           className="flex items-center gap-1 px-3 py-1.5 text-xs bg-zinc-900 text-white rounded-lg hover:bg-zinc-700">
-          <Plus size={13} />ThÃªm nhÃ³m
+          <Plus size={13} />Thêm nhóm
         </button>
       </div>
 
       {adding && (
         <div className="bg-zinc-50/40 border border-indigo-200 rounded-xl p-4 mb-4 space-y-3">
-          <p className="text-xs font-semibold text-indigo-700">NhÃ³m má»›i</p>
+          <p className="text-xs font-semibold text-indigo-700">Nhóm mới</p>
           <div className="grid grid-cols-2 gap-3">
             <input value={newForm.name} onChange={e => setNewForm(p => ({ ...p, name: e.target.value }))}
-              placeholder="TÃªn nhÃ³m *" className={`${inputCls} col-span-2`} />
+              placeholder="Tên nhóm *" className={`${inputCls} col-span-2`} />
             <select value={newForm.deptId} onChange={e => setNewForm(p => ({ ...p, deptId: e.target.value }))} className={inputCls}>
-              <option value="">-- PhÃ²ng ban --</option>
+              <option value="">-- Phòng ban --</option>
               {depts.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>
             <input value={newForm.description} onChange={e => setNewForm(p => ({ ...p, description: e.target.value }))}
-              placeholder="MÃ´ táº£" className={inputCls} />
+              placeholder="Mô tả" className={inputCls} />
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setAdding(false)} className="px-3 py-1.5 text-xs text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Há»§y</button>
+            <button onClick={() => setAdding(false)} className="px-3 py-1.5 text-xs text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Hủy</button>
             <button
               onClick={() => newForm.name.trim() && createMutation.mutate({ name: newForm.name.trim(), description: newForm.description || undefined, deptId: newForm.deptId || undefined })}
               disabled={createMutation.isPending || !newForm.name.trim()}
               className="px-3 py-1.5 text-xs bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60"
-            >{createMutation.isPending ? 'Äang táº¡o...' : 'Táº¡o nhÃ³m'}</button>
+            >{createMutation.isPending ? 'Đang tạo...' : 'Tạo nhóm'}</button>
           </div>
         </div>
       )}
 
       {isLoading ? (
-        <div className="text-sm text-zinc-400 py-6 text-center">Äang táº£i...</div>
+        <div className="text-sm text-zinc-400 py-6 text-center">Đang tải...</div>
       ) : teams.length === 0 ? (
-        <div className="text-sm text-zinc-400 py-8 text-center">ChÆ°a cÃ³ nhÃ³m nÃ o</div>
+        <div className="text-sm text-zinc-400 py-8 text-center">Chưa có nhóm nào</div>
       ) : (
         <div className="bg-white border border-zinc-200 rounded-xl divide-y divide-gray-100">
           {teams.map(team => (
@@ -258,11 +258,11 @@ function TeamsTab() {
                 <p className="text-sm font-medium text-gray-800">{team.name}</p>
                 {(team.dept || team.description) && (
                   <p className="text-xs text-zinc-400 truncate">
-                    {team.dept?.name}{team.dept && team.description ? ' Â· ' : ''}{team.description}
+                    {team.dept?.name}{team.dept && team.description ? ' · ' : ''}{team.description}
                   </p>
                 )}
               </div>
-              <button onClick={() => window.confirm(`XÃ³a nhÃ³m "${team.name}"?`) && deleteMutation.mutate(team.id)}
+              <button onClick={() => window.confirm(`Xóa nhóm "${team.name}"?`) && deleteMutation.mutate(team.id)}
                 className="opacity-0 group-hover:opacity-100 p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
                 <Trash2 size={14} />
               </button>
@@ -274,7 +274,7 @@ function TeamsTab() {
   );
 }
 
-// â”€â”€â”€ Tab: PhÃ¢n quyá»n (RBAC) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Tab: Phân quyền (RBAC) ───────────────────────────────────────────────────
 interface Permission { id: string; resource: string; action: string; description?: string; }
 interface RbacRole { id: string; name: string; displayName: string; permissions?: { permission: Permission }[]; }
 
@@ -319,10 +319,10 @@ function RbacTab() {
       api.put(`/rbac/roles/${payload.roleId}/permissions`, { permissionIds: payload.permissionIds }).then(r => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['rbac-roles'] });
-      toast.success('ÄÃ£ cáº­p nháº­t quyá»n');
+      toast.success('Đã cập nhật quyền');
       setDirty(false);
     },
-    onError: () => toast.error('Cáº­p nháº­t quyá»n tháº¥t báº¡i'),
+    onError: () => toast.error('Cập nhật quyền thất bại'),
   });
 
   const handleSave = () => {
@@ -342,10 +342,10 @@ function RbacTab() {
       {/* Role list */}
       <div className="w-56 shrink-0 border border-zinc-200 rounded-xl overflow-hidden">
         <div className="px-3 py-2.5 border-b border-zinc-100 bg-zinc-50">
-          <p className="text-xs font-semibold text-zinc-600 uppercase tracking-wide">Vai trÃ²</p>
+          <p className="text-xs font-semibold text-zinc-600 uppercase tracking-wide">Vai trò</p>
         </div>
         {rolesLoading ? (
-          <div className="p-4 text-sm text-zinc-400">Äang táº£i...</div>
+          <div className="p-4 text-sm text-zinc-400">Đang tải...</div>
         ) : (
           <div className="divide-y divide-gray-50">
             {roles.map(role => (
@@ -370,32 +370,32 @@ function RbacTab() {
         {!selectedRole ? (
           <div className="flex flex-col items-center justify-center h-full text-zinc-400 py-12">
             <ShieldCheck size={36} className="mb-3 opacity-30" />
-            <p className="text-sm">Chá»n má»™t vai trÃ² Ä‘á»ƒ xem vÃ  chá»‰nh sá»­a quyá»n</p>
+            <p className="text-sm">Chọn một vai trò để xem và chỉnh sửa quyền</p>
           </div>
         ) : (
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="font-medium text-zinc-900">{selectedRole.displayName ?? selectedRole.name}</p>
-                <p className="text-xs text-zinc-400 mt-0.5">{pendingPerms.size} / {allPermissions.length} quyá»n Ä‘Æ°á»£c cáº¥p</p>
+                <p className="text-xs text-zinc-400 mt-0.5">{pendingPerms.size} / {allPermissions.length} quyền được cấp</p>
               </div>
               {dirty && (
                 <div className="flex gap-2">
                   <button
                     onClick={() => { handleSelectRole(selectedRole); }}
                     className="px-3 py-1.5 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50"
-                  >Há»§y</button>
+                  >Hủy</button>
                   <button
                     onClick={handleSave}
                     disabled={updatePermsMutation.isPending}
                     className="px-3 py-1.5 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60"
-                  >{updatePermsMutation.isPending ? 'Äang lÆ°u...' : 'LÆ°u thay Ä‘á»•i'}</button>
+                  >{updatePermsMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}</button>
                 </div>
               )}
             </div>
 
             {permsLoading ? (
-              <div className="text-sm text-zinc-400">Äang táº£i quyá»n...</div>
+              <div className="text-sm text-zinc-400">Đang tải quyền...</div>
             ) : (
               <div className="space-y-5">
                 {Object.entries(permsByResource).map(([resource, perms]) => (
@@ -430,7 +430,7 @@ function RbacTab() {
   );
 }
 
-// â”€â”€â”€ Tab: Tags â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Tab: Tags ─────────────────────────────────────────────────────────────────
 function TagsTab() {
   const qc = useQueryClient();
   const { data: tags = [], isLoading } = useQuery<{ id: string; name: string; color: string | null }[]>({
@@ -440,16 +440,16 @@ function TagsTab() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/tags/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tags'] }); toast.success('ÄÃ£ xÃ³a tag'); },
-    onError: () => toast.error('XÃ³a tag tháº¥t báº¡i'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tags'] }); toast.success('Đã xóa tag'); },
+    onError: () => toast.error('Xóa tag thất bại'),
   });
 
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState('#6366f1');
   const createMutation = useMutation({
     mutationFn: (data: { name: string; color: string }) => api.post('/tags', data).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tags'] }); setNewName(''); toast.success('ÄÃ£ táº¡o tag'); },
-    onError: () => toast.error('Táº¡o tag tháº¥t báº¡i'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tags'] }); setNewName(''); toast.success('Đã tạo tag'); },
+    onError: () => toast.error('Tạo tag thất bại'),
   });
 
   const PRESET_COLORS = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'];
@@ -458,7 +458,7 @@ function TagsTab() {
     <div className="max-w-lg space-y-5">
       {/* Create */}
       <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200">
-        <p className="text-xs font-semibold text-zinc-600 mb-3">Táº¡o tag má»›i</p>
+        <p className="text-xs font-semibold text-zinc-600 mb-3">Tạo tag mới</p>
         <div className="flex items-center gap-2 mb-3">
           {PRESET_COLORS.map(c => (
             <button key={c} onClick={() => setNewColor(c)}
@@ -470,7 +470,7 @@ function TagsTab() {
           <input
             value={newName} onChange={e => setNewName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && newName.trim()) createMutation.mutate({ name: newName.trim(), color: newColor }); }}
-            placeholder="TÃªn tag..." maxLength={30}
+            placeholder="Tên tag..." maxLength={30}
             className="flex-1 px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
           <button
@@ -486,12 +486,12 @@ function TagsTab() {
       {/* List */}
       <div>
         <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-          Tags cá»§a tá»• chá»©c ({tags.length})
+          Tags của tổ chức ({tags.length})
         </p>
         {isLoading ? (
-          <p className="text-sm text-zinc-400">Äang táº£i...</p>
+          <p className="text-sm text-zinc-400">Đang tải...</p>
         ) : tags.length === 0 ? (
-          <p className="text-sm text-zinc-400 text-center py-6">ChÆ°a cÃ³ tag nÃ o</p>
+          <p className="text-sm text-zinc-400 text-center py-6">Chưa có tag nào</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {tags.map(tag => {
@@ -502,7 +502,7 @@ function TagsTab() {
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: c }} />
                   <span>{tag.name}</span>
                   <button
-                    onClick={() => window.confirm(`XÃ³a tag "${tag.name}"?`) && deleteMutation.mutate(tag.id)}
+                    onClick={() => window.confirm(`Xóa tag "${tag.name}"?`) && deleteMutation.mutate(tag.id)}
                     disabled={deleteMutation.isPending}
                     className="ml-0.5 text-current opacity-40 hover:opacity-100 transition-opacity"
                   >
@@ -518,7 +518,7 @@ function TagsTab() {
   );
 }
 
-// â”€â”€â”€ Tab: TÃ­ch há»£p kÃªnh â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Tab: Tích hợp kênh ────────────────────────────────────────────────────────
 function IntegrationsTab() {
   const [zaloOaId, setZaloOaId] = useState('');
   const [zaloAppId, setZaloAppId] = useState('');
@@ -531,7 +531,7 @@ function IntegrationsTab() {
 
   function handleSaveZalo(e: React.FormEvent) {
     e.preventDefault();
-    // Stored locally â€” admin must paste into .env and restart server
+    // Stored locally — admin must paste into .env and restart server
     setSaved('zalo');
     setTimeout(() => setSaved(null), 3000);
   }
@@ -545,8 +545,8 @@ function IntegrationsTab() {
   return (
     <div className="max-w-2xl space-y-6">
       <p className="text-sm text-zinc-500">
-        Cáº¥u hÃ¬nh kÃªnh tÃ­ch há»£p Ä‘á»ƒ nháº­n tin nháº¯n tá»« Zalo OA vÃ  Facebook Messenger vÃ o Inbox.
-        Sau khi Ä‘iá»n, sao chÃ©p giÃ¡ trá»‹ vÃ o file <code className="bg-zinc-100 px-1 rounded text-xs">.env</code> vÃ  khá»Ÿi Ä‘á»™ng láº¡i server.
+        Cấu hình kênh tích hợp để nhận tin nhắn từ Zalo OA và Facebook Messenger vào Inbox.
+        Sau khi điền, sao chép giá trị vào file <code className="bg-zinc-100 px-1 rounded text-xs">.env</code> và khởi động lại server.
       </p>
 
       {/* Zalo OA */}
@@ -557,7 +557,7 @@ function IntegrationsTab() {
           </div>
           <div>
             <p className="text-sm font-semibold text-zinc-900">Zalo Official Account</p>
-            <p className="text-xs text-zinc-400">Nháº­n tin nháº¯n tá»« Zalo OA</p>
+            <p className="text-xs text-zinc-400">Nhận tin nhắn từ Zalo OA</p>
           </div>
         </div>
         <form onSubmit={handleSaveZalo} className="space-y-3">
@@ -578,13 +578,13 @@ function IntegrationsTab() {
           <div className="p-3 bg-blue-50 rounded-lg text-xs text-blue-700 space-y-1">
             <p className="font-medium">Webhook URL:</p>
             <code className="block break-all">{typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3000/api/integrations/zalo/webhook` : 'http://your-domain/api/integrations/zalo/webhook'}</code>
-            <p className="mt-1 font-medium">Äá»ƒ xÃ¡c minh (GET) + nháº­n sá»± kiá»‡n (POST)</p>
+            <p className="mt-1 font-medium">Để xác minh (GET) + nhận sự kiện (POST)</p>
           </div>
           <div className="flex items-center gap-2">
             <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-              {saved === 'zalo' ? 'âœ“ ÄÃ£ sao chÃ©p' : 'LÆ°u cáº¥u hÃ¬nh'}
+              {saved === 'zalo' ? '✓ Đã sao chép' : 'Lưu cấu hình'}
             </button>
-            {saved === 'zalo' && <span className="text-xs text-zinc-400">DÃ¡n vÃ o .env vÃ  restart server</span>}
+            {saved === 'zalo' && <span className="text-xs text-zinc-400">Dán vào .env và restart server</span>}
           </div>
         </form>
       </div>
@@ -597,7 +597,7 @@ function IntegrationsTab() {
           </div>
           <div>
             <p className="text-sm font-semibold text-zinc-900">Facebook Messenger</p>
-            <p className="text-xs text-zinc-400">Nháº­n tin nháº¯n tá»« Facebook Page</p>
+            <p className="text-xs text-zinc-400">Nhận tin nhắn từ Facebook Page</p>
           </div>
         </div>
         <form onSubmit={handleSaveFB} className="space-y-3">
@@ -606,18 +606,18 @@ function IntegrationsTab() {
             <input className={inputCls} type="password" value={fbPageToken} onChange={e => setFbPageToken(e.target.value)} placeholder="META_PAGE_ACCESS_TOKEN=..." />
           </div>
           <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Verify Token (tá»± Ä‘áº·t)</label>
+            <label className="block text-xs font-medium text-zinc-600 mb-1">Verify Token (tự đặt)</label>
             <input className={inputCls} value={fbVerifyToken} onChange={e => setFbVerifyToken(e.target.value)} placeholder="META_VERIFY_TOKEN=..." />
           </div>
           <div className="p-3 bg-zinc-50 rounded-lg text-xs text-indigo-700 space-y-1">
-            <p className="font-medium">Webhook URL (cáº¥u hÃ¬nh trong Meta Developer Console):</p>
+            <p className="font-medium">Webhook URL (cấu hình trong Meta Developer Console):</p>
             <code className="block break-all">{typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3000/api/integrations/messenger/webhook` : 'http://your-domain/api/integrations/messenger/webhook'}</code>
           </div>
           <div className="flex items-center gap-2">
             <button type="submit" className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition">
-              {saved === 'fb' ? 'âœ“ ÄÃ£ sao chÃ©p' : 'LÆ°u cáº¥u hÃ¬nh'}
+              {saved === 'fb' ? '✓ Đã sao chép' : 'Lưu cấu hình'}
             </button>
-            {saved === 'fb' && <span className="text-xs text-zinc-400">DÃ¡n vÃ o .env vÃ  restart server</span>}
+            {saved === 'fb' && <span className="text-xs text-zinc-400">Dán vào .env và restart server</span>}
           </div>
         </form>
       </div>
@@ -625,14 +625,14 @@ function IntegrationsTab() {
   );
 }
 
-// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main Page ────────────────────────────────────────────────────────────────
 const TABS = [
-  { key: 'org', label: 'Tá»• chá»©c', icon: Building2 },
-  { key: 'depts', label: 'PhÃ²ng ban', icon: GitBranch },
-  { key: 'teams', label: 'NhÃ³m', icon: Users },
-  { key: 'rbac', label: 'PhÃ¢n quyá»n', icon: ShieldCheck },
+  { key: 'org', label: 'Tổ chức', icon: Building2 },
+  { key: 'depts', label: 'Phòng ban', icon: GitBranch },
+  { key: 'teams', label: 'Nhóm', icon: Users },
+  { key: 'rbac', label: 'Phân quyền', icon: ShieldCheck },
   { key: 'tags', label: 'Tags', icon: Tag },
-  { key: 'integrations', label: 'TÃ­ch há»£p', icon: Plug },
+  { key: 'integrations', label: 'Tích hợp', icon: Plug },
 ];
 
 export default function SettingsPage() {
@@ -641,8 +641,8 @@ export default function SettingsPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">CÃ i Ä‘áº·t</h1>
-        <p className="text-sm text-zinc-500 mt-0.5">Quáº£n lÃ½ thÃ´ng tin tá»• chá»©c, phÃ²ng ban vÃ  nhÃ³m</p>
+        <h1 className="text-xl font-bold text-zinc-900">Cài đặt</h1>
+        <p className="text-sm text-zinc-500 mt-0.5">Quản lý thông tin tổ chức, phòng ban và nhóm</p>
       </div>
 
       {/* Tabs */}

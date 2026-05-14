@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { formatDate, getInitials } from '@/lib/utils';
 import { toast } from 'sonner';
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface Role { id: string; name: string; displayName: string; }
 interface Dept { id: string; name: string; }
 interface Team { id: string; name: string; deptId: string | null; }
@@ -25,10 +25,10 @@ const STATUS_STYLES: Record<string, string> = {
   INVITED: 'bg-yellow-100 text-yellow-700',
 };
 const STATUS_LABELS: Record<string, string> = {
-  ACTIVE: 'Hoáº¡t Ä‘á»™ng', INACTIVE: 'VÃ´ hiá»‡u', INVITED: 'ÄÃ£ má»i',
+  ACTIVE: 'Hoạt động', INACTIVE: 'Vô hiệu', INVITED: 'Đã mời',
 };
 
-// â”€â”€â”€ User Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── User Modal ───────────────────────────────────────────────────────────────
 const EMPTY_FORM = { fullName: '', email: '', phone: '', jobTitle: '', deptId: '', teamId: '', roleId: '', password: '' };
 
 function UserModal({ user, onClose }: { user: User | null; onClose: () => void }) {
@@ -52,13 +52,13 @@ function UserModal({ user, onClose }: { user: User | null; onClose: () => void }
 
   const createMutation = useMutation({
     mutationFn: (payload: typeof form) => api.post('/users', payload).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Táº¡o ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng'); onClose(); },
-    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Táº¡o tháº¥t báº¡i'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Tạo người dùng thành công'); onClose(); },
+    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Tạo thất bại'),
   });
   const updateMutation = useMutation({
     mutationFn: (payload: Partial<typeof form>) => api.patch(`/users/${user!.id}`, payload).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Cáº­p nháº­t thÃ nh cÃ´ng'); onClose(); },
-    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Cáº­p nháº­t tháº¥t báº¡i'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Cập nhật thành công'); onClose(); },
+    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Cập nhật thất bại'),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -83,61 +83,61 @@ function UserModal({ user, onClose }: { user: User | null; onClose: () => void }
     >
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
-          <h2 className="text-base font-semibold text-zinc-900">{isEdit ? 'Chá»‰nh sá»­a ngÆ°á»i dÃ¹ng' : 'ThÃªm ngÆ°á»i dÃ¹ng má»›i'}</h2>
+          <h2 className="text-base font-semibold text-zinc-900">{isEdit ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}</h2>
           <button onClick={onClose} className="p-1 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-zinc-100"><X size={16} /></button>
         </div>
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className={labelCls}>Há» tÃªn *</label>
-              <input className={inputCls} value={form.fullName} onChange={set('fullName')} placeholder="Nguyá»…n VÄƒn A" required />
+              <label className={labelCls}>Họ tên *</label>
+              <input className={inputCls} value={form.fullName} onChange={set('fullName')} placeholder="Nguyễn Văn A" required />
             </div>
             <div>
               <label className={labelCls}>Email *</label>
               <input className={inputCls} type="email" value={form.email} onChange={set('email')} placeholder="email@company.com" required disabled={isEdit} />
             </div>
             <div>
-              <label className={labelCls}>Sá»‘ Ä‘iá»‡n thoáº¡i</label>
+              <label className={labelCls}>Số điện thoại</label>
               <input className={inputCls} value={form.phone} onChange={set('phone')} placeholder="0901234567" />
             </div>
             <div className="col-span-2">
-              <label className={labelCls}>Chá»©c danh</label>
-              <input className={inputCls} value={form.jobTitle} onChange={set('jobTitle')} placeholder="TrÆ°á»Ÿng phÃ²ng kinh doanh" />
+              <label className={labelCls}>Chức danh</label>
+              <input className={inputCls} value={form.jobTitle} onChange={set('jobTitle')} placeholder="Trưởng phòng kinh doanh" />
             </div>
             <div>
-              <label className={labelCls}>PhÃ²ng ban</label>
+              <label className={labelCls}>Phòng ban</label>
               <select className={inputCls} value={form.deptId} onChange={e => { set('deptId')(e); setForm(p => ({ ...p, deptId: e.target.value, teamId: '' })); }}>
-                <option value="">-- Chá»n phÃ²ng ban --</option>
+                <option value="">-- Chọn phòng ban --</option>
                 {depts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </div>
             <div>
-              <label className={labelCls}>NhÃ³m</label>
+              <label className={labelCls}>Nhóm</label>
               <select className={inputCls} value={form.teamId} onChange={set('teamId')}>
-                <option value="">-- Chá»n nhÃ³m --</option>
+                <option value="">-- Chọn nhóm --</option>
                 {filteredTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
             {!isEdit && (
               <div>
-                <label className={labelCls}>Vai trÃ²</label>
+                <label className={labelCls}>Vai trò</label>
                 <select className={inputCls} value={form.roleId} onChange={set('roleId')}>
-                  <option value="">-- Chá»n vai trÃ² --</option>
+                  <option value="">-- Chọn vai trò --</option>
                   {roles.map(r => <option key={r.id} value={r.id}>{r.displayName}</option>)}
                 </select>
               </div>
             )}
             {!isEdit && (
               <div>
-                <label className={labelCls}>Máº­t kháº©u *</label>
-                <input className={inputCls} type="password" value={form.password} onChange={set('password')} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required={!isEdit} minLength={6} />
+                <label className={labelCls}>Mật khẩu *</label>
+                <input className={inputCls} type="password" value={form.password} onChange={set('password')} placeholder="••••••••" required={!isEdit} minLength={6} />
               </div>
             )}
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Há»§y</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Hủy</button>
             <button type="submit" disabled={isPending} className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60">
-              {isPending ? 'Äang lÆ°u...' : isEdit ? 'LÆ°u thay Ä‘á»•i' : 'Táº¡o ngÆ°á»i dÃ¹ng'}
+              {isPending ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo người dùng'}
             </button>
           </div>
         </form>
@@ -146,7 +146,7 @@ function UserModal({ user, onClose }: { user: User | null; onClose: () => void }
   );
 }
 
-// â”€â”€â”€ Slide-over Detail â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Slide-over Detail ────────────────────────────────────────────────────────
 function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: () => void; onEdit: (u: User) => void }) {
   const qc = useQueryClient();
   const { data: user, isLoading } = useQuery<User>({
@@ -160,20 +160,20 @@ function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: (
 
   const deactivateMutation = useMutation({
     mutationFn: () => api.patch(`/users/${userId}/deactivate`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); qc.invalidateQueries({ queryKey: ['user', userId] }); toast.success('ÄÃ£ cáº­p nháº­t tráº¡ng thÃ¡i'); },
-    onError: () => toast.error('Thao tÃ¡c tháº¥t báº¡i'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); qc.invalidateQueries({ queryKey: ['user', userId] }); toast.success('Đã cập nhật trạng thái'); },
+    onError: () => toast.error('Thao tác thất bại'),
   });
 
   const assignRoleMutation = useMutation({
     mutationFn: (roleId: string) => api.post(`/rbac/users/${userId}/roles/${roleId}`).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['user', userId] }); qc.invalidateQueries({ queryKey: ['users'] }); toast.success('ÄÃ£ gÃ¡n vai trÃ²'); },
-    onError: () => toast.error('GÃ¡n vai trÃ² tháº¥t báº¡i'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['user', userId] }); qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Đã gán vai trò'); },
+    onError: () => toast.error('Gán vai trò thất bại'),
   });
 
   const removeRoleMutation = useMutation({
     mutationFn: (roleId: string) => api.delete(`/rbac/users/${userId}/roles/${roleId}`).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['user', userId] }); qc.invalidateQueries({ queryKey: ['users'] }); toast.success('ÄÃ£ xÃ³a vai trÃ²'); },
-    onError: () => toast.error('XÃ³a vai trÃ² tháº¥t báº¡i'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['user', userId] }); qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Đã xóa vai trò'); },
+    onError: () => toast.error('Xóa vai trò thất bại'),
   });
 
   return (
@@ -181,11 +181,11 @@ function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: (
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
       <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 shrink-0">
-          <h3 className="text-sm font-semibold text-zinc-900">Chi tiáº¿t ngÆ°á»i dÃ¹ng</h3>
+          <h3 className="text-sm font-semibold text-zinc-900">Chi tiết người dùng</h3>
           <button onClick={onClose} className="p-1 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-zinc-100"><X size={16} /></button>
         </div>
         {isLoading ? (
-          <div className="flex-1 flex items-center justify-center text-zinc-400 text-sm">Äang táº£i...</div>
+          <div className="flex-1 flex items-center justify-center text-zinc-400 text-sm">Đang tải...</div>
         ) : user ? (
           <div className="flex-1 overflow-y-auto">
             {/* Header */}
@@ -213,26 +213,26 @@ function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: (
 
             {/* Info */}
             <div className="px-5 py-4 space-y-3 border-b border-gray-50">
-              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">ThÃ´ng tin liÃªn há»‡</p>
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Thông tin liên hệ</p>
               <InfoRow label="Email" value={user.email} />
-              <InfoRow label="Äiá»‡n thoáº¡i" value={user.phone} />
+              <InfoRow label="Điện thoại" value={user.phone} />
             </div>
 
             <div className="px-5 py-4 space-y-3 border-b border-gray-50">
-              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Tá»• chá»©c</p>
-              <InfoRow label="PhÃ²ng ban" value={user.dept?.name} />
-              <InfoRow label="NhÃ³m" value={user.team?.name} />
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Tổ chức</p>
+              <InfoRow label="Phòng ban" value={user.dept?.name} />
+              <InfoRow label="Nhóm" value={user.team?.name} />
             </div>
 
             {user.lastLoginAt && (
               <div className="px-5 py-4 border-b border-gray-50">
-                <InfoRow label="ÄÄƒng nháº­p láº§n cuá»‘i" value={formatDate(user.lastLoginAt)} />
+                <InfoRow label="Đăng nhập lần cuối" value={formatDate(user.lastLoginAt)} />
               </div>
             )}
 
             {/* Roles */}
             <div className="px-5 py-4 space-y-3 border-b border-gray-50">
-              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Vai trÃ²</p>
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Vai trò</p>
               <div className="flex flex-wrap gap-2">
                 {user.userRoles?.map(({ role }) => (
                   <div key={role.id} className="flex items-center gap-1 bg-zinc-50 text-indigo-700 px-2 py-1 rounded-lg text-xs font-medium">
@@ -242,14 +242,14 @@ function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: (
                       onClick={() => removeRoleMutation.mutate(role.id)}
                       disabled={removeRoleMutation.isPending}
                       className="ml-0.5 hover:text-red-500"
-                      title="XÃ³a vai trÃ²"
+                      title="Xóa vai trò"
                     >
                       <X size={11} />
                     </button>
                   </div>
                 ))}
                 {(!user.userRoles || user.userRoles.length === 0) && (
-                  <p className="text-xs text-zinc-400">ChÆ°a cÃ³ vai trÃ²</p>
+                  <p className="text-xs text-zinc-400">Chưa có vai trò</p>
                 )}
               </div>
               {/* Add role */}
@@ -259,7 +259,7 @@ function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: (
                   onChange={e => { if (e.target.value) assignRoleMutation.mutate(e.target.value); }}
                   className="w-full px-2 py-1.5 text-xs border border-zinc-200 rounded-lg focus:ring-1 focus:ring-indigo-500 bg-white text-zinc-600"
                 >
-                  <option value="">+ ThÃªm vai trÃ²...</option>
+                  <option value="">+ Thêm vai trò...</option>
                   {allRoles
                     .filter(r => !user.userRoles?.some(ur => ur.role.id === r.id))
                     .map(r => <option key={r.id} value={r.id}>{r.displayName}</option>)}
@@ -273,7 +273,7 @@ function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: (
                 onClick={() => onEdit(user)}
                 className="flex-1 px-3 py-2 text-sm text-zinc-900 border border-indigo-200 rounded-lg hover:bg-zinc-50 flex items-center justify-center gap-1.5"
               >
-                <Pencil size={14} />Chá»‰nh sá»­a
+                <Pencil size={14} />Chỉnh sửa
               </button>
               <button
                 onClick={() => deactivateMutation.mutate()}
@@ -284,7 +284,7 @@ function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: (
                     : 'text-green-600 border-green-200 hover:bg-green-50'
                 }`}
               >
-                {user.status === 'ACTIVE' ? <><UserX size={14} />VÃ´ hiá»‡u hÃ³a</> : <><UserCheck size={14} />KÃ­ch hoáº¡t</>}
+                {user.status === 'ACTIVE' ? <><UserX size={14} />Vô hiệu hóa</> : <><UserCheck size={14} />Kích hoạt</>}
               </button>
             </div>
           </div>
@@ -304,7 +304,7 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
-// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function UsersPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
@@ -326,12 +326,12 @@ export default function UsersPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/users/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); toast.success('ÄÃ£ xÃ³a ngÆ°á»i dÃ¹ng'); if (slideOverId) setSlideOverId(null); },
-    onError: () => toast.error('XÃ³a tháº¥t báº¡i'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Đã xóa người dùng'); if (slideOverId) setSlideOverId(null); },
+    onError: () => toast.error('Xóa thất bại'),
   });
 
   const handleDelete = (u: User) => {
-    if (!window.confirm(`XÃ³a ngÆ°á»i dÃ¹ng "${u.fullName}"?`)) return;
+    if (!window.confirm(`Xóa người dùng "${u.fullName}"?`)) return;
     deleteMutation.mutate(u.id);
   };
 
@@ -343,18 +343,18 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-zinc-900">NgÆ°á»i dÃ¹ng</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">{meta?.total ?? 0} ngÆ°á»i dÃ¹ng trong há»‡ thá»‘ng</p>
+          <h1 className="text-xl font-bold text-zinc-900">Người dùng</h1>
+          <p className="text-sm text-zinc-500 mt-0.5">{meta?.total ?? 0} người dùng trong hệ thống</p>
         </div>
         <button onClick={openCreate} className="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
-          <Plus size={16} />ThÃªm ngÆ°á»i dÃ¹ng
+          <Plus size={16} />Thêm người dùng
         </button>
       </div>
 
       {/* Search */}
       <div className="relative max-w-xs">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="TÃ¬m theo tÃªn, email..."
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm theo tên, email..."
           className="w-full pl-9 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white" />
       </div>
 
@@ -363,11 +363,11 @@ export default function UsersPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-zinc-50 border-b border-zinc-200">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">NgÆ°á»i dÃ¹ng</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide hidden md:table-cell">Vai trÃ²</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide hidden lg:table-cell">PhÃ²ng ban</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide hidden xl:table-cell">ÄÄƒng nháº­p cuá»‘i</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Tráº¡ng thÃ¡i</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Người dùng</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide hidden md:table-cell">Vai trò</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide hidden lg:table-cell">Phòng ban</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide hidden xl:table-cell">Đăng nhập cuối</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Trạng thái</th>
               <th className="px-4 py-3 w-10"></th>
             </tr>
           </thead>
@@ -381,7 +381,7 @@ export default function UsersPage() {
                 </tr>
               ))
             ) : users.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-12 text-center text-zinc-400 text-sm">KhÃ´ng cÃ³ ngÆ°á»i dÃ¹ng nÃ o</td></tr>
+              <tr><td colSpan={6} className="px-4 py-12 text-center text-zinc-400 text-sm">Không có người dùng nào</td></tr>
             ) : (
               users.map(u => (
                 <tr key={u.id} onClick={() => setSlideOverId(u.id)}
@@ -404,10 +404,10 @@ export default function UsersPage() {
                       ? <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-zinc-50 text-indigo-700 rounded-full text-xs font-medium">
                           <Shield size={10} />{u.userRoles[0].role.displayName}
                         </span>
-                      : <span className="text-zinc-400 text-xs">â€”</span>}
+                      : <span className="text-zinc-400 text-xs">—</span>}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 hidden lg:table-cell">{u.dept?.name ?? 'â€”'}</td>
-                  <td className="px-4 py-3 text-zinc-500 hidden xl:table-cell">{u.lastLoginAt ? formatDate(u.lastLoginAt) : 'â€”'}</td>
+                  <td className="px-4 py-3 text-zinc-600 hidden lg:table-cell">{u.dept?.name ?? '—'}</td>
+                  <td className="px-4 py-3 text-zinc-500 hidden xl:table-cell">{u.lastLoginAt ? formatDate(u.lastLoginAt) : '—'}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[u.status]}`}>
                       {STATUS_LABELS[u.status]}
@@ -425,7 +425,7 @@ export default function UsersPage() {
         {/* Pagination */}
         {meta && meta.totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100 bg-zinc-50">
-            <p className="text-xs text-zinc-500">Trang {page}/{meta.totalPages} Â· {meta.total} ngÆ°á»i dÃ¹ng</p>
+            <p className="text-xs text-zinc-500">Trang {page}/{meta.totalPages} · {meta.total} người dùng</p>
             <div className="flex items-center gap-1">
               <button onClick={() => setPage(p => p - 1)} disabled={page <= 1}
                 className="p-1.5 rounded text-zinc-500 hover:bg-gray-200 disabled:opacity-40"><ChevronLeft size={14} /></button>
@@ -467,10 +467,10 @@ function UserRowMenu({ user, onEdit, onDelete }: { user: User; onEdit: () => voi
       {open && (
         <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-zinc-200 z-10 overflow-hidden">
           <button onClick={() => { onEdit(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
-            <Pencil size={13} />Chá»‰nh sá»­a
+            <Pencil size={13} />Chỉnh sửa
           </button>
           <button onClick={() => { onDelete(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50">
-            <Trash2 size={13} />XÃ³a
+            <Trash2 size={13} />Xóa
           </button>
         </div>
       )}
