@@ -41,24 +41,24 @@ export default function DashboardPage() {
 
   const stats = [
     {
-      label: "Kh�ch h�ng ti?m nang",
+      label: "Khách hàng tiềm năng",
       value: dash?.leads?.total ?? 0,
       icon: Users,
     },
     {
-      label: "Co h?i dang m?",
+      label: "Cơ hội đang mở",
       value:
         dash?.deals?.byStage?.reduce((s: number, d: any) => s + d.count, 0) ??
         0,
       icon: TrendingUp,
     },
     {
-      label: "Nhi?m v? dang m?",
+      label: "Nhiệm vụ đang mở",
       value: dash?.tasks?.open ?? 0,
       icon: CheckSquare,
     },
     {
-      label: "H?i tho?i dang m?",
+      label: "Hội thoại đang mở",
       value: dash?.conversations?.open ?? 0,
       icon: MessageCircle,
     },
@@ -77,9 +77,9 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-900">T?ng quan</h1>
+        <h1 className="text-xl font-semibold text-zinc-900">Tổng quan</h1>
         <p className="text-sm text-zinc-500 mt-0.5">
-          D? li?u th?i gian th?c t? h? th?ng CRM
+          Dữ liệu thời gian thực từ hệ thống CRM
         </p>
       </div>
 
@@ -92,7 +92,7 @@ export default function DashboardPage() {
           >
             <s.icon size={16} className="text-zinc-400 mb-3" />
             <p className="text-3xl font-bold text-zinc-900">
-              {isLoading ? "�" : s.value}
+              {isLoading ? "—" : s.value}
             </p>
             <p className="text-sm text-zinc-500 mt-1">{s.label}</p>
           </div>
@@ -105,16 +105,16 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2 mb-4">
             <Target size={16} className="text-indigo-600" />
             <h2 className="text-sm font-semibold text-zinc-900">
-              Ph?u b�n h�ng
+              Phễu bán hàng
             </h2>
             <span className="ml-auto text-xs text-zinc-400">
-              T?ng: {formatCurrency(totalDealValue)}
+              Tổng: {formatCurrency(totalDealValue)}
             </span>
           </div>
           <div className="space-y-3">
             {funnel.length === 0 && !isLoading && (
               <p className="text-sm text-zinc-400 text-center py-6">
-                Chua c� d? li?u
+                Chưa có dữ liệu
               </p>
             )}
             {funnel.map((stage: any) => (
@@ -124,7 +124,7 @@ export default function DashboardPage() {
                     {stage.stage.name}
                   </span>
                   <span className="text-zinc-500">
-                    {stage.count} deal �{" "}
+                    {stage.count} deal ·{" "}
                     {formatCurrency(parseFloat(stage.totalValue ?? "0"))}
                   </span>
                 </div>
@@ -147,13 +147,13 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 size={16} className="text-emerald-600" />
             <h2 className="text-sm font-semibold text-zinc-900">
-              Lead theo ngu?n
+              Lead theo nguồn
             </h2>
           </div>
           <div className="space-y-3">
             {bySource.length === 0 && !isLoading && (
               <p className="text-sm text-zinc-400 text-center py-6">
-                Chua c� d? li?u
+                Chưa có dữ liệu
               </p>
             )}
             {(() => {
@@ -165,17 +165,17 @@ export default function DashboardPage() {
                 const count = s._count?.source ?? 0;
                 const sourceLabels: Record<string, string> = {
                   website: "Website",
-                  referral: "Gi?i thi?u",
+                  referral: "Giới thiệu",
                   facebook: "Facebook",
                   zalo: "Zalo",
                   cold_call: "Cold Call",
-                  other: "Kh�c",
+                  other: "Khác",
                 };
                 return (
                   <div key={s.source ?? "unknown"}>
                     <div className="flex items-center justify-between text-xs mb-1">
                       <span className="font-medium text-gray-700">
-                        {sourceLabels[s.source] ?? s.source ?? "Kh�ng r�"}
+                        {sourceLabels[s.source] ?? s.source ?? "Không rõ"}
                       </span>
                       <span className="text-zinc-500">{count} lead</span>
                     </div>
@@ -197,16 +197,16 @@ export default function DashboardPage() {
       {dash?.leads?.byStatus && (
         <div className="bg-white rounded-xl border border-zinc-200 p-5">
           <h2 className="text-sm font-semibold text-zinc-900 mb-4">
-            Tr?ng th�i Lead
+            Trạng thái Lead
           </h2>
           <div className="flex flex-wrap gap-3">
             {dash.leads.byStatus.map((s: any) => {
               const labels: Record<string, string> = {
-                NEW: "M?i",
-                CONTACTED: "�� li�n h?",
-                QUALIFIED: "�? di?u ki?n",
-                UNQUALIFIED: "Kh�ng ph� h?p",
-                CONVERTED: "�� chuy?n d?i",
+                NEW: "Mới",
+                CONTACTED: "Đã liên hệ",
+                QUALIFIED: "Đủ điều kiện",
+                UNQUALIFIED: "Không phù hợp",
+                CONVERTED: "Đã chuyển đổi",
               };
               const colors: Record<string, string> = {
                 NEW: "bg-blue-50 text-blue-700",
@@ -237,12 +237,12 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 size={16} className="text-amber-600" />
             <h2 className="text-sm font-semibold text-zinc-900">
-              Ho?t d?ng theo ng�y (7 ng�y)
+              Hoạt động theo ngày (7 ngày)
             </h2>
           </div>
           {activitiesTimeline.length === 0 ? (
             <p className="text-sm text-zinc-400 text-center py-6">
-              Chua c� d? li?u
+              Chưa có dữ liệu
             </p>
           ) : (
             <div className="space-y-1">
@@ -256,12 +256,12 @@ export default function DashboardPage() {
                   OTHER: "bg-slate-400",
                 };
                 const typeLabels: Record<string, string> = {
-                  CALL: "G?i",
+                  CALL: "Gọi",
                   EMAIL: "Email",
-                  MEETING: "H?p",
-                  NOTE: "Ghi ch�",
+                  MEETING: "Họp",
+                  NOTE: "Ghi chú",
                   TASK: "Task",
-                  OTHER: "Kh�c",
+                  OTHER: "Khác",
                 };
                 // Find max total per day for scaling
                 const maxTotal = Math.max(
@@ -314,11 +314,11 @@ export default function DashboardPage() {
               })()}
               <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-zinc-100">
                 {[
-                  ["CALL", "G?i", "bg-blue-400"],
+                  ["CALL", "Gọi", "bg-blue-400"],
                   ["EMAIL", "Email", "bg-violet-400"],
-                  ["MEETING", "H?p", "bg-amber-400"],
+                  ["MEETING", "Họp", "bg-amber-400"],
                   ["TASK", "Task", "bg-green-400"],
-                  ["OTHER", "Kh�c", "bg-slate-400"],
+                  ["OTHER", "Khác", "bg-slate-400"],
                 ].map(([, label, cls]) => (
                   <div
                     key={label}
@@ -338,12 +338,12 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2 mb-4">
             <Target size={16} className="text-purple-600" />
             <h2 className="text-sm font-semibold text-zinc-900">
-              Th?ng k� chi?n d?ch
+              Thống kê chiến dịch
             </h2>
           </div>
           {campaignStats.length === 0 ? (
             <p className="text-sm text-zinc-400 text-center py-6">
-              Chua c� d? li?u
+              Chưa có dữ liệu
             </p>
           ) : (
             <div className="space-y-4">
@@ -351,13 +351,13 @@ export default function DashboardPage() {
                 const maxVal = Math.max(1, c.sentCount ?? 0);
                 const bars = [
                   {
-                    label: "�� g?i",
+                    label: "Đã gửi",
                     value: c.sentCount ?? 0,
                     color: "bg-indigo-500",
                     max: maxVal,
                   },
                   {
-                    label: "�� m?",
+                    label: "Đã mở",
                     value: c.openCount ?? 0,
                     color: "bg-emerald-500",
                     max: maxVal,

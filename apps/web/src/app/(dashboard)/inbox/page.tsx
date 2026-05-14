@@ -26,9 +26,9 @@ interface Conversation {
 }
 
 const CHANNEL_ICON: Record<string, string> = {
-  ZALO: '🟦',
-  MESSENGER: '💬',
-  INTERNAL: '🔔',
+  ZALO: 'ðŸŸ¦',
+  MESSENGER: 'ðŸ’¬',
+  INTERNAL: 'ðŸ””',
 };
 
 const STATUS_BADGE: Record<string, string> = {
@@ -38,9 +38,9 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  OPEN: 'Mở',
-  PENDING: 'Chờ',
-  CLOSED: 'Đóng',
+  OPEN: 'Má»Ÿ',
+  PENDING: 'Chá»',
+  CLOSED: 'ÄÃ³ng',
 };
 
 function useConversations(status?: string) {
@@ -72,7 +72,7 @@ function ConvoListItem({
   isActive: boolean;
   onClick: () => void;
 }) {
-  const name = convo.contact?.fullName ?? convo.lead?.fullName ?? 'Khách hàng';
+  const name = convo.contact?.fullName ?? convo.lead?.fullName ?? 'KhÃ¡ch hÃ ng';
   const lastMsg = convo.messages?.[0];
 
   return (
@@ -97,7 +97,7 @@ function ConvoListItem({
             </div>
           </div>
           <p className="text-xs text-zinc-400 truncate mt-0.5">
-            {lastMsg ? lastMsg.content : 'Chưa có tin nhắn'}
+            {lastMsg ? lastMsg.content : 'ChÆ°a cÃ³ tin nháº¯n'}
           </p>
           <p className="text-xs text-zinc-300 mt-0.5">
             {new Date(convo.lastMessageAt).toLocaleString('vi-VN')}
@@ -133,25 +133,25 @@ function ChatWindow({ conversationId }: { conversationId: string }) {
       qc.invalidateQueries({ queryKey: ['conversations', conversationId] });
       setMessage('');
     },
-    onError: () => toast.error('Gửi tin nhắn thất bại'),
+    onError: () => toast.error('Gá»­i tin nháº¯n tháº¥t báº¡i'),
   });
 
   const closeConvo = useMutation({
     mutationFn: () => api.patch(`/conversations/${conversationId}/status`, { status: 'CLOSED' }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['conversations'] });
-      toast.success('Đã đóng hội thoại');
+      toast.success('ÄÃ£ Ä‘Ã³ng há»™i thoáº¡i');
     },
-    onError: () => toast.error('Đóng hội thoại thất bại'),
+    onError: () => toast.error('ÄÃ³ng há»™i thoáº¡i tháº¥t báº¡i'),
   });
 
   const assignAgent = useMutation({
     mutationFn: (userId: string) => api.patch(`/conversations/${conversationId}/assign`, { userId }).then(r => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['conversations', conversationId] });
-      toast.success('Đã gán agent');
+      toast.success('ÄÃ£ gÃ¡n agent');
     },
-    onError: () => toast.error('Gán agent thất bại'),
+    onError: () => toast.error('GÃ¡n agent tháº¥t báº¡i'),
   });
 
   const linkContact = useMutation({
@@ -159,9 +159,9 @@ function ChatWindow({ conversationId }: { conversationId: string }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['conversations', conversationId] });
       setContactSearch('');
-      toast.success('Đã liên kết liên hệ');
+      toast.success('ÄÃ£ liÃªn káº¿t liÃªn há»‡');
     },
-    onError: () => toast.error('Liên kết thất bại'),
+    onError: () => toast.error('LiÃªn káº¿t tháº¥t báº¡i'),
   });
 
   if (!convo) {
@@ -172,7 +172,7 @@ function ChatWindow({ conversationId }: { conversationId: string }) {
     );
   }
 
-  const name = convo.contact?.fullName ?? convo.lead?.fullName ?? 'Khách hàng';
+  const name = convo.contact?.fullName ?? convo.lead?.fullName ?? 'KhÃ¡ch hÃ ng';
 
   return (
     <div className="flex-1 flex flex-col h-full">
@@ -203,7 +203,7 @@ function ChatWindow({ conversationId }: { conversationId: string }) {
               onChange={e => { if (e.target.value) assignAgent.mutate(e.target.value); }}
               className="text-xs border border-zinc-200 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-indigo-500 bg-white text-zinc-600"
             >
-              <option value="">Gán agent...</option>
+              <option value="">GÃ¡n agent...</option>
               {(users ?? []).map((u: any) => (
                 <option key={u.id} value={u.id}>{u.fullName}</option>
               ))}
@@ -214,14 +214,14 @@ function ChatWindow({ conversationId }: { conversationId: string }) {
           <div className="relative flex items-center gap-1.5">
             {convo.contact ? (
               <span className="text-xs bg-zinc-50 text-indigo-700 px-2 py-1 rounded-lg border border-indigo-100">
-                👤 {convo.contact.fullName}
+                ðŸ‘¤ {convo.contact.fullName}
               </span>
             ) : (
               <div className="relative">
                 <input
                   value={contactSearch}
                   onChange={e => setContactSearch(e.target.value)}
-                  placeholder="Tìm liên hệ..."
+                  placeholder="TÃ¬m liÃªn há»‡..."
                   className="text-xs border border-zinc-200 rounded-lg px-2 py-1.5 w-32 focus:ring-1 focus:ring-indigo-500"
                 />
                 {contactSearch.length >= 2 && contacts.length > 0 && (
@@ -247,7 +247,7 @@ function ChatWindow({ conversationId }: { conversationId: string }) {
               onClick={() => closeConvo.mutate()}
               className="text-xs px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-zinc-50 text-zinc-600"
             >
-              Đóng hội thoại
+              ÄÃ³ng há»™i thoáº¡i
             </button>
           )}
         </div>
@@ -275,7 +275,7 @@ function ChatWindow({ conversationId }: { conversationId: string }) {
           </div>
         ))}
         {(!convo.messages || convo.messages.length === 0) && (
-          <p className="text-center text-zinc-400 text-sm py-8">Chưa có tin nhắn nào</p>
+          <p className="text-center text-zinc-400 text-sm py-8">ChÆ°a cÃ³ tin nháº¯n nÃ o</p>
         )}
       </div>
 
@@ -285,7 +285,7 @@ function ChatWindow({ conversationId }: { conversationId: string }) {
           <div className="flex gap-2">
             <input
               className="flex-1 border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-1 focus:ring-zinc-900 focus:border-transparent"
-              placeholder="Nhập tin nhắn..."
+              placeholder="Nháº­p tin nháº¯n..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={(e) => {
@@ -300,13 +300,13 @@ function ChatWindow({ conversationId }: { conversationId: string }) {
               disabled={send.isPending || !message.trim()}
               className="bg-zinc-900 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
             >
-              Gửi
+              Gá»­i
             </button>
           </div>
         </div>
       ) : (
         <div className="border-t border-zinc-200 p-4 bg-zinc-50 text-center text-sm text-zinc-400">
-          Hội thoại đã đóng
+          Há»™i thoáº¡i Ä‘Ã£ Ä‘Ã³ng
         </div>
       )}
     </div>
@@ -322,8 +322,8 @@ export default function InboxPage() {
     <div className="h-[calc(100vh-6rem)] flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Hộp thư</h1>
-          <p className="text-zinc-500 text-sm">Quản lý hội thoại Zalo & Messenger</p>
+          <h1 className="text-2xl font-bold text-zinc-900">Há»™p thÆ°</h1>
+          <p className="text-zinc-500 text-sm">Quáº£n lÃ½ há»™i thoáº¡i Zalo & Messenger</p>
         </div>
       </div>
 
@@ -354,7 +354,7 @@ export default function InboxPage() {
                 <div className="animate-spin w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full" />
               </div>
             ) : conversations?.length === 0 ? (
-              <p className="text-center text-zinc-400 text-sm py-8">Không có hội thoại nào</p>
+              <p className="text-center text-zinc-400 text-sm py-8">KhÃ´ng cÃ³ há»™i thoáº¡i nÃ o</p>
             ) : (
               conversations?.map((convo) => (
                 <ConvoListItem
@@ -373,13 +373,12 @@ export default function InboxPage() {
           <ChatWindow conversationId={activeId} />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-zinc-400">
-            <p className="text-5xl mb-3">💬</p>
-            <p className="font-medium">Chọn một hội thoại để bắt đầu</p>
-            <p className="text-sm">Tin nhắn Zalo và Messenger sẽ xuất hiện ở đây</p>
+            <p className="text-5xl mb-3">ðŸ’¬</p>
+            <p className="font-medium">Chá»n má»™t há»™i thoáº¡i Ä‘á»ƒ báº¯t Ä‘áº§u</p>
+            <p className="text-sm">Tin nháº¯n Zalo vÃ  Messenger sáº½ xuáº¥t hiá»‡n á»Ÿ Ä‘Ã¢y</p>
           </div>
         )}
       </div>
     </div>
   );
 }
-

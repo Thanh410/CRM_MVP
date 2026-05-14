@@ -21,7 +21,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface Note {
   id: string;
@@ -50,24 +50,24 @@ type ActivityType = 'CALL' | 'EMAIL' | 'MEETING' | 'NOTE' | 'TASK' | 'OTHER';
 
 type Tab = 'all' | 'notes' | 'activities';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const ACTIVITY_TYPE_OPTIONS: { value: ActivityType; label: string }[] = [
-  { value: 'CALL', label: 'Cuộc gọi' },
+  { value: 'CALL', label: 'Cuá»™c gá»i' },
   { value: 'EMAIL', label: 'Email' },
-  { value: 'MEETING', label: 'Cuộc họp' },
-  { value: 'NOTE', label: 'Ghi chú' },
-  { value: 'TASK', label: 'Nhiệm vụ' },
-  { value: 'OTHER', label: 'Khác' },
+  { value: 'MEETING', label: 'Cuá»™c há»p' },
+  { value: 'NOTE', label: 'Ghi chÃº' },
+  { value: 'TASK', label: 'Nhiá»‡m vá»¥' },
+  { value: 'OTHER', label: 'KhÃ¡c' },
 ];
 
 const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
-  CALL: 'Cuộc gọi',
+  CALL: 'Cuá»™c gá»i',
   EMAIL: 'Email',
-  MEETING: 'Cuộc họp',
-  NOTE: 'Ghi chú',
-  TASK: 'Nhiệm vụ',
-  OTHER: 'Khác',
+  MEETING: 'Cuá»™c há»p',
+  NOTE: 'Ghi chÃº',
+  TASK: 'Nhiá»‡m vá»¥',
+  OTHER: 'KhÃ¡c',
 };
 
 const ACTIVITY_TYPE_COLORS: Record<ActivityType, string> = {
@@ -79,7 +79,7 @@ const ACTIVITY_TYPE_COLORS: Record<ActivityType, string> = {
   OTHER: 'bg-slate-100 text-slate-600',
 };
 
-// ─── Helper: Activity Icon ────────────────────────────────────────────────────
+// â”€â”€â”€ Helper: Activity Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ActivityIcon({ type, size = 14 }: { type: ActivityType; size?: number }) {
   switch (type) {
@@ -98,22 +98,22 @@ function ActivityIcon({ type, size = 14 }: { type: ActivityType; size?: number }
   }
 }
 
-// ─── Helper: Relative Time ────────────────────────────────────────────────────
+// â”€â”€â”€ Helper: Relative Time â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function relativeTime(dateStr: string): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
   const diff = Math.floor((now - then) / 1000);
 
-  if (diff < 60) return 'vừa xong';
-  if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
-  if (diff < 2592000) return `${Math.floor(diff / 86400)} ngày trước`;
-  if (diff < 31536000) return `${Math.floor(diff / 2592000)} tháng trước`;
-  return `${Math.floor(diff / 31536000)} năm trước`;
+  if (diff < 60) return 'vá»«a xong';
+  if (diff < 3600) return `${Math.floor(diff / 60)} phÃºt trÆ°á»›c`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} giá» trÆ°á»›c`;
+  if (diff < 2592000) return `${Math.floor(diff / 86400)} ngÃ y trÆ°á»›c`;
+  if (diff < 31536000) return `${Math.floor(diff / 2592000)} thÃ¡ng trÆ°á»›c`;
+  return `${Math.floor(diff / 31536000)} nÄƒm trÆ°á»›c`;
 }
 
-// ─── New Note Form ────────────────────────────────────────────────────────────
+// â”€â”€â”€ New Note Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function NewNoteForm({
   entityType,
@@ -132,10 +132,10 @@ function NewNoteForm({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes', entityType, entityId] });
-      toast.success('Đã thêm ghi chú');
+      toast.success('ÄÃ£ thÃªm ghi chÃº');
       setContent('');
     },
-    onError: () => toast.error('Thêm ghi chú thất bại'),
+    onError: () => toast.error('ThÃªm ghi chÃº tháº¥t báº¡i'),
   });
 
   function handleSubmit(e: React.FormEvent) {
@@ -153,7 +153,7 @@ function NewNoteForm({
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Thêm ghi chú..."
+          placeholder="ThÃªm ghi chÃº..."
           rows={2}
           className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none"
           onKeyDown={(e) => {
@@ -161,14 +161,14 @@ function NewNoteForm({
           }}
         />
         <div className="flex items-center justify-between mt-1.5">
-          <span className="text-xs text-zinc-400">Ctrl+Enter để lưu nhanh</span>
+          <span className="text-xs text-zinc-400">Ctrl+Enter Ä‘á»ƒ lÆ°u nhanh</span>
           <button
             type="submit"
             disabled={!content.trim() || mutation.isPending}
             className="flex items-center gap-1 px-3 py-1.5 text-xs bg-zinc-900 text-white hover:bg-zinc-700 disabled:opacity-50 transition"
           >
             <Plus size={12} />
-            {mutation.isPending ? 'Đang lưu...' : 'Thêm ghi chú'}
+            {mutation.isPending ? 'Äang lÆ°u...' : 'ThÃªm ghi chÃº'}
           </button>
         </div>
       </div>
@@ -176,7 +176,7 @@ function NewNoteForm({
   );
 }
 
-// ─── New Activity Form ────────────────────────────────────────────────────────
+// â”€â”€â”€ New Activity Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function NewActivityForm({
   entityType,
@@ -197,11 +197,11 @@ function NewActivityForm({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities', entityType, entityId] });
-      toast.success('Đã ghi nhận hoạt động');
+      toast.success('ÄÃ£ ghi nháº­n hoáº¡t Ä‘á»™ng');
       setTitle('');
       setOpen(false);
     },
-    onError: () => toast.error('Thêm hoạt động thất bại'),
+    onError: () => toast.error('ThÃªm hoáº¡t Ä‘á»™ng tháº¥t báº¡i'),
   });
 
   function handleSubmit(e: React.FormEvent) {
@@ -217,7 +217,7 @@ function NewActivityForm({
         className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-900 transition px-1 py-0.5"
       >
         <Plus size={13} />
-        Ghi nhận hoạt động
+        Ghi nháº­n hoáº¡t Ä‘á»™ng
         <ChevronDown size={12} />
       </button>
     );
@@ -226,13 +226,13 @@ function NewActivityForm({
   return (
     <form onSubmit={handleSubmit} className="bg-zinc-50 rounded-xl border border-zinc-200 p-3 space-y-2.5">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-zinc-700">Hoạt động mới</p>
+        <p className="text-xs font-semibold text-zinc-700">Hoáº¡t Ä‘á»™ng má»›i</p>
         <button
           type="button"
           onClick={() => setOpen(false)}
           className="text-xs text-zinc-400 hover:text-zinc-600"
         >
-          Hủy
+          Há»§y
         </button>
       </div>
 
@@ -259,7 +259,7 @@ function NewActivityForm({
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="Tiêu đề hoạt động..."
+        placeholder="TiÃªu Ä‘á» hoáº¡t Ä‘á»™ng..."
         className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white"
       />
 
@@ -270,14 +270,14 @@ function NewActivityForm({
           className="flex items-center gap-1 px-3 py-1.5 text-xs bg-zinc-900 text-white hover:bg-zinc-700 disabled:opacity-50 transition"
         >
           <Plus size={12} />
-          {mutation.isPending ? 'Đang lưu...' : 'Thêm hoạt động'}
+          {mutation.isPending ? 'Äang lÆ°u...' : 'ThÃªm hoáº¡t Ä‘á»™ng'}
         </button>
       </div>
     </form>
   );
 }
 
-// ─── Timeline Item ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Timeline Item â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function NoteItem({ note, onDelete }: { note: Note; onDelete: () => void }) {
   const queryClient = useQueryClient();
@@ -291,10 +291,10 @@ function NoteItem({ note, onDelete }: { note: Note; onDelete: () => void }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes', note.entityType, note.entityId] });
-      toast.success('Đã cập nhật ghi chú');
+      toast.success('ÄÃ£ cáº­p nháº­t ghi chÃº');
       setEditing(false);
     },
-    onError: () => toast.error('Cập nhật ghi chú thất bại'),
+    onError: () => toast.error('Cáº­p nháº­t ghi chÃº tháº¥t báº¡i'),
   });
 
   const handleSave = () => {
@@ -331,14 +331,14 @@ function NoteItem({ note, onDelete }: { note: Note; onDelete: () => void }) {
                     className="flex items-center gap-1 px-2.5 py-1 text-xs bg-zinc-900 text-white hover:bg-zinc-700 disabled:opacity-50"
                   >
                     <Check size={11} />
-                    {updateMutation.isPending ? 'Đang lưu...' : 'Lưu'}
+                    {updateMutation.isPending ? 'Äang lÆ°u...' : 'LÆ°u'}
                   </button>
                   <button
                     onClick={handleCancel}
                     className="flex items-center gap-1 px-2.5 py-1 text-xs border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600"
                   >
                     <X size={11} />
-                    Hủy
+                    Há»§y
                   </button>
                 </div>
               </div>
@@ -353,7 +353,7 @@ function NoteItem({ note, onDelete }: { note: Note; onDelete: () => void }) {
               )}
               <span className="text-xs text-zinc-400">{relativeTime(note.createdAt)}</span>
               <span className="text-xs bg-yellow-50 text-yellow-600 px-1.5 py-0.5 rounded-full border border-yellow-100">
-                Ghi chú
+                Ghi chÃº
               </span>
             </div>
           </div>
@@ -361,14 +361,14 @@ function NoteItem({ note, onDelete }: { note: Note; onDelete: () => void }) {
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
               <button
                 onClick={() => setEditing(true)}
-                title="Chỉnh sửa ghi chú"
+                title="Chá»‰nh sá»­a ghi chÃº"
                 className="p-1 text-gray-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg"
               >
                 <Pencil size={13} />
               </button>
               <button
                 onClick={onDelete}
-                title="Xóa ghi chú"
+                title="XÃ³a ghi chÃº"
                 className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg"
               >
                 <Trash2 size={13} />
@@ -404,7 +404,7 @@ function ActivityItem({ activity, onDelete }: { activity: Activity; onDelete: ()
           </div>
           <button
             onClick={onDelete}
-            title="Xóa hoạt động"
+            title="XÃ³a hoáº¡t Ä‘á»™ng"
             className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg shrink-0"
           >
             <Trash2 size={13} />
@@ -415,7 +415,7 @@ function ActivityItem({ activity, onDelete }: { activity: Activity; onDelete: ()
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface EntityTimelineProps {
   entityType: string;
@@ -452,9 +452,9 @@ export function EntityTimeline({ entityType, entityId }: EntityTimelineProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes', entityType, entityId] });
-      toast.success('Đã xóa ghi chú');
+      toast.success('ÄÃ£ xÃ³a ghi chÃº');
     },
-    onError: () => toast.error('Xóa ghi chú thất bại'),
+    onError: () => toast.error('XÃ³a ghi chÃº tháº¥t báº¡i'),
   });
 
   const deleteActivityMutation = useMutation({
@@ -463,9 +463,9 @@ export function EntityTimeline({ entityType, entityId }: EntityTimelineProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities', entityType, entityId] });
-      toast.success('Đã xóa hoạt động');
+      toast.success('ÄÃ£ xÃ³a hoáº¡t Ä‘á»™ng');
     },
-    onError: () => toast.error('Xóa hoạt động thất bại'),
+    onError: () => toast.error('XÃ³a hoáº¡t Ä‘á»™ng tháº¥t báº¡i'),
   });
 
   const rawNotes: Omit<Note, '_kind'>[] = Array.isArray(notesData)
@@ -493,9 +493,9 @@ export function EntityTimeline({ entityType, entityId }: EntityTimelineProps) {
   const isLoading = notesLoading || activitiesLoading;
 
   const TAB_LABELS: { key: Tab; label: string; count: number }[] = [
-    { key: 'all', label: 'Tất cả', count: allItems.length },
-    { key: 'notes', label: 'Ghi chú', count: notes.length },
-    { key: 'activities', label: 'Hoạt động', count: activities.length },
+    { key: 'all', label: 'Táº¥t cáº£', count: allItems.length },
+    { key: 'notes', label: 'Ghi chÃº', count: notes.length },
+    { key: 'activities', label: 'Hoáº¡t Ä‘á»™ng', count: activities.length },
   ];
 
   return (
@@ -530,7 +530,7 @@ export function EntityTimeline({ entityType, entityId }: EntityTimelineProps) {
         ))}
         <button
           onClick={() => { refetchNotes(); refetchActivities(); }}
-          title="Làm mới"
+          title="LÃ m má»›i"
           className="ml-auto p-1.5 text-zinc-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition"
         >
           <RefreshCw size={13} />
@@ -540,11 +540,11 @@ export function EntityTimeline({ entityType, entityId }: EntityTimelineProps) {
       {/* Timeline list */}
       {isLoading ? (
         <div className="flex items-center justify-center py-8 text-zinc-400 text-sm">
-          Đang tải...
+          Äang táº£i...
         </div>
       ) : visibleItems.length === 0 ? (
         <div className="flex items-center justify-center py-8 text-zinc-400 text-sm">
-          Chưa có {tab === 'notes' ? 'ghi chú' : tab === 'activities' ? 'hoạt động' : 'dữ liệu'} nào.
+          ChÆ°a cÃ³ {tab === 'notes' ? 'ghi chÃº' : tab === 'activities' ? 'hoáº¡t Ä‘á»™ng' : 'dá»¯ liá»‡u'} nÃ o.
         </div>
       ) : (
         <div className="space-y-4">
@@ -554,7 +554,7 @@ export function EntityTimeline({ entityType, entityId }: EntityTimelineProps) {
                 key={`note-${item.id}`}
                 note={item}
                 onDelete={() => {
-                  if (window.confirm('Xóa ghi chú này?')) {
+                  if (window.confirm('XÃ³a ghi chÃº nÃ y?')) {
                     deleteNoteMutation.mutate(item.id);
                   }
                 }}
@@ -564,7 +564,7 @@ export function EntityTimeline({ entityType, entityId }: EntityTimelineProps) {
                 key={`activity-${item.id}`}
                 activity={item}
                 onDelete={() => {
-                  if (window.confirm('Xóa hoạt động này?')) {
+                  if (window.confirm('XÃ³a hoáº¡t Ä‘á»™ng nÃ y?')) {
                     deleteActivityMutation.mutate(item.id);
                   }
                 }}
@@ -578,4 +578,3 @@ export function EntityTimeline({ entityType, entityId }: EntityTimelineProps) {
 }
 
 export default EntityTimeline;
-

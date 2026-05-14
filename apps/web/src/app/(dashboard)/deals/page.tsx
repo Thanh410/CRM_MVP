@@ -12,7 +12,7 @@ import { TagSelector } from '@/components/tag-selector';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
-// ─── Deal Edit Modal ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Deal Edit Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function DealEditModal({ deal, onClose }: { deal: any; onClose: () => void }) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const updateDeal = useUpdateDeal(deal.id);
@@ -44,21 +44,21 @@ function DealEditModal({ deal, onClose }: { deal: any; onClose: () => void }) {
       onMouseDown={e => { if (e.target === overlayRef.current) onClose(); }}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
-          <h2 className="text-base font-semibold text-zinc-900">Chỉnh sửa deal</h2>
+          <h2 className="text-base font-semibold text-zinc-900">Chá»‰nh sá»­a deal</h2>
           <button onClick={onClose} className="p-1 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-zinc-100"><X size={16} /></button>
         </div>
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div>
-            <label className={labelCls}>Tên deal *</label>
+            <label className={labelCls}>TÃªn deal *</label>
             <input className={inputCls} value={form.title} onChange={set('title')} required />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>Giá trị</label>
+              <label className={labelCls}>GiÃ¡ trá»‹</label>
               <input className={inputCls} type="number" min="0" value={form.value} onChange={set('value')} placeholder="0" />
             </div>
             <div>
-              <label className={labelCls}>Tiền tệ</label>
+              <label className={labelCls}>Tiá»n tá»‡</label>
               <select className={inputCls} value={form.currency} onChange={set('currency')}>
                 <option value="VND">VND</option>
                 <option value="USD">USD</option>
@@ -68,22 +68,22 @@ function DealEditModal({ deal, onClose }: { deal: any; onClose: () => void }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>Xác suất (%)</label>
+              <label className={labelCls}>XÃ¡c suáº¥t (%)</label>
               <input className={inputCls} type="number" min="0" max="100" value={form.probability} onChange={set('probability')} />
             </div>
             <div>
-              <label className={labelCls}>Ngày chốt dự kiến</label>
+              <label className={labelCls}>NgÃ y chá»‘t dá»± kiáº¿n</label>
               <input className={inputCls} type="date" value={form.closeDate} onChange={set('closeDate')} />
             </div>
           </div>
           <div>
-            <label className={labelCls}>Ghi chú</label>
+            <label className={labelCls}>Ghi chÃº</label>
             <textarea className={`${inputCls} resize-none`} rows={3} value={form.description} onChange={set('description')} />
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Hủy</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Há»§y</button>
             <button type="submit" disabled={updateDeal.isPending} className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60">
-              {updateDeal.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+              {updateDeal.isPending ? 'Äang lÆ°u...' : 'LÆ°u thay Ä‘á»•i'}
             </button>
           </div>
         </form>
@@ -92,7 +92,7 @@ function DealEditModal({ deal, onClose }: { deal: any; onClose: () => void }) {
   );
 }
 
-// ─── Mark Lost Modal ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Mark Lost Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function MarkLostModal({ dealId, dealTitle, onClose }: { dealId: string; dealTitle: string; onClose: () => void }) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const markLost = useMarkDealLost();
@@ -108,24 +108,24 @@ function MarkLostModal({ dealId, dealTitle, onClose }: { dealId: string; dealTit
       onMouseDown={e => { if (e.target === overlayRef.current) onClose(); }}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
         <div className="px-6 py-4 border-b border-zinc-100">
-          <h2 className="text-base font-semibold text-zinc-900">Đánh dấu thua</h2>
+          <h2 className="text-base font-semibold text-zinc-900">ÄÃ¡nh dáº¥u thua</h2>
           <p className="text-sm text-zinc-500 mt-1 truncate">"{dealTitle}"</p>
         </div>
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Lý do thua (tuỳ chọn)</label>
+            <label className="block text-xs font-medium text-zinc-600 mb-1">LÃ½ do thua (tuá»³ chá»n)</label>
             <textarea
               value={reason}
               onChange={e => setReason(e.target.value)}
               rows={3}
-              placeholder="Giá cao, chọn đối thủ, không đủ ngân sách..."
+              placeholder="GiÃ¡ cao, chá»n Ä‘á»‘i thá»§, khÃ´ng Ä‘á»§ ngÃ¢n sÃ¡ch..."
               className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
             />
           </div>
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Hủy</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Há»§y</button>
             <button type="submit" disabled={markLost.isPending} className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-60">
-              {markLost.isPending ? 'Đang lưu...' : 'Xác nhận thua'}
+              {markLost.isPending ? 'Äang lÆ°u...' : 'XÃ¡c nháº­n thua'}
             </button>
           </div>
         </form>
@@ -134,7 +134,7 @@ function MarkLostModal({ dealId, dealTitle, onClose }: { dealId: string; dealTit
   );
 }
 
-// ─── Create Deal Modal ────────────────────────────────────────────────────────
+// â”€â”€â”€ Create Deal Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function CreateDealModal({ onClose, stages }: { onClose: () => void; stages: any[] }) {
   const qc = useQueryClient();
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -157,8 +157,8 @@ function CreateDealModal({ onClose, stages }: { onClose: () => void; stages: any
 
   const mutation = useMutation({
     mutationFn: (payload: any) => api.post('/deals', payload).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['deals'] }); qc.invalidateQueries({ queryKey: ['deals', 'kanban'] }); toast.success('Tạo deal thành công'); onClose(); },
-    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Tạo thất bại'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['deals'] }); qc.invalidateQueries({ queryKey: ['deals', 'kanban'] }); toast.success('Táº¡o deal thÃ nh cÃ´ng'); onClose(); },
+    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Táº¡o tháº¥t báº¡i'),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -179,21 +179,21 @@ function CreateDealModal({ onClose, stages }: { onClose: () => void; stages: any
       onMouseDown={e => { if (e.target === overlayRef.current) onClose(); }}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
-          <h2 className="text-base font-semibold text-zinc-900">Tạo deal mới</h2>
+          <h2 className="text-base font-semibold text-zinc-900">Táº¡o deal má»›i</h2>
           <button onClick={onClose} className="p-1 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-zinc-100"><X size={16} /></button>
         </div>
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Tên deal *</label>
-            <input className={inputCls} value={form.title} onChange={set('title')} required placeholder="Hợp đồng phần mềm ABC" />
+            <label className="block text-xs font-medium text-zinc-600 mb-1">TÃªn deal *</label>
+            <input className={inputCls} value={form.title} onChange={set('title')} required placeholder="Há»£p Ä‘á»“ng pháº§n má»m ABC" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1">Giá trị</label>
+              <label className="block text-xs font-medium text-zinc-600 mb-1">GiÃ¡ trá»‹</label>
               <input className={inputCls} type="number" min="0" value={form.value} onChange={set('value')} placeholder="0" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1">Giai đoạn</label>
+              <label className="block text-xs font-medium text-zinc-600 mb-1">Giai Ä‘oáº¡n</label>
               <select className={inputCls} value={form.stageId} onChange={set('stageId')}>
                 {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
@@ -201,18 +201,18 @@ function CreateDealModal({ onClose, stages }: { onClose: () => void; stages: any
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1">Liên hệ</label>
+              <label className="block text-xs font-medium text-zinc-600 mb-1">LiÃªn há»‡</label>
               <select className={inputCls} value={form.contactId} onChange={set('contactId')}>
-                <option value="">-- Không chọn --</option>
+                <option value="">-- KhÃ´ng chá»n --</option>
                 {(contacts as any[]).map((c: any) => (
                   <option key={c.id} value={c.id}>{c.fullName}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1">Công ty</label>
+              <label className="block text-xs font-medium text-zinc-600 mb-1">CÃ´ng ty</label>
               <select className={inputCls} value={form.companyId} onChange={set('companyId')}>
-                <option value="">-- Không chọn --</option>
+                <option value="">-- KhÃ´ng chá»n --</option>
                 {(companies as any[]).map((c: any) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -220,9 +220,9 @@ function CreateDealModal({ onClose, stages }: { onClose: () => void; stages: any
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Hủy</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Há»§y</button>
             <button type="submit" disabled={mutation.isPending} className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60">
-              {mutation.isPending ? 'Đang tạo...' : 'Tạo deal'}
+              {mutation.isPending ? 'Äang táº¡o...' : 'Táº¡o deal'}
             </button>
           </div>
         </form>
@@ -231,7 +231,7 @@ function CreateDealModal({ onClose, stages }: { onClose: () => void; stages: any
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function DealsPage() {
   const { data: pipelines } = usePipelines();
   const [pipelineId, setPipelineId] = useState<string | undefined>(undefined);
@@ -265,7 +265,7 @@ export default function DealsPage() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64 text-zinc-400 text-sm">Đang tải pipeline...</div>;
+    return <div className="flex items-center justify-center h-64 text-zinc-400 text-sm">Äang táº£i pipeline...</div>;
   }
 
   const stages = data?.stages ?? [];
@@ -290,7 +290,7 @@ export default function DealsPage() {
         <div>
           <h1 className="text-xl font-semibold text-zinc-900">Pipeline kinh doanh</h1>
           <p className="text-sm text-zinc-500 mt-0.5">
-            {totalDeals} cơ hội · {formatCurrency(totalValue)} tổng giá trị
+            {totalDeals} cÆ¡ há»™i Â· {formatCurrency(totalValue)} tá»•ng giÃ¡ trá»‹
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -298,7 +298,7 @@ export default function DealsPage() {
             <button onClick={() => setViewMode('kanban')} className={`px-2.5 py-2 ${viewMode === 'kanban' ? 'bg-zinc-900/10 text-zinc-900' : 'text-zinc-400 hover:text-zinc-600'}`} title="Kanban">
               <LayoutGrid size={15} />
             </button>
-            <button onClick={() => setViewMode('list')} className={`px-2.5 py-2 border-l border-zinc-200 ${viewMode === 'list' ? 'bg-zinc-900/10 text-zinc-900' : 'text-zinc-400 hover:text-zinc-600'}`} title="Danh sách">
+            <button onClick={() => setViewMode('list')} className={`px-2.5 py-2 border-l border-zinc-200 ${viewMode === 'list' ? 'bg-zinc-900/10 text-zinc-900' : 'text-zinc-400 hover:text-zinc-600'}`} title="Danh sÃ¡ch">
               <List size={15} />
             </button>
           </div>
@@ -308,12 +308,12 @@ export default function DealsPage() {
               onChange={e => setPipelineId(e.target.value || undefined)}
               className="px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
             >
-              <option value="">Tất cả pipeline</option>
+              <option value="">Táº¥t cáº£ pipeline</option>
               {pipelines.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           )}
           <button onClick={() => setCreateOpen(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition">
-            <Plus size={14} /> Thêm deal
+            <Plus size={14} /> ThÃªm deal
           </button>
         </div>
       </div>
@@ -353,7 +353,7 @@ export default function DealsPage() {
                 ))}
                 {stage.deals?.length === 0 && (
                   <div className="border-2 border-dashed border-zinc-200 rounded-xl h-20 flex items-center justify-center">
-                    <span className="text-xs text-zinc-300">Chưa có deal</span>
+                    <span className="text-xs text-zinc-300">ChÆ°a cÃ³ deal</span>
                   </div>
                 )}
               </div>
@@ -362,7 +362,7 @@ export default function DealsPage() {
 
           {stages.length === 0 && (
             <div className="flex-1 flex items-center justify-center text-zinc-400 text-sm">
-              Chưa có pipeline. Hãy cấu hình trong Cài đặt.
+              ChÆ°a cÃ³ pipeline. HÃ£y cáº¥u hÃ¬nh trong CÃ i Ä‘áº·t.
             </div>
           )}
         </div>
@@ -386,7 +386,7 @@ export default function DealsPage() {
                 {selectedDeal.status !== 'OPEN' && (
                   <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                     selectedDeal.status === 'WON' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  }`}>{selectedDeal.status === 'WON' ? 'Đã thắng' : 'Đã thua'}</span>
+                  }`}>{selectedDeal.status === 'WON' ? 'ÄÃ£ tháº¯ng' : 'ÄÃ£ thua'}</span>
                 )}
               </div>
               <button onClick={() => setSelectedDeal(null)} className="p-1 text-zinc-400 hover:text-zinc-600 rounded shrink-0">
@@ -394,11 +394,11 @@ export default function DealsPage() {
               </button>
             </div>
             <div className="px-4 py-2 border-b border-zinc-100 text-xs text-zinc-500 space-y-1">
-              {selectedDeal.contact && <div>👤 {selectedDeal.contact.fullName}</div>}
-              {selectedDeal.company && <div>🏢 {selectedDeal.company.name}</div>}
-              {selectedDeal.owner && <div>📋 Phụ trách: {selectedDeal.owner.fullName}</div>}
-              <div>📊 Xác suất: {selectedDeal.probability}%</div>
-              {selectedDeal.closeDate && <div>📅 Ngày chốt: {formatDate(selectedDeal.closeDate)}</div>}
+              {selectedDeal.contact && <div>ðŸ‘¤ {selectedDeal.contact.fullName}</div>}
+              {selectedDeal.company && <div>ðŸ¢ {selectedDeal.company.name}</div>}
+              {selectedDeal.owner && <div>ðŸ“‹ Phá»¥ trÃ¡ch: {selectedDeal.owner.fullName}</div>}
+              <div>ðŸ“Š XÃ¡c suáº¥t: {selectedDeal.probability}%</div>
+              {selectedDeal.closeDate && <div>ðŸ“… NgÃ y chá»‘t: {formatDate(selectedDeal.closeDate)}</div>}
               <div className="pt-1">
                 <TagSelector entityType="DEAL" entityId={selectedDeal.id} />
               </div>
@@ -406,7 +406,7 @@ export default function DealsPage() {
             <div className="px-4 py-2 border-b border-zinc-100 flex gap-2">
               <button onClick={() => setEditingDeal(selectedDeal)}
                 className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-zinc-900 border border-zinc-200 rounded-lg hover:bg-zinc-100">
-                <Pencil size={12} />Sửa
+                <Pencil size={12} />Sá»­a
               </button>
               <button onClick={() => setLostDeal(selectedDeal)}
                 className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50">
@@ -420,23 +420,23 @@ export default function DealsPage() {
         )}
       </div>
       ) : (
-      /* ─── List View ─────────────────────────────────────────────────── */
+      /* â”€â”€â”€ List View â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
       <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden flex-1">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-zinc-100 bg-zinc-50/50">
               <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Deal</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Giá trị</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Giai đoạn</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Trạng thái</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Xác suất</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Phụ trách</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">GiÃ¡ trá»‹</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Giai Ä‘oáº¡n</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Tráº¡ng thÃ¡i</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">XÃ¡c suáº¥t</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Phá»¥ trÃ¡ch</th>
               <th className="px-4 py-3 w-24" />
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-50">
             {allDeals.length === 0 && (
-              <tr><td colSpan={7} className="text-center py-12 text-zinc-400 text-sm">Chưa có deal nào</td></tr>
+              <tr><td colSpan={7} className="text-center py-12 text-zinc-400 text-sm">ChÆ°a cÃ³ deal nÃ o</td></tr>
             )}
             {allDeals.map((deal: any) => {
               const stage = stages.find((s: any) => s.deals?.some((d: any) => d.id === deal.id));
@@ -456,7 +456,7 @@ export default function DealsPage() {
                   <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                       deal.status === 'WON' ? 'bg-green-100 text-green-700' : deal.status === 'LOST' ? 'bg-red-100 text-red-700' : 'bg-zinc-100 text-zinc-600'
-                    }`}>{deal.status === 'WON' ? 'Thắng' : deal.status === 'LOST' ? 'Thua' : 'Mở'}</span>
+                    }`}>{deal.status === 'WON' ? 'Tháº¯ng' : deal.status === 'LOST' ? 'Thua' : 'Má»Ÿ'}</span>
                   </td>
                   <td className="px-4 py-3 text-zinc-500">{deal.probability}%</td>
                   <td className="px-4 py-3 text-zinc-500 text-xs">{deal.owner?.fullName ?? '-'}</td>
@@ -482,16 +482,16 @@ export default function DealsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
             <div className="px-6 py-4 border-b border-zinc-100">
-              <h2 className="text-base font-semibold text-zinc-900">Xóa deal?</h2>
+              <h2 className="text-base font-semibold text-zinc-900">XÃ³a deal?</h2>
               <p className="text-sm text-zinc-500 mt-1 truncate">"{deleteConfirm.title}"</p>
             </div>
             <div className="px-6 py-4">
-              <p className="text-sm text-zinc-600">Hành động này không thể hoàn tác. Deal và mọi dữ liệu liên quan sẽ bị xóa.</p>
+              <p className="text-sm text-zinc-600">HÃ nh Ä‘á»™ng nÃ y khÃ´ng thá»ƒ hoÃ n tÃ¡c. Deal vÃ  má»i dá»¯ liá»‡u liÃªn quan sáº½ bá»‹ xÃ³a.</p>
             </div>
             <div className="flex justify-end gap-2 px-6 py-3 border-t border-zinc-100">
-              <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Hủy</button>
+              <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Há»§y</button>
               <button onClick={handleDelete} disabled={deleteDeal.isPending} className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-60">
-                {deleteDeal.isPending ? 'Đang xóa...' : 'Xóa deal'}
+                {deleteDeal.isPending ? 'Äang xÃ³a...' : 'XÃ³a deal'}
               </button>
             </div>
           </div>
@@ -501,7 +501,7 @@ export default function DealsPage() {
   );
 }
 
-// ─── DnD helpers ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ DnD helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function StageColumn({ stageId, children }: { stageId: string; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id: stageId });
   return (
@@ -538,7 +538,7 @@ function DealCard({ deal, stages, currentStageId, isSelected, onSelect, onEdit, 
   const statusOverlay = deal.status !== 'OPEN' ? (
     <div className={`absolute inset-0 rounded-xl flex items-center justify-center bg-white/70 backdrop-blur-[1px]`}>
       <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${deal.status === 'WON' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-        {deal.status === 'WON' ? '🏆 Đã thắng' : '❌ Đã thua'}
+        {deal.status === 'WON' ? 'ðŸ† ÄÃ£ tháº¯ng' : 'âŒ ÄÃ£ thua'}
       </span>
     </div>
   ) : null;
@@ -556,13 +556,13 @@ function DealCard({ deal, stages, currentStageId, isSelected, onSelect, onEdit, 
       <div className="flex items-start justify-between gap-1 mb-2">
         <p className="text-sm font-medium text-zinc-900 leading-snug line-clamp-2 flex-1">{deal.title}</p>
         <div className="flex shrink-0 opacity-0 group-hover:opacity-100 transition">
-          <button onClick={e => { e.stopPropagation(); onEdit(); }} title="Chỉnh sửa"
+          <button onClick={e => { e.stopPropagation(); onEdit(); }} title="Chá»‰nh sá»­a"
             className="p-1 text-zinc-300 hover:text-zinc-900 transition"><Pencil size={12} /></button>
-          <button onClick={e => { e.stopPropagation(); markWon.mutate(deal.id); }} title="Đánh dấu thắng"
+          <button onClick={e => { e.stopPropagation(); markWon.mutate(deal.id); }} title="ÄÃ¡nh dáº¥u tháº¯ng"
             className="p-1 text-zinc-300 hover:text-yellow-500 transition"><Trophy size={13} /></button>
-          <button onClick={e => { e.stopPropagation(); onMarkLost(); }} title="Đánh dấu thua"
+          <button onClick={e => { e.stopPropagation(); onMarkLost(); }} title="ÄÃ¡nh dáº¥u thua"
             className="p-1 text-zinc-300 hover:text-red-500 transition"><ThumbsDown size={12} /></button>
-          <button onClick={e => { e.stopPropagation(); onDelete(); }} title="Xóa deal"
+          <button onClick={e => { e.stopPropagation(); onDelete(); }} title="XÃ³a deal"
             className="p-1 text-zinc-300 hover:text-red-500 transition"><Trash2 size={12} /></button>
         </div>
       </div>
@@ -608,6 +608,5 @@ function DealCard({ deal, stages, currentStageId, isSelected, onSelect, onEdit, 
     </div>
   );
 }
-
 
 

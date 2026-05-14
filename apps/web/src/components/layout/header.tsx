@@ -45,7 +45,7 @@ export function Header() {
                 setSearchQuery('');
               }
             }}
-            placeholder="T�m ki?m... (Enter)"
+            placeholder="Tìm kiếm... (Enter)"
             className="w-full pl-9 pr-3 py-1.5 text-sm bg-zinc-50 border border-zinc-200 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 placeholder:text-zinc-400 transition"
           />
         </div>
@@ -70,10 +70,10 @@ export function Header() {
             <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-zinc-200 z-50 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-zinc-900">Th�ng b�o</span>
+                  <span className="text-sm font-semibold text-zinc-900">Thông báo</span>
                   {unread > 0 && (
                     <span className="text-[10px] bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded-full font-medium">
-                      {unread} m?i
+                      {unread} mới
                     </span>
                   )}
                 </div>
@@ -83,7 +83,7 @@ export function Header() {
                     className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-900 transition-colors"
                   >
                     <CheckCheck size={12} />
-                    ��nh d?u t?t c?
+                    Đánh dấu tất cả
                   </button>
                 )}
               </div>
@@ -92,7 +92,7 @@ export function Header() {
                 {notifications.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 text-zinc-400">
                     <Bell size={26} className="mb-2 opacity-30" />
-                    <p className="text-sm">Kh�ng c� th�ng b�o</p>
+                    <p className="text-sm">Không có thông báo</p>
                   </div>
                 ) : (
                   notifications.map((n: any) => (
@@ -112,7 +112,7 @@ export function Header() {
                           <button
                             onClick={(e) => { e.stopPropagation(); markRead.mutate(n.id); }}
                             className="p-0.5 text-zinc-400 hover:text-zinc-900 transition-colors"
-                            title="��nh d?u d� d?c"
+                            title="Đánh dấu đã đọc"
                           >
                             <Check size={13} />
                           </button>
@@ -120,7 +120,7 @@ export function Header() {
                         <button
                           onClick={(e) => { e.stopPropagation(); deleteNotification.mutate(n.id); }}
                           className="p-0.5 text-zinc-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity"
-                          title="X�a th�ng b�o"
+                          title="Xóa thông báo"
                         >
                           <X size={12} />
                         </button>

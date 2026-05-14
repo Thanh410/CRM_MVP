@@ -26,7 +26,7 @@ import {
   Hash,
 } from 'lucide-react';
 
-// --- Types --------------------------------------------------------------------
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Company {
   id: string;
@@ -99,15 +99,15 @@ const DEAL_STAGE_COLORS: Record<string, string> = {
 };
 
 const DEAL_STAGE_LABELS: Record<string, string> = {
-  LEAD: 'Ti?m nang',
-  QUALIFIED: '�? di?u ki?n',
-  PROPOSAL: '�? xu?t',
-  NEGOTIATION: '��m ph�n',
-  WON: 'Th?ng',
+  LEAD: 'Tiềm năng',
+  QUALIFIED: 'Đủ điều kiện',
+  PROPOSAL: 'Đề xuất',
+  NEGOTIATION: 'Đàm phán',
+  WON: 'Thắng',
   LOST: 'Thua',
 };
 
-// --- Company Modal ------------------------------------------------------------
+// ─── Company Modal ────────────────────────────────────────────────────────────
 
 function CompanyModal({
   company,
@@ -143,10 +143,10 @@ function CompanyModal({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
-      toast.success('T?o c�ng ty th�nh c�ng');
+      toast.success('Tạo công ty thành công');
       onClose();
     },
-    onError: () => toast.error('T?o c�ng ty th?t b?i'),
+    onError: () => toast.error('Tạo công ty thất bại'),
   });
 
   const updateMutation = useMutation({
@@ -157,10 +157,10 @@ function CompanyModal({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       queryClient.invalidateQueries({ queryKey: ['company', company!.id] });
-      toast.success('C?p nh?t th�nh c�ng');
+      toast.success('Cập nhật thành công');
       onClose();
     },
-    onError: () => toast.error('C?p nh?t th?t b?i'),
+    onError: () => toast.error('Cập nhật thất bại'),
   });
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -168,7 +168,7 @@ function CompanyModal({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) {
-      toast.error('T�n c�ng ty kh�ng du?c d? tr?ng');
+      toast.error('Tên công ty không được để trống');
       return;
     }
     // strip empty strings to undefined so backend ignores them
@@ -199,7 +199,7 @@ function CompanyModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
           <h2 className="text-base font-semibold text-zinc-900">
-            {isEdit ? 'Ch?nh s?a c�ng ty' : 'Th�m c�ng ty m?i'}
+            {isEdit ? 'Chỉnh sửa công ty' : 'Thêm công ty mới'}
           </h2>
           <button
             onClick={onClose}
@@ -214,12 +214,12 @@ function CompanyModal({
           {/* Name */}
           <div>
             <label className="block text-xs font-medium text-zinc-700 mb-1">
-              T�n c�ng ty <span className="text-red-500">*</span>
+              Tên công ty <span className="text-red-500">*</span>
             </label>
             <input
               value={form.name}
               onChange={(e) => set('name', e.target.value)}
-              placeholder="VD: C�ng ty TNHH ABC"
+              placeholder="VD: Công ty TNHH ABC"
               className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
           </div>
@@ -227,16 +227,16 @@ function CompanyModal({
           {/* Industry + Size */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-zinc-700 mb-1">Ng�nh ngh?</label>
+              <label className="block text-xs font-medium text-zinc-700 mb-1">Ngành nghề</label>
               <input
                 value={form.industry}
                 onChange={(e) => set('industry', e.target.value)}
-                placeholder="C�ng ngh?, B�n l?..."
+                placeholder="Công nghệ, Bán lẻ..."
                 className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-700 mb-1">Quy m� (nh�n vi�n)</label>
+              <label className="block text-xs font-medium text-zinc-700 mb-1">Quy mô (nhân viên)</label>
               <input
                 value={form.size}
                 onChange={(e) => set('size', e.target.value)}
@@ -258,7 +258,7 @@ function CompanyModal({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-700 mb-1">M� s? thu?</label>
+              <label className="block text-xs font-medium text-zinc-700 mb-1">Mã số thuế</label>
               <input
                 value={form.taxCode}
                 onChange={(e) => set('taxCode', e.target.value)}
@@ -271,7 +271,7 @@ function CompanyModal({
           {/* Phone + Email */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-zinc-700 mb-1">�i?n tho?i</label>
+              <label className="block text-xs font-medium text-zinc-700 mb-1">Điện thoại</label>
               <input
                 value={form.phone}
                 onChange={(e) => set('phone', e.target.value)}
@@ -293,23 +293,23 @@ function CompanyModal({
 
           {/* Address */}
           <div>
-            <label className="block text-xs font-medium text-zinc-700 mb-1">�?a ch?</label>
+            <label className="block text-xs font-medium text-zinc-700 mb-1">Địa chỉ</label>
             <input
               value={form.address}
               onChange={(e) => set('address', e.target.value)}
-              placeholder="123 �u?ng ABC, Qu?n 1, TP.HCM"
+              placeholder="123 Đường ABC, Quận 1, TP.HCM"
               className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-zinc-700 mb-1">M� t?</label>
+            <label className="block text-xs font-medium text-zinc-700 mb-1">Mô tả</label>
             <textarea
               value={form.description}
               onChange={(e) => set('description', e.target.value)}
               rows={3}
-              placeholder="Th�ng tin th�m v? c�ng ty..."
+              placeholder="Thông tin thêm về công ty..."
               className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none"
             />
           </div>
@@ -321,14 +321,14 @@ function CompanyModal({
               onClick={onClose}
               className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition"
             >
-              H?y
+              Hủy
             </button>
             <button
               type="submit"
               disabled={isPending}
               className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60 transition"
             >
-              {isPending ? '�ang luu...' : isEdit ? 'Luu thay d?i' : 'T?o c�ng ty'}
+              {isPending ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo công ty'}
             </button>
           </div>
         </form>
@@ -337,7 +337,7 @@ function CompanyModal({
   );
 }
 
-// --- Slide-over Detail --------------------------------------------------------
+// ─── Slide-over Detail ────────────────────────────────────────────────────────
 
 function CompanySlideOver({
   companyId,
@@ -365,7 +365,7 @@ function CompanySlideOver({
       <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 shrink-0">
-          <h2 className="text-base font-semibold text-zinc-900">Chi ti?t c�ng ty</h2>
+          <h2 className="text-base font-semibold text-zinc-900">Chi tiết công ty</h2>
           <button
             onClick={onClose}
             className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition"
@@ -376,7 +376,7 @@ function CompanySlideOver({
 
         {isLoading && (
           <div className="flex items-center justify-center flex-1 text-zinc-400 text-sm">
-            �ang t?i...
+            Đang tải...
           </div>
         )}
 
@@ -397,7 +397,7 @@ function CompanySlideOver({
                   )}
                   {company.size && (
                     <span className="inline-block mt-1 text-xs bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">
-                      {company.size} nh�n vi�n
+                      {company.size} nhân viên
                     </span>
                   )}
                 </div>
@@ -405,7 +405,7 @@ function CompanySlideOver({
                   onClick={() => onEdit(company)}
                   className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs border border-zinc-200 rounded-lg hover:bg-zinc-50 transition text-zinc-600"
                 >
-                  <Pencil size={12} /> S?a
+                  <Pencil size={12} /> Sửa
                 </button>
               </div>
             </div>
@@ -413,7 +413,7 @@ function CompanySlideOver({
             {/* Contact info */}
             <div className="px-5 py-4 border-b border-gray-50">
               <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-                Th�ng tin li�n h?
+                Thông tin liên hệ
               </h4>
               <div className="space-y-2.5">
                 {company.email && (
@@ -465,7 +465,7 @@ function CompanySlideOver({
             {company.description && (
               <div className="px-5 py-4 border-b border-gray-50">
                 <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                  M� t?
+                  Mô tả
                 </h4>
                 <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-line">
                   {company.description}
@@ -478,11 +478,11 @@ function CompanySlideOver({
               <div className="flex items-center gap-2 mb-3">
                 <Users size={14} className="text-zinc-400" />
                 <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                  Li�n h? ({company.contacts?.length ?? 0})
+                  Liên hệ ({company.contacts?.length ?? 0})
                 </h4>
               </div>
               {(!company.contacts || company.contacts.length === 0) ? (
-                <p className="text-sm text-zinc-400 italic">Chua c� li�n h? n�o.</p>
+                <p className="text-sm text-zinc-400 italic">Chưa có liên hệ nào.</p>
               ) : (
                 <div className="space-y-2">
                   {company.contacts.map((contact) => (
@@ -528,7 +528,7 @@ function CompanySlideOver({
                 </h4>
               </div>
               {(!company.deals || company.deals.length === 0) ? (
-                <p className="text-sm text-zinc-400 italic">Chua c� deal n�o.</p>
+                <p className="text-sm text-zinc-400 italic">Chưa có deal nào.</p>
               ) : (
                 <div className="space-y-2">
                   {company.deals.map((deal) => (
@@ -540,7 +540,7 @@ function CompanySlideOver({
                         <p className="text-sm font-medium text-gray-800 truncate">{deal.title}</p>
                         {deal.closedAt && (
                           <p className="text-xs text-zinc-400 mt-0.5">
-                            D? ki?n: {formatDate(deal.closedAt)}
+                            Dự kiến: {formatDate(deal.closedAt)}
                           </p>
                         )}
                       </div>
@@ -574,14 +574,14 @@ function CompanySlideOver({
 
             {/* Timeline */}
             <div className="px-5 py-4 border-t border-gray-50">
-              <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Ho?t d?ng</h4>
+              <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Hoạt động</h4>
               <EntityTimeline entityType="COMPANY" entityId={company.id} />
             </div>
 
             {/* Meta */}
             <div className="px-5 py-3 border-t border-gray-50">
               <p className="text-xs text-zinc-400">
-                T?o ng�y {formatDate(company.createdAt)} � C?p nh?t {formatDate(company.updatedAt)}
+                Tạo ngày {formatDate(company.createdAt)} · Cập nhật {formatDate(company.updatedAt)}
               </p>
             </div>
           </div>
@@ -591,7 +591,7 @@ function CompanySlideOver({
   );
 }
 
-// --- Main Page ----------------------------------------------------------------
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function CompaniesPage() {
   const queryClient = useQueryClient();
@@ -619,9 +619,9 @@ export default function CompaniesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
-      toast.success('�� x�a c�ng ty');
+      toast.success('Đã xóa công ty');
     },
-    onError: () => toast.error('X�a th?t b?i'),
+    onError: () => toast.error('Xóa thất bại'),
   });
 
   function openCreate() {
@@ -638,7 +638,7 @@ export default function CompaniesPage() {
   function handleDelete(company: Company, e: React.MouseEvent) {
     e.stopPropagation();
     if (
-      window.confirm(`X�a c�ng ty "${company.name}"? H�nh d?ng n�y kh�ng th? ho�n t�c.`)
+      window.confirm(`Xóa công ty "${company.name}"? Hành động này không thể hoàn tác.`)
     ) {
       deleteMutation.mutate(company.id);
       if (slideOverId === company.id) setSlideOverId(null);
@@ -654,14 +654,14 @@ export default function CompaniesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">C�ng ty</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">{meta?.total ?? 0} c�ng ty</p>
+          <h1 className="text-xl font-semibold text-zinc-900">Công ty</h1>
+          <p className="text-sm text-zinc-500 mt-0.5">{meta?.total ?? 0} công ty</p>
         </div>
         <button
           onClick={openCreate}
           className="flex items-center gap-1.5 px-3 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition"
         >
-          <Plus size={14} /> Th�m c�ng ty
+          <Plus size={14} /> Thêm công ty
         </button>
       </div>
 
@@ -675,7 +675,7 @@ export default function CompaniesPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="T�m t�n c�ng ty, ng�nh ngh?..."
+            placeholder="Tìm tên công ty, ngành nghề..."
             className="w-full pl-8 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
@@ -685,13 +685,13 @@ export default function CompaniesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading && (
           <div className="col-span-3 flex items-center justify-center h-32 text-zinc-400 text-sm">
-            �ang t?i...
+            Đang tải...
           </div>
         )}
         {!isLoading && companies.length === 0 && (
           <div className="col-span-3 flex flex-col items-center justify-center h-32 gap-2 text-zinc-400 text-sm">
             <Building2 size={28} className="text-zinc-300" />
-            Chua c� c�ng ty n�o. Nh?n "Th�m c�ng ty" d? b?t d?u.
+            Chưa có công ty nào. Nhấn "Thêm công ty" để bắt đầu.
           </div>
         )}
         {companies.map((company) => (
@@ -700,18 +700,18 @@ export default function CompaniesPage() {
             onClick={() => setSlideOverId(company.id)}
             className="group relative bg-white border border-zinc-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
           >
-            {/* Action buttons � visible on hover */}
+            {/* Action buttons — visible on hover */}
             <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={(e) => openEdit(company, e)}
-                title="Ch?nh s?a"
+                title="Chỉnh sửa"
                 className="p-1.5 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition"
               >
                 <Pencil size={13} />
               </button>
               <button
                 onClick={(e) => handleDelete(company, e)}
-                title="X�a"
+                title="Xóa"
                 className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
               >
                 <Trash2 size={13} />
@@ -738,7 +738,7 @@ export default function CompaniesPage() {
             {company.size && (
               <div className="mb-3">
                 <span className="text-xs bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">
-                  {company.size} nh�n vi�n
+                  {company.size} nhân viên
                 </span>
               </div>
             )}
@@ -765,7 +765,7 @@ export default function CompaniesPage() {
               <div className="flex items-center gap-3 text-xs text-zinc-400 pt-1 border-t border-gray-50 mt-2">
                 <div className="flex items-center gap-1">
                   <Users size={12} />
-                  {company._count?.contacts ?? 0} li�n h?
+                  {company._count?.contacts ?? 0} liên hệ
                 </div>
                 <div className="flex items-center gap-1">
                   <TrendingUp size={12} />
@@ -781,7 +781,7 @@ export default function CompaniesPage() {
       {meta && meta.total > 20 && (
         <div className="flex items-center justify-between px-1">
           <span className="text-xs text-zinc-400">
-            Hi?n th? {(page - 1) * 20 + 1}�{Math.min(page * 20, meta.total)} / {meta.total}
+            Hiển thị {(page - 1) * 20 + 1}–{Math.min(page * 20, meta.total)} / {meta.total}
           </span>
           <div className="flex items-center gap-1">
             <button

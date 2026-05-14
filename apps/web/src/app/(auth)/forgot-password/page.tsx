@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 
 const schema = z.object({
-  email: z.string().email('Email kh�ng h?p l?'),
+  email: z.string().email('Email không hợp lệ'),
 });
 
 type ForgotForm = z.infer<typeof schema>;
@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
       setSentEmail(data.email);
       setSent(true);
     } catch (err: any) {
-      toast.error(err.response?.data?.message ?? 'C� l?i x?y ra, vui l�ng th? l?i');
+      toast.error(err.response?.data?.message ?? 'Có lỗi xảy ra, vui lòng thử lại');
     }
   };
 
@@ -53,9 +53,9 @@ export default function ForgotPasswordPage() {
           {!sent ? (
             <>
               <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Qu�n m?t kh?u?</h2>
+                <h2 className="text-xl font-semibold text-gray-900">Quên mật khẩu?</h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  Nh?p email c?a b?n, ch�ng t�i s? g?i hu?ng d?n d?t l?i m?t kh?u.
+                  Nhập email của bạn, chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu.
                 </p>
               </div>
 
@@ -82,7 +82,7 @@ export default function ForgotPasswordPage() {
                   className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm transition flex items-center justify-center gap-2"
                 >
                   {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                  {isSubmitting ? '�ang g?i...' : 'G?i hu?ng d?n'}
+                  {isSubmitting ? 'Đang gửi...' : 'Gửi hướng dẫn'}
                 </button>
               </form>
             </>
@@ -92,26 +92,26 @@ export default function ForgotPasswordPage() {
               <div className="inline-flex items-center justify-center w-14 h-14 bg-green-100 rounded-full mb-4">
                 <Mail size={28} className="text-green-600" />
               </div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Ki?m tra email c?a b?n</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Kiểm tra email của bạn</h2>
               <p className="text-sm text-gray-500 mb-1">
-                Ch�ng t�i d� g?i hu?ng d?n d?t l?i m?t kh?u t?i:
+                Chúng tôi đã gửi hướng dẫn đặt lại mật khẩu tới:
               </p>
               <p className="text-sm font-medium text-indigo-600 mb-4">{sentEmail}</p>
               <p className="text-xs text-gray-400 mb-6">
-                Kh�ng th?y email? Ki?m tra thu m?c spam ho?c th? l?i sau v�i ph�t.
+                Không thấy email? Kiểm tra thư mục spam hoặc thử lại sau vài phút.
               </p>
               <button
                 onClick={() => setSent(false)}
                 className="text-sm text-indigo-600 hover:underline"
               >
-                G?i l?i
+                Gửi lại
               </button>
 
               {process.env.NODE_ENV === 'development' && (
                 <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200 text-left">
                   <p className="text-xs text-amber-700 font-medium">Dev mode</p>
                   <p className="text-xs text-amber-600 mt-0.5">
-                    Xem reset URL trong console c?a API server (apps/api terminal)
+                    Xem reset URL trong console của API server (apps/api terminal)
                   </p>
                 </div>
               )}
@@ -124,7 +124,7 @@ export default function ForgotPasswordPage() {
               className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700"
             >
               <ArrowLeft size={14} />
-              Quay l?i dang nh?p
+              Quay lại đăng nhập
             </Link>
           </div>
         </div>
