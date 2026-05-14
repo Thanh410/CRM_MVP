@@ -7,7 +7,9 @@ import { LoggerModule } from 'nestjs-pino';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 
 import configuration from './config/configuration';
+import { validateConfig } from './config/validate-config';
 import { PrismaModule } from './prisma/prisma.module';
+import { CommonModule } from './common/common.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TraceIdInterceptor } from './common/interceptors/trace-id.interceptor';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -48,6 +50,7 @@ import { HealthController } from './health.controller';
       isGlobal: true,
       load: [configuration],
       envFilePath: ['.env', '.env.local'],
+      validate: validateConfig,
     }),
 
     // ── Events & Scheduling ────────────────────────────────
@@ -79,6 +82,7 @@ import { HealthController } from './health.controller';
 
     // ── Core Infrastructure ────────────────────────────────
     PrismaModule,
+    CommonModule,
 
     // ── Feature Modules ────────────────────────────────────
     AuthModule,

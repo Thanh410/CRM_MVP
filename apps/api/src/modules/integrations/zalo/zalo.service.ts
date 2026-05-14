@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { EncryptionService } from '../../../common/services/encryption.service';
 import { ConversationsService } from '../../conversations/conversations.service';
 import * as crypto from 'crypto';
 
@@ -11,21 +12,34 @@ export class ZaloService {
   constructor(
     private config: ConfigService,
     private prisma: PrismaService,
+    private encryption: EncryptionService,
     private conversationsService: ConversationsService,
   ) {}
 
   verifyToken(token: string): boolean {
-    return token === this.config.get('ZALO_VERIFY_TOKEN');
+    return token === this.config.get('zalo.webhookSecret') || token === this.config.get('ZALO_VERIFY_TOKEN');
   }
 
-  private verifySignature(payload: string, signature: string): boolean {
-    const secret = this.config.get<string>('ZALO_APP_SECRET') ?? '';
-    const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
-    return expected === signature;
+  /**
+   * Verify Zalo webhook HMAC-SHA256 signature.
+   * Uses timing-safe comparison to prevent timing attacks.
+   */
+  verifySignature(rawBody: string, signature: string | undefined): boolean {
+    if (!signature) return false;
+    const secret = this.config.get<string>('zalo.appSecret') ?? this.config.get<string>('ZALO_APP_SECRET') ?? '';
+    if (!secret) {
+      this.logger.error('ZALO_APP_SECRET not configured — cannot verify webhook');
+      return false;
+    }
+    const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+    try {
+      return crypto.timingSafeEqual(Buffer.from(signature, 'utf8'), Buffer.from(expected, 'utf8'));
+    } catch {
+      return false;
+    }
   }
 
-  async handleInbound(body: any, signature: string) {
-    // 1. Log raw webhook
+  async handleInbound(body: any) {
     const channelAccount = await this.prisma.channelAccount.findFirst({
       where: { channel: 'ZALO', isActive: true },
     });
@@ -44,7 +58,6 @@ export class ZaloService {
       },
     });
 
-    // 2. Process message events
     if (body.event_name === 'user_send_text' && body.message) {
       const senderId = body.sender?.id ?? body.user_id_by_app;
       const msgId = body.message?.msg_id ?? `zalo_${Date.now()}`;
@@ -60,7 +73,6 @@ export class ZaloService {
         senderExternalId: senderId,
       });
 
-      // Mark webhook processed
       await this.prisma.channelWebhook.updateMany({
         where: { channelAccountId: channelAccount.id, processed: false },
         data: { processed: true },
@@ -74,10 +86,14 @@ export class ZaloService {
     const account = await this.prisma.channelAccount.findUnique({ where: { id: channelAccountId } });
     if (!account) return;
 
-    const creds = account.credentialsEnc as any;
+    // Decrypt credentials (supports plaintext fallback for legacy data)
+    const creds = this.encryption.decryptOrPassthrough<{ accessToken?: string }>(account.credentialsEnc);
     const accessToken = creds?.accessToken;
+    if (!accessToken) {
+      this.logger.error(`Zalo channel ${channelAccountId} has no accessToken`);
+      return false;
+    }
 
-    // Call Zalo OA API
     const res = await fetch('https://openapi.zalo.me/v3.0/oa/message/cs', {
       method: 'POST',
       headers: {

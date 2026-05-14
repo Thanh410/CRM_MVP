@@ -1,8 +1,12 @@
-import { Controller, Get, Post, Query, Body, Headers, Res, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Query, Body, Headers, Req, Res, HttpCode, ForbiddenException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { ZaloService } from './zalo.service';
 import { Public } from '../../../common/decorators/public.decorator';
+
+interface RawBodyRequest extends Request {
+  rawBody?: Buffer;
+}
 
 @ApiTags('integrations/zalo')
 @Public()
@@ -24,13 +28,20 @@ export class ZaloController {
     return res.status(403).send('Forbidden');
   }
 
-  /** Zalo OA inbound webhook */
+  /** Zalo OA inbound webhook — signature verified */
   @Post('webhook')
   @HttpCode(200)
-  handleWebhook(
+  async handleWebhook(
     @Body() body: any,
     @Headers('x-zevent-signature') signature: string,
+    @Req() req: RawBodyRequest,
   ) {
-    return this.zaloService.handleInbound(body, signature);
+    const rawBody = req.rawBody?.toString('utf8') ?? JSON.stringify(body);
+
+    if (!this.zaloService.verifySignature(rawBody, signature)) {
+      throw new ForbiddenException('Invalid Zalo webhook signature');
+    }
+
+    return this.zaloService.handleInbound(body);
   }
 }

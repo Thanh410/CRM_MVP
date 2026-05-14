@@ -1,8 +1,12 @@
-import { Controller, Get, Post, Query, Body, Res, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Query, Body, Headers, Req, Res, HttpCode, ForbiddenException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { MessengerService } from './messenger.service';
 import { Public } from '../../../common/decorators/public.decorator';
+
+interface RawBodyRequest extends Request {
+  rawBody?: Buffer;
+}
 
 @ApiTags('integrations/messenger')
 @Public()
@@ -24,10 +28,20 @@ export class MessengerController {
     return res.status(403).send('Forbidden');
   }
 
-  /** Meta inbound webhook */
+  /** Meta inbound webhook — X-Hub-Signature-256 verified */
   @Post('webhook')
   @HttpCode(200)
-  handleWebhook(@Body() body: any) {
+  async handleWebhook(
+    @Body() body: any,
+    @Headers('x-hub-signature-256') signature: string,
+    @Req() req: RawBodyRequest,
+  ) {
+    const rawBody = req.rawBody?.toString('utf8') ?? JSON.stringify(body);
+
+    if (!this.messengerService.verifySignature(rawBody, signature)) {
+      throw new ForbiddenException('Invalid Messenger webhook signature');
+    }
+
     return this.messengerService.handleInbound(body);
   }
 }

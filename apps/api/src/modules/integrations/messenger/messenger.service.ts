@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { EncryptionService } from '../../../common/services/encryption.service';
 import { ConversationsService } from '../../conversations/conversations.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class MessengerService {
@@ -10,11 +12,33 @@ export class MessengerService {
   constructor(
     private config: ConfigService,
     private prisma: PrismaService,
+    private encryption: EncryptionService,
     private conversationsService: ConversationsService,
   ) {}
 
   verifyToken(token: string): boolean {
-    return token === this.config.get('META_VERIFY_TOKEN');
+    return token === this.config.get('meta.verifyToken') || token === this.config.get('META_VERIFY_TOKEN');
+  }
+
+  /**
+   * Verify Meta webhook X-Hub-Signature-256 (HMAC-SHA256 of raw body).
+   * Header format: "sha256=<hex>"
+   * Uses timing-safe comparison to prevent timing attacks.
+   */
+  verifySignature(rawBody: string, signature: string | undefined): boolean {
+    if (!signature || !signature.startsWith('sha256=')) return false;
+    const secret = this.config.get<string>('meta.appSecret') ?? this.config.get<string>('META_APP_SECRET') ?? '';
+    if (!secret) {
+      this.logger.error('META_APP_SECRET not configured — cannot verify webhook');
+      return false;
+    }
+    const provided = signature.slice('sha256='.length);
+    const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+    try {
+      return crypto.timingSafeEqual(Buffer.from(provided, 'utf8'), Buffer.from(expected, 'utf8'));
+    } catch {
+      return false;
+    }
   }
 
   async handleInbound(body: any) {
@@ -70,8 +94,13 @@ export class MessengerService {
     const account = await this.prisma.channelAccount.findUnique({ where: { id: channelAccountId } });
     if (!account) return;
 
-    const creds = account.credentialsEnc as any;
+    // Decrypt credentials (supports plaintext fallback for legacy data)
+    const creds = this.encryption.decryptOrPassthrough<{ pageAccessToken?: string }>(account.credentialsEnc);
     const pageAccessToken = creds?.pageAccessToken;
+    if (!pageAccessToken) {
+      this.logger.error(`Messenger channel ${channelAccountId} has no pageAccessToken`);
+      return false;
+    }
 
     const res = await fetch(
       `https://graph.facebook.com/v19.0/me/messages?access_token=${pageAccessToken}`,
