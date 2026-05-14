@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Check, CheckCheck, X } from 'lucide-react';
+import { Bell, Check, CheckCheck, X, Search } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { getInitials, formatDate } from '@/lib/utils';
 import { useNotifications, useMarkRead, useMarkAllRead, useDeleteNotification } from '@/hooks/use-notifications';
-import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export function Header() {
@@ -20,9 +19,8 @@ export function Header() {
   const markAllRead = useMarkAllRead();
   const deleteNotification = useDeleteNotification();
 
-  const unread = notifications.filter((n: any) => !n.read).length;
+  const unread = notifications.filter((n: { read: boolean }) => !n.read).length;
 
-  // Close on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -32,11 +30,11 @@ export function Header() {
   }, []);
 
   return (
-    <header className="h-14 bg-white border-b border-gray-200 flex items-center px-6 gap-4 shrink-0">
+    <header className="h-14 bg-white border-b border-zinc-200 flex items-center px-6 gap-4 shrink-0">
       {/* Search */}
       <div className="flex-1 max-w-md">
         <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
           <input
             type="text"
             value={searchQuery}
@@ -47,35 +45,34 @@ export function Header() {
                 setSearchQuery('');
               }
             }}
-            placeholder="Tìm kiếm lead, liên hệ... (Enter)"
-            className="w-full pl-9 pr-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            placeholder="Tìm kiếm... (Enter)"
+            className="w-full pl-9 pr-3 py-1.5 text-sm bg-zinc-50 border border-zinc-200 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 placeholder:text-zinc-400 transition"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-3 ml-auto">
-        {/* Notifications Bell */}
+      <div className="flex items-center gap-2 ml-auto">
+        {/* Notifications */}
         <div className="relative" ref={ref}>
           <button
             onClick={() => setOpen(!open)}
-            className="relative p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+            className="relative p-2 rounded-md text-zinc-500 hover:bg-zinc-100 transition-colors"
           >
-            <Bell size={18} />
+            <Bell size={17} />
             {unread > 0 && (
-              <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold px-0.5">
+              <span className="absolute top-1 right-1 min-w-[14px] h-3.5 bg-zinc-900 rounded-full flex items-center justify-center text-[9px] text-white font-bold px-0.5">
                 {unread > 9 ? '9+' : unread}
               </span>
             )}
           </button>
 
           {open && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-zinc-200 z-50 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-gray-900">Thông báo</span>
+                  <span className="text-sm font-semibold text-zinc-900">Thông báo</span>
                   {unread > 0 && (
-                    <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-medium">
+                    <span className="text-[10px] bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded-full font-medium">
                       {unread} mới
                     </span>
                   )}
@@ -83,19 +80,18 @@ export function Header() {
                 {unread > 0 && (
                   <button
                     onClick={() => markAllRead.mutate()}
-                    className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700"
+                    className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-900 transition-colors"
                   >
                     <CheckCheck size={12} />
-                    Đánh dấu tất cả đã đọc
+                    Đánh dấu tất cả
                   </button>
                 )}
               </div>
 
-              {/* List */}
-              <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+              <div className="max-h-80 overflow-y-auto divide-y divide-zinc-50">
                 {notifications.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-10 text-gray-400">
-                    <Bell size={28} className="mb-2 opacity-30" />
+                  <div className="flex flex-col items-center justify-center py-10 text-zinc-400">
+                    <Bell size={26} className="mb-2 opacity-30" />
                     <p className="text-sm">Không có thông báo</p>
                   </div>
                 ) : (
@@ -103,33 +99,30 @@ export function Header() {
                     <div
                       key={n.id}
                       onClick={() => !n.read && markRead.mutate(n.id)}
-                      className={`group px-4 py-3 flex items-start gap-3 cursor-pointer hover:bg-gray-50 transition-colors ${!n.read ? 'bg-indigo-50/40' : ''}`}
+                      className={`group px-4 py-3 flex items-start gap-3 cursor-pointer hover:bg-zinc-50 transition-colors ${!n.read ? 'bg-zinc-50/60' : ''}`}
                     >
-                      {!n.read && (
-                        <span className="mt-1.5 w-2 h-2 bg-indigo-500 rounded-full shrink-0" />
-                      )}
-                      {n.read && <span className="mt-1.5 w-2 h-2 shrink-0" />}
+                      <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${!n.read ? 'bg-zinc-900' : 'bg-transparent'}`} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 leading-snug">{n.title}</p>
-                        {n.body && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.body}</p>}
-                        <p className="text-xs text-gray-400 mt-1">{formatDate(n.createdAt)}</p>
+                        <p className="text-sm font-medium text-zinc-900 leading-snug">{n.title}</p>
+                        {n.body && <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2">{n.body}</p>}
+                        <p className="text-xs text-zinc-400 mt-1">{formatDate(n.createdAt)}</p>
                       </div>
                       <div className="flex items-center gap-0.5 shrink-0">
                         {!n.read && (
                           <button
                             onClick={(e) => { e.stopPropagation(); markRead.mutate(n.id); }}
-                            className="p-0.5 text-gray-400 hover:text-indigo-600"
+                            className="p-0.5 text-zinc-400 hover:text-zinc-900 transition-colors"
                             title="Đánh dấu đã đọc"
                           >
-                            <Check size={14} />
+                            <Check size={13} />
                           </button>
                         )}
                         <button
                           onClick={(e) => { e.stopPropagation(); deleteNotification.mutate(n.id); }}
-                          className="p-0.5 text-gray-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity"
+                          className="p-0.5 text-zinc-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity"
                           title="Xóa thông báo"
                         >
-                          <X size={13} />
+                          <X size={12} />
                         </button>
                       </div>
                     </div>
@@ -143,18 +136,18 @@ export function Header() {
         {/* Avatar */}
         {user && (
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+            <div className="w-7 h-7 bg-zinc-900 rounded-full flex items-center justify-center ring-2 ring-zinc-900/10">
               {user.avatar ? (
                 <img src={user.avatar} alt={user.fullName} className="w-full h-full rounded-full object-cover" />
               ) : (
-                <span className="text-xs font-semibold text-indigo-700">
+                <span className="text-[11px] font-semibold text-white">
                   {getInitials(user.fullName)}
                 </span>
               )}
             </div>
             <div className="hidden sm:block">
-              <p className="text-xs font-medium text-gray-700 leading-none">{user.fullName}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{user.roles[0]}</p>
+              <p className="text-xs font-medium text-zinc-800 leading-none">{user.fullName}</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">{user.roles?.[0]}</p>
             </div>
           </div>
         )}

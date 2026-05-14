@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -14,6 +15,8 @@ import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -213,9 +216,9 @@ export class AuthService {
       },
     );
 
-    // In production, send via email. In dev, log to console.
+    // TODO: gửi email qua mail service khi tích hợp production
     const resetUrl = `${this.configService.get('FRONTEND_URL', 'http://localhost:3001')}/reset-password?token=${resetToken}`;
-    console.log(`\n[PASSWORD RESET] ${user.email}\nURL: ${resetUrl}\nToken: ${resetToken}\n`);
+    this.logger.debug(`[PASSWORD RESET] Gửi link đặt lại mật khẩu tới ${user.email}: ${resetUrl}`);
 
     return { message: 'Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu.' };
   }
