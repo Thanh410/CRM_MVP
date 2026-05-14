@@ -18,9 +18,17 @@ const SOURCES = ['facebook', 'zalo', 'website', 'referral', 'cold_call'];
 function CreateLeadModal({ onClose }: { onClose: () => void }) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const createLead = useCreateLead();
+  const { data: users } = useQuery({
+    queryKey: ['users', 'select'],
+    queryFn: async () => {
+      const res = await api.get('/users?limit=50');
+      return res.data?.data ?? res.data ?? [];
+    },
+  });
   const [form, setForm] = useState({
     fullName: '', email: '', phone: '',
     status: 'NEW', source: '', notes: '',
+    assignedTo: '',
   });
   const set = (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -30,12 +38,12 @@ function CreateLeadModal({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     if (!form.fullName.trim()) return;
     createLead.mutate(
-      { ...form, email: form.email || undefined, phone: form.phone || undefined, source: form.source || undefined, notes: form.notes || undefined },
+      { ...form, email: form.email || undefined, phone: form.phone || undefined, source: form.source || undefined, notes: form.notes || undefined, assignedTo: form.assignedTo || undefined },
       { onSuccess: onClose },
     );
   };
 
-  const inputCls = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const inputCls = 'w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900';
   const labelCls = 'block text-xs font-medium text-gray-600 mb-1';
 
   return (
@@ -44,7 +52,7 @@ function CreateLeadModal({ onClose }: { onClose: () => void }) {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h2 className="text-base font-semibold text-gray-900">Thêm lead mới</h2>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-zinc-100">
             <X size={16} />
           </button>
         </div>
@@ -81,12 +89,21 @@ function CreateLeadModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
           <div>
+            <label className={labelCls}>Phụ trách</label>
+            <select className={inputCls} value={form.assignedTo} onChange={set('assignedTo')}>
+              <option value="">-- Chưa gán --</option>
+              {(users ?? []).map((u: any) => (
+                <option key={u.id} value={u.id}>{u.fullName}</option>
+              ))}
+            </select>
+          </div>
+          <div>
             <label className={labelCls}>Ghi chú</label>
             <textarea className={`${inputCls} resize-none`} rows={3} value={form.notes} onChange={set('notes')} placeholder="Ghi chú thêm..." />
           </div>
           <div className="flex justify-end gap-2 pt-1 border-t border-gray-100">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">Hủy</button>
-            <button type="submit" disabled={createLead.isPending} className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-60">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Hủy</button>
+            <button type="submit" disabled={createLead.isPending} className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60">
               {createLead.isPending ? 'Đang lưu...' : 'Tạo lead'}
             </button>
           </div>
@@ -166,21 +183,21 @@ export default function LeadsPage() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={importLeads.isPending}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-zinc-50 transition disabled:opacity-50"
           >
             <Upload size={14} /> {importLeads.isPending ? 'Đang nhập...' : 'Nhập CSV'}
           </button>
-          <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+          <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-zinc-50 transition">
             <Download size={14} /> Export CSV
           </button>
-          <button onClick={() => setCreateOpen(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+          <button onClick={() => setCreateOpen(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition">
             <Plus size={14} /> Thêm lead
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <div className="bg-white rounded-xl border border-zinc-200 p-4">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -188,20 +205,20 @@ export default function LeadsPage() {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Tìm tên, email, số điện thoại..."
-              className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-8 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
           </div>
           <select
             value={status}
             onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white"
           >
             <option value="">Tất cả trạng thái</option>
             {STATUSES.map((s) => (
               <option key={s} value={s}>{LEAD_STATUS_LABELS[s]}</option>
             ))}
           </select>
-          <button onClick={() => refetch()} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition">
+          <button onClick={() => refetch()} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-zinc-100 rounded-lg transition">
             <RefreshCw size={14} />
           </button>
         </div>
@@ -209,14 +226,14 @@ export default function LeadsPage() {
 
       <div className="flex gap-5 items-start">
         {/* Table */}
-        <div className={`bg-white rounded-xl border border-gray-200 overflow-hidden transition-all ${selectedLead ? 'flex-1 min-w-0' : 'w-full'}`}>
+        <div className={`bg-white rounded-xl border border-zinc-200 overflow-hidden transition-all ${selectedLead ? 'flex-1 min-w-0' : 'w-full'}`}>
           {isLoading ? (
             <div className="flex items-center justify-center h-48 text-gray-400 text-sm">Đang tải...</div>
           ) : (
             <>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/50">
+                  <tr className="border-b border-gray-100 bg-zinc-50/50">
                     <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Họ tên</th>
                     {!selectedLead && <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Liên hệ</th>}
                     <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Trạng thái</th>
@@ -238,12 +255,12 @@ export default function LeadsPage() {
                     <tr
                       key={lead.id}
                       onClick={() => setSelectedLead(selectedLead?.id === lead.id ? null : lead)}
-                      className={`hover:bg-gray-50/50 transition-colors cursor-pointer ${selectedLead?.id === lead.id ? 'bg-indigo-50/50 border-l-2 border-l-indigo-500' : ''}`}
+                      className={`hover:bg-zinc-50 transition-colors cursor-pointer ${selectedLead?.id === lead.id ? 'bg-zinc-50 border-l-2 border-l-zinc-900' : ''}`}
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center shrink-0">
-                            <span className="text-xs font-semibold text-indigo-700">{getInitials(lead.fullName)}</span>
+                          <div className="w-7 h-7 bg-zinc-100 rounded-full flex items-center justify-center shrink-0">
+                            <span className="text-xs font-semibold text-zinc-700">{getInitials(lead.fullName)}</span>
                           </div>
                           <span className="font-medium text-gray-900 text-sm">{lead.fullName}</span>
                         </div>
@@ -301,12 +318,12 @@ export default function LeadsPage() {
                   </span>
                   <div className="flex items-center gap-1">
                     <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-                      className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition">
+                      className="px-2.5 py-1.5 text-xs border border-zinc-200 rounded-lg disabled:opacity-40 hover:bg-zinc-50 transition">
                       Trước
                     </button>
                     <span className="px-3 py-1.5 text-xs text-gray-600">{page} / {data.meta.totalPages}</span>
                     <button onClick={() => setPage((p) => Math.min(data.meta.totalPages, p + 1))} disabled={page >= data.meta.totalPages}
-                      className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition">
+                      className="px-2.5 py-1.5 text-xs border border-zinc-200 rounded-lg disabled:opacity-40 hover:bg-zinc-50 transition">
                       Sau
                     </button>
                   </div>
@@ -318,12 +335,12 @@ export default function LeadsPage() {
 
         {/* Detail Panel */}
         {selectedLead && (
-          <div className="w-96 shrink-0 bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="w-96 shrink-0 bg-white rounded-xl border border-zinc-200 overflow-hidden">
             {/* Panel Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center shrink-0">
-                  <span className="text-xs font-semibold text-indigo-700">{getInitials(selectedLead.fullName)}</span>
+                <div className="w-8 h-8 bg-zinc-100 rounded-full flex items-center justify-center shrink-0">
+                  <span className="text-xs font-semibold text-zinc-700">{getInitials(selectedLead.fullName)}</span>
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">{selectedLead.fullName}</p>
@@ -345,7 +362,7 @@ export default function LeadsPage() {
               <div className="flex items-center gap-2 pt-1">
                 <span className="text-gray-400">👤 Phụ trách:</span>
                 <select
-                  className="flex-1 border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-indigo-500 bg-white"
+                  className="flex-1 border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-zinc-900 bg-white"
                   value={selectedLead.assignee?.id ?? ''}
                   onChange={(e) => {
                     if (!e.target.value) return;
@@ -354,6 +371,9 @@ export default function LeadsPage() {
                       {
                         onSuccess: (updated) => {
                           setSelectedLead((prev: any) => ({ ...prev, assignee: updated?.assignee ?? prev.assignee }));
+                        },
+                        onError: () => {
+                          toast.error('Bạn không có quyền gán phụ trách. Vui lòng liên hệ quản lý.');
                         },
                       }
                     );

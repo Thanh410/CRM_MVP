@@ -21,15 +21,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [mounted, isAuthenticated, router]);
 
-  if (!mounted) return <div className="flex h-screen bg-gray-50" />;
+  if (!mounted) return <div className="flex h-screen bg-white" />;
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-white overflow-hidden">
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 bg-zinc-50/50">
           {children}
         </main>
       </div>

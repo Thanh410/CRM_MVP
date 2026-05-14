@@ -44,8 +44,6 @@ export default function DashboardPage() {
       label: "Khách hàng tiềm năng",
       value: dash?.leads?.total ?? 0,
       icon: Users,
-      color: "text-indigo-600",
-      bg: "bg-indigo-50",
     },
     {
       label: "Cơ hội đang mở",
@@ -53,22 +51,16 @@ export default function DashboardPage() {
         dash?.deals?.byStage?.reduce((s: number, d: any) => s + d.count, 0) ??
         0,
       icon: TrendingUp,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
     },
     {
       label: "Nhiệm vụ đang mở",
       value: dash?.tasks?.open ?? 0,
       icon: CheckSquare,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
     },
     {
       label: "Hội thoại đang mở",
       value: dash?.conversations?.open ?? 0,
       icon: MessageCircle,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
     },
   ];
 
@@ -85,8 +77,8 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-gray-900">Tổng quan</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <h1 className="text-xl font-semibold text-zinc-900">Tổng quan</h1>
+        <p className="text-sm text-zinc-500 mt-0.5">
           Dữ liệu thời gian thực từ hệ thống CRM
         </p>
       </div>
@@ -96,34 +88,32 @@ export default function DashboardPage() {
         {stats.map((s) => (
           <div
             key={s.label}
-            className="bg-white rounded-xl border border-gray-200 p-5"
+            className="bg-white rounded-xl border border-zinc-200 p-5 shadow-sm"
           >
-            <div className={`inline-flex p-2 rounded-lg ${s.bg} mb-3`}>
-              <s.icon size={18} className={s.color} />
-            </div>
-            <p className="text-3xl font-bold text-gray-900">
+            <s.icon size={16} className="text-zinc-400 mb-3" />
+            <p className="text-3xl font-bold text-zinc-900">
               {isLoading ? "—" : s.value}
             </p>
-            <p className="text-sm text-gray-500 mt-1">{s.label}</p>
+            <p className="text-sm text-zinc-500 mt-1">{s.label}</p>
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sales Funnel */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-white rounded-xl border border-zinc-200 p-5">
           <div className="flex items-center gap-2 mb-4">
             <Target size={16} className="text-indigo-600" />
-            <h2 className="text-sm font-semibold text-gray-900">
+            <h2 className="text-sm font-semibold text-zinc-900">
               Phễu bán hàng
             </h2>
-            <span className="ml-auto text-xs text-gray-400">
+            <span className="ml-auto text-xs text-zinc-400">
               Tổng: {formatCurrency(totalDealValue)}
             </span>
           </div>
           <div className="space-y-3">
             {funnel.length === 0 && !isLoading && (
-              <p className="text-sm text-gray-400 text-center py-6">
+              <p className="text-sm text-zinc-400 text-center py-6">
                 Chưa có dữ liệu
               </p>
             )}
@@ -133,12 +123,12 @@ export default function DashboardPage() {
                   <span className="font-medium text-gray-700">
                     {stage.stage.name}
                   </span>
-                  <span className="text-gray-500">
+                  <span className="text-zinc-500">
                     {stage.count} deal ·{" "}
                     {formatCurrency(parseFloat(stage.totalValue ?? "0"))}
                   </span>
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
@@ -153,16 +143,16 @@ export default function DashboardPage() {
         </div>
 
         {/* Leads by Source */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-white rounded-xl border border-zinc-200 p-5">
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 size={16} className="text-emerald-600" />
-            <h2 className="text-sm font-semibold text-gray-900">
+            <h2 className="text-sm font-semibold text-zinc-900">
               Lead theo nguồn
             </h2>
           </div>
           <div className="space-y-3">
             {bySource.length === 0 && !isLoading && (
-              <p className="text-sm text-gray-400 text-center py-6">
+              <p className="text-sm text-zinc-400 text-center py-6">
                 Chưa có dữ liệu
               </p>
             )}
@@ -187,9 +177,9 @@ export default function DashboardPage() {
                       <span className="font-medium text-gray-700">
                         {sourceLabels[s.source] ?? s.source ?? "Không rõ"}
                       </span>
-                      <span className="text-gray-500">{count} lead</span>
+                      <span className="text-zinc-500">{count} lead</span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-emerald-500 rounded-full transition-all duration-500"
                         style={{ width: `${(count / maxCount) * 100}%` }}
@@ -205,8 +195,8 @@ export default function DashboardPage() {
 
       {/* Leads breakdown */}
       {dash?.leads?.byStatus && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-xl border border-zinc-200 p-5">
+          <h2 className="text-sm font-semibold text-zinc-900 mb-4">
             Trạng thái Lead
           </h2>
           <div className="flex flex-wrap gap-3">
@@ -243,15 +233,15 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Activities Timeline chart */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-white rounded-xl border border-zinc-200 p-5">
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 size={16} className="text-amber-600" />
-            <h2 className="text-sm font-semibold text-gray-900">
+            <h2 className="text-sm font-semibold text-zinc-900">
               Hoạt động theo ngày (7 ngày)
             </h2>
           </div>
           {activitiesTimeline.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">
+            <p className="text-sm text-zinc-400 text-center py-6">
               Chưa có dữ liệu
             </p>
           ) : (
@@ -293,14 +283,14 @@ export default function DashboardPage() {
                   return (
                     <div key={d.date}>
                       <div className="flex items-center justify-between text-xs mb-0.5">
-                        <span className="text-gray-500 w-20 shrink-0">
+                        <span className="text-zinc-500 w-20 shrink-0">
                           {new Date(d.date).toLocaleDateString("vi-VN", {
                             weekday: "short",
                             month: "numeric",
                             day: "numeric",
                           })}
                         </span>
-                        <div className="flex-1 mx-2 h-4 bg-gray-100 rounded overflow-hidden flex">
+                        <div className="flex-1 mx-2 h-4 bg-zinc-100 rounded overflow-hidden flex">
                           {Object.entries(byType).map(
                             ([type, count]: [string, any]) => (
                               <div
@@ -314,7 +304,7 @@ export default function DashboardPage() {
                             ),
                           )}
                         </div>
-                        <span className="text-gray-500 w-6 text-right">
+                        <span className="text-zinc-500 w-6 text-right">
                           {(total as number).toLocaleString()}
                         </span>
                       </div>
@@ -322,7 +312,7 @@ export default function DashboardPage() {
                   );
                 });
               })()}
-              <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-gray-100">
+              <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-zinc-100">
                 {[
                   ["CALL", "Gọi", "bg-blue-400"],
                   ["EMAIL", "Email", "bg-violet-400"],
@@ -332,7 +322,7 @@ export default function DashboardPage() {
                 ].map(([, label, cls]) => (
                   <div
                     key={label}
-                    className="flex items-center gap-1 text-xs text-gray-500"
+                    className="flex items-center gap-1 text-xs text-zinc-500"
                   >
                     <div className={`w-2.5 h-2.5 rounded-sm ${cls}`} />
                     {label}
@@ -344,15 +334,15 @@ export default function DashboardPage() {
         </div>
 
         {/* Campaign Stats chart */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-white rounded-xl border border-zinc-200 p-5">
           <div className="flex items-center gap-2 mb-4">
             <Target size={16} className="text-purple-600" />
-            <h2 className="text-sm font-semibold text-gray-900">
+            <h2 className="text-sm font-semibold text-zinc-900">
               Thống kê chiến dịch
             </h2>
           </div>
           {campaignStats.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">
+            <p className="text-sm text-zinc-400 text-center py-6">
               Chưa có dữ liệu
             </p>
           ) : (
@@ -387,10 +377,10 @@ export default function DashboardPage() {
                     <div className="space-y-1">
                       {bars.map(({ label, value, color, max }) => (
                         <div key={label} className="flex items-center gap-2">
-                          <span className="text-xs text-gray-400 w-14 shrink-0">
+                          <span className="text-xs text-zinc-400 w-14 shrink-0">
                             {label}
                           </span>
-                          <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="flex-1 h-3 bg-zinc-100 rounded-full overflow-hidden">
                             <div
                               className={`h-full ${color} rounded-full transition-all`}
                               style={{ width: `${(value / max) * 100}%` }}

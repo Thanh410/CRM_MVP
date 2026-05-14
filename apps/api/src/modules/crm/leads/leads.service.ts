@@ -6,6 +6,7 @@ import { Readable } from 'stream';
 import { stringify } from 'csv-stringify';
 import { parse } from 'csv-parse';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { NotificationsService } from '../../notifications/notifications.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { QueryLeadDto } from './dto/query-lead.dto';
@@ -24,6 +25,7 @@ export class LeadsService {
   constructor(
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
+    private notificationsService: NotificationsService,
   ) {}
 
   async create(orgId: string, dto: CreateLeadDto, createdBy?: string) {
@@ -110,11 +112,31 @@ export class LeadsService {
     const user = await this.prisma.user.findFirst({ where: { id: assignedTo, orgId } });
     if (!user) throw new BadRequestException('Assignee not found in organization');
 
-    return this.prisma.lead.update({
+    const lead = await this.prisma.lead.update({
       where: { id },
       data: { assignedTo, updatedBy: actorId },
       select: LEAD_SELECT,
     });
+
+    // Gửi thông báo tiếng Việt cho người được gán (không gửi nếu tự gán cho mình)
+    if (assignedTo !== actorId) {
+      try {
+        await this.notificationsService.create({
+          orgId,
+          userId: assignedTo,
+          type: 'LEAD_ASSIGNED',
+          title: 'Bạn được gán lead mới',
+          body: `Lead "${lead.fullName}" vừa được gán cho bạn.`,
+          entityType: 'LEAD',
+          entityId: id,
+        });
+      } catch (err) {
+        // Log lỗi nhưng không break flow chính
+        console.error('[LeadsService] Failed to send notification:', err);
+      }
+    }
+
+    return lead;
   }
 
   async convert(orgId: string, id: string, actorId?: string) {

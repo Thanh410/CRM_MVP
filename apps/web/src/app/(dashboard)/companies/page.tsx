@@ -90,7 +90,7 @@ const EMPTY_FORM: FormState = {
 };
 
 const DEAL_STAGE_COLORS: Record<string, string> = {
-  LEAD: 'bg-gray-100 text-gray-600',
+  LEAD: 'bg-zinc-100 text-zinc-600',
   QUALIFIED: 'bg-blue-100 text-blue-700',
   PROPOSAL: 'bg-yellow-100 text-yellow-700',
   NEGOTIATION: 'bg-orange-100 text-orange-700',
@@ -197,13 +197,13 @@ function CompanyModal({
     >
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
+          <h2 className="text-base font-semibold text-zinc-900">
             {isEdit ? 'Chỉnh sửa công ty' : 'Thêm công ty mới'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition"
+            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition"
           >
             <X size={16} />
           </button>
@@ -213,35 +213,35 @@ function CompanyModal({
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-medium text-zinc-700 mb-1">
               Tên công ty <span className="text-red-500">*</span>
             </label>
             <input
               value={form.name}
               onChange={(e) => set('name', e.target.value)}
               placeholder="VD: Công ty TNHH ABC"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
           </div>
 
           {/* Industry + Size */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Ngành nghề</label>
+              <label className="block text-xs font-medium text-zinc-700 mb-1">Ngành nghề</label>
               <input
                 value={form.industry}
                 onChange={(e) => set('industry', e.target.value)}
                 placeholder="Công nghệ, Bán lẻ..."
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Quy mô (nhân viên)</label>
+              <label className="block text-xs font-medium text-zinc-700 mb-1">Quy mô (nhân viên)</label>
               <input
                 value={form.size}
                 onChange={(e) => set('size', e.target.value)}
                 placeholder="1-10, 11-50, 51-200..."
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
           </div>
@@ -249,21 +249,21 @@ function CompanyModal({
           {/* Website + Tax Code */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Website</label>
+              <label className="block text-xs font-medium text-zinc-700 mb-1">Website</label>
               <input
                 value={form.website}
                 onChange={(e) => set('website', e.target.value)}
                 placeholder="https://example.com"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Mã số thuế</label>
+              <label className="block text-xs font-medium text-zinc-700 mb-1">Mã số thuế</label>
               <input
                 value={form.taxCode}
                 onChange={(e) => set('taxCode', e.target.value)}
                 placeholder="0123456789"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
           </div>
@@ -271,46 +271,46 @@ function CompanyModal({
           {/* Phone + Email */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Điện thoại</label>
+              <label className="block text-xs font-medium text-zinc-700 mb-1">Điện thoại</label>
               <input
                 value={form.phone}
                 onChange={(e) => set('phone', e.target.value)}
                 placeholder="028 1234 5678"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-xs font-medium text-zinc-700 mb-1">Email</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => set('email', e.target.value)}
                 placeholder="info@example.com"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
           </div>
 
           {/* Address */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Địa chỉ</label>
+            <label className="block text-xs font-medium text-zinc-700 mb-1">Địa chỉ</label>
             <input
               value={form.address}
               onChange={(e) => set('address', e.target.value)}
               placeholder="123 Đường ABC, Quận 1, TP.HCM"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Mô tả</label>
+            <label className="block text-xs font-medium text-zinc-700 mb-1">Mô tả</label>
             <textarea
               value={form.description}
               onChange={(e) => set('description', e.target.value)}
               rows={3}
               placeholder="Thông tin thêm về công ty..."
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none"
             />
           </div>
 
@@ -319,14 +319,14 @@ function CompanyModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+              className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition"
+              className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60 transition"
             >
               {isPending ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo công ty'}
             </button>
@@ -364,18 +364,18 @@ function CompanySlideOver({
       {/* Panel */}
       <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
-          <h2 className="text-base font-semibold text-gray-900">Chi tiết công ty</h2>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 shrink-0">
+          <h2 className="text-base font-semibold text-zinc-900">Chi tiết công ty</h2>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition"
+            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition"
           >
             <X size={16} />
           </button>
         </div>
 
         {isLoading && (
-          <div className="flex items-center justify-center flex-1 text-gray-400 text-sm">
+          <div className="flex items-center justify-center flex-1 text-zinc-400 text-sm">
             Đang tải...
           </div>
         )}
@@ -385,25 +385,25 @@ function CompanySlideOver({
             {/* Avatar + name */}
             <div className="px-5 py-5 border-b border-gray-50">
               <div className="flex items-start gap-4">
-                <div className="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
+                <div className="w-14 h-14 bg-zinc-100 rounded-xl flex items-center justify-center shrink-0">
                   <span className="text-lg font-bold text-indigo-700">
                     {getInitials(company.name)}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-gray-900 truncate">{company.name}</h3>
+                  <h3 className="text-lg font-semibold text-zinc-900 truncate">{company.name}</h3>
                   {company.industry && (
-                    <p className="text-sm text-gray-500 mt-0.5">{company.industry}</p>
+                    <p className="text-sm text-zinc-500 mt-0.5">{company.industry}</p>
                   )}
                   {company.size && (
-                    <span className="inline-block mt-1 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                    <span className="inline-block mt-1 text-xs bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">
                       {company.size} nhân viên
                     </span>
                   )}
                 </div>
                 <button
                   onClick={() => onEdit(company)}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition text-gray-600"
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs border border-zinc-200 rounded-lg hover:bg-zinc-50 transition text-zinc-600"
                 >
                   <Pencil size={12} /> Sửa
                 </button>
@@ -412,49 +412,49 @@ function CompanySlideOver({
 
             {/* Contact info */}
             <div className="px-5 py-4 border-b border-gray-50">
-              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+              <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
                 Thông tin liên hệ
               </h4>
               <div className="space-y-2.5">
                 {company.email && (
                   <div className="flex items-center gap-2.5 text-sm">
-                    <Mail size={14} className="text-gray-400 shrink-0" />
+                    <Mail size={14} className="text-zinc-400 shrink-0" />
                     <a
                       href={`mailto:${company.email}`}
-                      className="text-indigo-600 hover:underline truncate"
+                      className="text-zinc-900 hover:underline truncate"
                     >
                       {company.email}
                     </a>
                   </div>
                 )}
                 {company.phone && (
-                  <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                    <Phone size={14} className="text-gray-400 shrink-0" />
+                  <div className="flex items-center gap-2.5 text-sm text-zinc-600">
+                    <Phone size={14} className="text-zinc-400 shrink-0" />
                     {company.phone}
                   </div>
                 )}
                 {company.website && (
-                  <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                    <Globe size={14} className="text-gray-400 shrink-0" />
+                  <div className="flex items-center gap-2.5 text-sm text-zinc-600">
+                    <Globe size={14} className="text-zinc-400 shrink-0" />
                     <a
                       href={company.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-indigo-600 hover:underline truncate"
+                      className="text-zinc-900 hover:underline truncate"
                     >
                       {company.website}
                     </a>
                   </div>
                 )}
                 {company.taxCode && (
-                  <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                    <Hash size={14} className="text-gray-400 shrink-0" />
+                  <div className="flex items-center gap-2.5 text-sm text-zinc-600">
+                    <Hash size={14} className="text-zinc-400 shrink-0" />
                     MST: {company.taxCode}
                   </div>
                 )}
                 {company.address && (
-                  <div className="flex items-start gap-2.5 text-sm text-gray-600">
-                    <MapPin size={14} className="text-gray-400 shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2.5 text-sm text-zinc-600">
+                    <MapPin size={14} className="text-zinc-400 shrink-0 mt-0.5" />
                     {company.address}
                   </div>
                 )}
@@ -464,10 +464,10 @@ function CompanySlideOver({
             {/* Description */}
             {company.description && (
               <div className="px-5 py-4 border-b border-gray-50">
-                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
                   Mô tả
                 </h4>
-                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-line">
                   {company.description}
                 </p>
               </div>
@@ -476,19 +476,19 @@ function CompanySlideOver({
             {/* Contacts */}
             <div className="px-5 py-4 border-b border-gray-50">
               <div className="flex items-center gap-2 mb-3">
-                <Users size={14} className="text-gray-400" />
-                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <Users size={14} className="text-zinc-400" />
+                <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                   Liên hệ ({company.contacts?.length ?? 0})
                 </h4>
               </div>
               {(!company.contacts || company.contacts.length === 0) ? (
-                <p className="text-sm text-gray-400 italic">Chưa có liên hệ nào.</p>
+                <p className="text-sm text-zinc-400 italic">Chưa có liên hệ nào.</p>
               ) : (
                 <div className="space-y-2">
                   {company.contacts.map((contact) => (
                     <div
                       key={contact.id}
-                      className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg border border-gray-100"
+                      className="flex items-center gap-3 p-2.5 bg-zinc-50 rounded-lg border border-zinc-100"
                     >
                       <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
                         <span className="text-xs font-semibold text-emerald-700">
@@ -500,13 +500,13 @@ function CompanySlideOver({
                           {contact.fullName}
                         </p>
                         {contact.jobTitle && (
-                          <p className="text-xs text-gray-400 truncate">{contact.jobTitle}</p>
+                          <p className="text-xs text-zinc-400 truncate">{contact.jobTitle}</p>
                         )}
                       </div>
                       {contact.email && (
                         <a
                           href={`mailto:${contact.email}`}
-                          className="text-gray-400 hover:text-indigo-600 transition shrink-0"
+                          className="text-zinc-400 hover:text-zinc-900 transition shrink-0"
                           title={contact.email}
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -522,24 +522,24 @@ function CompanySlideOver({
             {/* Deals */}
             <div className="px-5 py-4">
               <div className="flex items-center gap-2 mb-3">
-                <TrendingUp size={14} className="text-gray-400" />
-                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <TrendingUp size={14} className="text-zinc-400" />
+                <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                   Deals ({company.deals?.length ?? 0})
                 </h4>
               </div>
               {(!company.deals || company.deals.length === 0) ? (
-                <p className="text-sm text-gray-400 italic">Chưa có deal nào.</p>
+                <p className="text-sm text-zinc-400 italic">Chưa có deal nào.</p>
               ) : (
                 <div className="space-y-2">
                   {company.deals.map((deal) => (
                     <div
                       key={deal.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100"
+                      className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg border border-zinc-100"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-800 truncate">{deal.title}</p>
                         {deal.closedAt && (
-                          <p className="text-xs text-gray-400 mt-0.5">
+                          <p className="text-xs text-zinc-400 mt-0.5">
                             Dự kiến: {formatDate(deal.closedAt)}
                           </p>
                         )}
@@ -548,14 +548,14 @@ function CompanySlideOver({
                         {deal.stage && (
                           <span
                             className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                              DEAL_STAGE_COLORS[deal.stage] ?? 'bg-gray-100 text-gray-600'
+                              DEAL_STAGE_COLORS[deal.stage] ?? 'bg-zinc-100 text-zinc-600'
                             }`}
                           >
                             {DEAL_STAGE_LABELS[deal.stage] ?? deal.stage}
                           </span>
                         )}
                         {deal.value != null && (
-                          <span className="text-sm font-semibold text-gray-700">
+                          <span className="text-sm font-semibold text-zinc-700">
                             {formatCurrency(deal.value)}
                           </span>
                         )}
@@ -568,19 +568,19 @@ function CompanySlideOver({
 
             {/* Tags */}
             <div className="px-5 py-4 border-t border-gray-50">
-              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tags</h4>
+              <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Tags</h4>
               <TagSelector entityType="COMPANY" entityId={company.id} />
             </div>
 
             {/* Timeline */}
             <div className="px-5 py-4 border-t border-gray-50">
-              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Hoạt động</h4>
+              <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Hoạt động</h4>
               <EntityTimeline entityType="COMPANY" entityId={company.id} />
             </div>
 
             {/* Meta */}
             <div className="px-5 py-3 border-t border-gray-50">
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-zinc-400">
                 Tạo ngày {formatDate(company.createdAt)} · Cập nhật {formatDate(company.updatedAt)}
               </p>
             </div>
@@ -654,21 +654,21 @@ export default function CompaniesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Công ty</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{meta?.total ?? 0} công ty</p>
+          <h1 className="text-xl font-semibold text-zinc-900">Công ty</h1>
+          <p className="text-sm text-zinc-500 mt-0.5">{meta?.total ?? 0} công ty</p>
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+          className="flex items-center gap-1.5 px-3 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition"
         >
           <Plus size={14} /> Thêm công ty
         </button>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <div className="bg-white rounded-xl border border-zinc-200 p-4">
         <div className="relative max-w-sm">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
           <input
             value={search}
             onChange={(e) => {
@@ -676,7 +676,7 @@ export default function CompaniesPage() {
               setPage(1);
             }}
             placeholder="Tìm tên công ty, ngành nghề..."
-            className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-8 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
       </div>
@@ -684,13 +684,13 @@ export default function CompaniesPage() {
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading && (
-          <div className="col-span-3 flex items-center justify-center h-32 text-gray-400 text-sm">
+          <div className="col-span-3 flex items-center justify-center h-32 text-zinc-400 text-sm">
             Đang tải...
           </div>
         )}
         {!isLoading && companies.length === 0 && (
-          <div className="col-span-3 flex flex-col items-center justify-center h-32 gap-2 text-gray-400 text-sm">
-            <Building2 size={28} className="text-gray-300" />
+          <div className="col-span-3 flex flex-col items-center justify-center h-32 gap-2 text-zinc-400 text-sm">
+            <Building2 size={28} className="text-zinc-300" />
             Chưa có công ty nào. Nhấn "Thêm công ty" để bắt đầu.
           </div>
         )}
@@ -698,21 +698,21 @@ export default function CompaniesPage() {
           <div
             key={company.id}
             onClick={() => setSlideOverId(company.id)}
-            className="group relative bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
+            className="group relative bg-white border border-zinc-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
           >
             {/* Action buttons — visible on hover */}
             <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={(e) => openEdit(company, e)}
                 title="Chỉnh sửa"
-                className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                className="p-1.5 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition"
               >
                 <Pencil size={13} />
               </button>
               <button
                 onClick={(e) => handleDelete(company, e)}
                 title="Xóa"
-                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
               >
                 <Trash2 size={13} />
               </button>
@@ -720,15 +720,15 @@ export default function CompaniesPage() {
 
             {/* Card content */}
             <div className="flex items-start gap-3 mb-3 pr-12">
-              <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 bg-zinc-100 rounded-lg flex items-center justify-center shrink-0">
                 <span className="text-sm font-bold text-indigo-700">
                   {getInitials(company.name)}
                 </span>
               </div>
               <div className="min-w-0">
-                <h3 className="font-semibold text-gray-900 truncate">{company.name}</h3>
+                <h3 className="font-semibold text-zinc-900 truncate">{company.name}</h3>
                 {company.industry && (
-                  <span className="text-xs text-gray-400 mt-0.5 block truncate">
+                  <span className="text-xs text-zinc-400 mt-0.5 block truncate">
                     {company.industry}
                   </span>
                 )}
@@ -737,7 +737,7 @@ export default function CompaniesPage() {
 
             {company.size && (
               <div className="mb-3">
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                <span className="text-xs bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">
                   {company.size} nhân viên
                 </span>
               </div>
@@ -745,24 +745,24 @@ export default function CompaniesPage() {
 
             <div className="space-y-1.5">
               {company.website && (
-                <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                <div className="flex items-center gap-1.5 text-xs text-zinc-400">
                   <Globe size={12} className="shrink-0" />
                   <span className="truncate">{company.website}</span>
                 </div>
               )}
               {company.email && (
-                <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                <div className="flex items-center gap-1.5 text-xs text-zinc-400">
                   <Mail size={12} className="shrink-0" />
                   <span className="truncate">{company.email}</span>
                 </div>
               )}
               {company.phone && (
-                <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                <div className="flex items-center gap-1.5 text-xs text-zinc-400">
                   <Phone size={12} className="shrink-0" />
                   <span>{company.phone}</span>
                 </div>
               )}
-              <div className="flex items-center gap-3 text-xs text-gray-400 pt-1 border-t border-gray-50 mt-2">
+              <div className="flex items-center gap-3 text-xs text-zinc-400 pt-1 border-t border-gray-50 mt-2">
                 <div className="flex items-center gap-1">
                   <Users size={12} />
                   {company._count?.contacts ?? 0} liên hệ
@@ -780,24 +780,24 @@ export default function CompaniesPage() {
       {/* Pagination */}
       {meta && meta.total > 20 && (
         <div className="flex items-center justify-between px-1">
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-zinc-400">
             Hiển thị {(page - 1) * 20 + 1}–{Math.min(page * 20, meta.total)} / {meta.total}
           </span>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="p-1.5 text-gray-500 border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition"
+              className="p-1.5 text-zinc-500 border border-zinc-200 rounded-lg disabled:opacity-40 hover:bg-zinc-50 transition"
             >
               <ChevronLeft size={14} />
             </button>
-            <span className="px-3 py-1.5 text-xs text-gray-600">
+            <span className="px-3 py-1.5 text-xs text-zinc-600">
               {page} / {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="p-1.5 text-gray-500 border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition"
+              className="p-1.5 text-zinc-500 border border-zinc-200 rounded-lg disabled:opacity-40 hover:bg-zinc-50 transition"
             >
               <ChevronRight size={14} />
             </button>

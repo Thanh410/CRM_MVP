@@ -214,13 +214,13 @@ function ContactModal({
     >
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
           <h2 className="text-base font-semibold text-gray-900">
             {isEdit ? 'Chỉnh sửa liên hệ' : 'Thêm liên hệ mới'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition"
+            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-zinc-100 rounded-lg transition"
           >
             <X size={16} />
           </button>
@@ -237,7 +237,7 @@ function ContactModal({
               value={form.fullName}
               onChange={(e) => set('fullName', e.target.value)}
               placeholder="Nguyễn Văn A"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
           </div>
 
@@ -250,7 +250,7 @@ function ContactModal({
                 value={form.email}
                 onChange={(e) => set('email', e.target.value)}
                 placeholder="email@example.com"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
             <div>
@@ -259,7 +259,7 @@ function ContactModal({
                 value={form.phone}
                 onChange={(e) => set('phone', e.target.value)}
                 placeholder="0912 345 678"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
           </div>
@@ -272,7 +272,7 @@ function ContactModal({
                 value={form.mobile}
                 onChange={(e) => set('mobile', e.target.value)}
                 placeholder="0987 654 321"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
             <div>
@@ -281,7 +281,7 @@ function ContactModal({
                 value={form.jobTitle}
                 onChange={(e) => set('jobTitle', e.target.value)}
                 placeholder="Giám đốc kinh doanh"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
           </div>
@@ -292,7 +292,7 @@ function ContactModal({
             <select
               value={form.companyId}
               onChange={(e) => set('companyId', e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white"
             >
               <option value="">— Chọn công ty —</option>
               {companies.map((c) => (
@@ -309,7 +309,7 @@ function ContactModal({
             <select
               value={form.assignedTo}
               onChange={(e) => set('assignedTo', e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white"
             >
               <option value="">— Chưa phân công —</option>
               {users.map((u) => (
@@ -327,7 +327,7 @@ function ContactModal({
               value={form.address}
               onChange={(e) => set('address', e.target.value)}
               placeholder="123 Đường ABC, Quận 1, TP.HCM"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
           </div>
 
@@ -339,7 +339,7 @@ function ContactModal({
               onChange={(e) => set('description', e.target.value)}
               rows={3}
               placeholder="Thông tin thêm về liên hệ..."
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none"
             />
           </div>
 
@@ -348,14 +348,14 @@ function ContactModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+              className="px-4 py-2 text-sm text-gray-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition"
+              className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60 transition"
             >
               {isPending ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo liên hệ'}
             </button>
@@ -395,11 +395,11 @@ function ContactSlideOver({
       {/* Panel */}
       <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 shrink-0">
           <h2 className="text-base font-semibold text-gray-900">Chi tiết liên hệ</h2>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition"
+            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-zinc-100 rounded-lg transition"
           >
             <X size={16} />
           </button>
@@ -416,8 +416,8 @@ function ContactSlideOver({
             {/* Avatar + name */}
             <div className="px-5 py-5 border-b border-gray-50">
               <div className="flex items-start gap-4">
-                <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
-                  <span className="text-lg font-bold text-emerald-700">
+                <div className="w-14 h-14 bg-zinc-100 rounded-full flex items-center justify-center shrink-0">
+                  <span className="text-lg font-bold text-zinc-700">
                     {getInitials(contact.fullName)}
                   </span>
                 </div>
@@ -437,7 +437,7 @@ function ContactSlideOver({
                 </div>
                 <button
                   onClick={() => onEdit(contact)}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition text-gray-600"
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs border border-zinc-200 rounded-lg hover:bg-zinc-50 transition text-gray-600"
                 >
                   <Pencil size={12} /> Sửa
                 </button>
@@ -455,7 +455,7 @@ function ContactSlideOver({
                     <Mail size={14} className="text-gray-400 shrink-0" />
                     <a
                       href={`mailto:${contact.email}`}
-                      className="text-indigo-600 hover:underline truncate"
+                      className="text-zinc-900 hover:underline truncate"
                     >
                       {contact.email}
                     </a>
@@ -522,7 +522,7 @@ function ContactSlideOver({
                   {contact.deals.map((deal) => (
                     <div
                       key={deal.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100"
+                      className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg border border-zinc-100"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-800 truncate">{deal.title}</p>
@@ -633,14 +633,14 @@ export default function ContactsPage() {
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+          className="flex items-center gap-1.5 px-3 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition"
         >
           <Plus size={14} /> Thêm liên hệ
         </button>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <div className="bg-white rounded-xl border border-zinc-200 p-4">
         <div className="relative max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -650,13 +650,13 @@ export default function ContactsPage() {
               setPage(1);
             }}
             placeholder="Tìm tên, email, số điện thoại..."
-            className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-8 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
             Đang tải...
@@ -665,7 +665,7 @@ export default function ContactsPage() {
           <>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
+                <tr className="border-b border-zinc-100 bg-zinc-50/50">
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
                     Họ tên
                   </th>
@@ -699,13 +699,13 @@ export default function ContactsPage() {
                   <tr
                     key={contact.id}
                     onClick={() => setSlideOverId(contact.id)}
-                    className="hover:bg-gray-50/60 transition-colors cursor-pointer"
+                    className="hover:bg-zinc-50/60 transition-colors cursor-pointer"
                   >
                     {/* Name + avatar */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
-                          <span className="text-xs font-semibold text-emerald-700">
+                        <div className="w-8 h-8 bg-zinc-100 rounded-full flex items-center justify-center shrink-0">
+                          <span className="text-xs font-semibold text-zinc-700">
                             {getInitials(contact.fullName)}
                           </span>
                         </div>
@@ -754,7 +754,7 @@ export default function ContactsPage() {
                         <button
                           onClick={(e) => openEdit(contact, e)}
                           title="Chỉnh sửa"
-                          className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                          className="p-1.5 text-gray-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition"
                         >
                           <Pencil size={14} />
                         </button>
@@ -774,7 +774,7 @@ export default function ContactsPage() {
 
             {/* Pagination */}
             {meta && meta.total > 0 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+              <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100">
                 <span className="text-xs text-gray-400">
                   Hiển thị {(page - 1) * 20 + 1}–{Math.min(page * 20, meta.total)} / {meta.total}
                 </span>
@@ -782,7 +782,7 @@ export default function ContactsPage() {
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="p-1.5 text-gray-500 border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition"
+                    className="p-1.5 text-gray-500 border border-zinc-200 rounded-lg disabled:opacity-40 hover:bg-zinc-50 transition"
                   >
                     <ChevronLeft size={14} />
                   </button>
@@ -792,7 +792,7 @@ export default function ContactsPage() {
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
-                    className="p-1.5 text-gray-500 border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition"
+                    className="p-1.5 text-gray-500 border border-zinc-200 rounded-lg disabled:opacity-40 hover:bg-zinc-50 transition"
                   >
                     <ChevronRight size={14} />
                   </button>
