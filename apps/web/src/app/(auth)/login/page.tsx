@@ -27,10 +27,12 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, touchedFields },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '', rememberMe: false },
+    mode: 'onBlur',         // validate on field blur — feedback ngay khi user rời field
+    reValidateMode: 'onChange',
   });
 
   const onSubmit = async (data: LoginForm) => {

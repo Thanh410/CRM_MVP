@@ -5,6 +5,7 @@ import { Bell, Check, CheckCheck, X, Search } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { getInitials, formatDate } from '@/lib/utils';
 import { avatarStyle } from '@/lib/avatar-color';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useNotifications, useMarkRead, useMarkAllRead, useDeleteNotification } from '@/hooks/use-notifications';
 import { useRouter } from 'next/navigation';
 
@@ -31,7 +32,7 @@ export function Header({ onOpenSearch }: { onOpenSearch?: () => void }) {
   }, []);
 
   return (
-    <header className="h-14 bg-white border-b border-zinc-200 flex items-center px-6 gap-4 shrink-0">
+    <header className="h-14 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 flex items-center px-6 gap-4 shrink-0">
       {/* Search — opens CommandPalette */}
       <div className="flex-1 max-w-md">
         <button
@@ -47,6 +48,8 @@ export function Header({ onOpenSearch }: { onOpenSearch?: () => void }) {
       </div>
 
       <div className="flex items-center gap-2 ml-auto">
+        <ThemeToggle />
+
         {/* Notifications */}
         <div className="relative" ref={ref}>
           <button

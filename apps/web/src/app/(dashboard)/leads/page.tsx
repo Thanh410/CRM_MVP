@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useLeads, LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, SOURCE_LABELS, useDeleteLead, useConvertLead, useAssignLead, useImportLeads, useCreateLead } from '@/hooks/use-leads';
 import { formatDate, getInitials } from '@/lib/utils';
 import { avatarStyle } from '@/lib/avatar-color';
-import { Plus, Download, Upload, Search, RefreshCw, UserCheck, X, Trash2, Users } from 'lucide-react';
+import { Plus, Download, Upload, Search, RefreshCw, UserCheck, X, Trash2, Users, ArrowUp, ArrowDown, ArrowUpDown, CheckSquare, Square } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { EntityTimeline } from '@/components/entity-timeline';
@@ -17,6 +17,66 @@ import { useQuery } from '@tanstack/react-query';
 
 const STATUSES = ['NEW', 'CONTACTED', 'QUALIFIED', 'UNQUALIFIED', 'CONVERTED'];
 const SOURCES = ['facebook', 'zalo', 'website', 'referral', 'cold_call'];
+
+// ─── Helpers: SortHeader / BulkCheck / BulkActionBar ────────────────────────
+function SortHeader({
+  field, label, sortBy, onSort,
+}: {
+  field: string;
+  label: string;
+  sortBy: { field: string; dir: 'asc' | 'desc' };
+  onSort: (s: { field: string; dir: 'asc' | 'desc' }) => void;
+}) {
+  const isActive = sortBy.field === field;
+  return (
+    <th
+      onClick={() => onSort({ field, dir: isActive && sortBy.dir === 'asc' ? 'desc' : 'asc' })}
+      className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide cursor-pointer hover:text-zinc-900 select-none"
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {!isActive && <ArrowUpDown size={10} className="text-zinc-300" />}
+        {isActive && sortBy.dir === 'asc' && <ArrowUp size={10} className="text-zinc-900" />}
+        {isActive && sortBy.dir === 'desc' && <ArrowDown size={10} className="text-zinc-900" />}
+      </span>
+    </th>
+  );
+}
+
+function BulkCheck({ all, some, onChange }: { all: boolean; some: boolean; onChange: (v: boolean) => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (ref.current) ref.current.indeterminate = some && !all;
+  }, [some, all]);
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      checked={all}
+      onChange={(e) => onChange(e.target.checked)}
+      className="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-1 focus:ring-zinc-900 cursor-pointer accent-zinc-900"
+    />
+  );
+}
+
+function BulkActionBar({ count, onClear, onDelete }: { count: number; onClear: () => void; onDelete: () => void }) {
+  return (
+    <div className="bg-zinc-900 text-white px-4 py-2.5 flex items-center justify-between text-sm">
+      <div className="flex items-center gap-3">
+        <span className="font-medium">{count} đã chọn</span>
+        <button onClick={onClear} className="text-zinc-400 hover:text-white text-xs underline">Bỏ chọn</button>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onDelete}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 rounded-md transition"
+        >
+          <Trash2 size={12} /> Xóa đã chọn
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // ─── CreateLeadModal ────────────────────────────────────────────────────────
 function CreateLeadModal({ onClose }: { onClose: () => void }) {
@@ -134,6 +194,8 @@ export default function LeadsPage() {
   const [page, setPage] = useState(1);
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<{ field: string; dir: 'asc' | 'desc' }>({ field: 'createdAt', dir: 'desc' });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -141,7 +203,14 @@ export default function LeadsPage() {
     if (q) { setSearch(q); setPage(1); }
   }, [searchParams]);
 
-  const { data, isLoading, refetch } = useLeads({ search: search || undefined, status: status || undefined, page, limit: 20 });
+  // Keyboard shortcut "c" → mở create modal
+  useEffect(() => {
+    const handler = () => setCreateOpen(true);
+    document.addEventListener('crm:create-shortcut', handler);
+    return () => document.removeEventListener('crm:create-shortcut', handler);
+  }, []);
+
+  const { data, isLoading, refetch } = useLeads({ search: search || undefined, status: status || undefined, page, limit: 20, sortBy: sortBy.field, sortDir: sortBy.dir });
   const deleteLead = useDeleteLead();
   const convertLead = useConvertLead();
   const assignLead = useAssignLead();
@@ -258,15 +327,37 @@ export default function LeadsPage() {
             />
           ) : (
             <>
+              {selectedIds.size > 0 && (
+                <BulkActionBar
+                  count={selectedIds.size}
+                  onClear={() => setSelectedIds(new Set())}
+                  onDelete={async () => {
+                    if (!window.confirm(`Xóa ${selectedIds.size} lead?`)) return;
+                    await Promise.all(Array.from(selectedIds).map(id => deleteLead.mutateAsync(id)));
+                    setSelectedIds(new Set());
+                    toast.success(`Đã xóa ${selectedIds.size} lead`);
+                  }}
+                />
+              )}
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 bg-zinc-50/50">
-                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Họ tên</th>
+                    <th className="px-3 py-3 w-10">
+                      <BulkCheck
+                        all={(data?.data ?? []).every((l: any) => selectedIds.has(l.id)) && (data?.data?.length ?? 0) > 0}
+                        some={(data?.data ?? []).some((l: any) => selectedIds.has(l.id))}
+                        onChange={(checked) => {
+                          if (checked) setSelectedIds(new Set((data?.data ?? []).map((l: any) => l.id)));
+                          else setSelectedIds(new Set());
+                        }}
+                      />
+                    </th>
+                    <SortHeader field="fullName" label="Họ tên" sortBy={sortBy} onSort={setSortBy} />
                     {!selectedLead && <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Liên hệ</th>}
-                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Trạng thái</th>
+                    <SortHeader field="status" label="Trạng thái" sortBy={sortBy} onSort={setSortBy} />
                     {!selectedLead && <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Nguồn</th>}
                     <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Phụ trách</th>
-                    {!selectedLead && <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Ngày tạo</th>}
+                    {!selectedLead && <SortHeader field="createdAt" label="Ngày tạo" sortBy={sortBy} onSort={setSortBy} />}
                     <th className="px-4 py-3 w-16" />
                   </tr>
                 </thead>
@@ -276,8 +367,22 @@ export default function LeadsPage() {
                     <tr
                       key={lead.id}
                       onClick={() => setSelectedLead(selectedLead?.id === lead.id ? null : lead)}
-                      className={`hover:bg-zinc-50 transition-colors cursor-pointer ${selectedLead?.id === lead.id ? 'bg-zinc-50 border-l-2 border-l-zinc-900' : ''}`}
+                      className={`hover:bg-zinc-50 transition-colors cursor-pointer ${selectedLead?.id === lead.id ? 'bg-zinc-50 border-l-2 border-l-zinc-900' : ''} ${selectedIds.has(lead.id) ? 'bg-indigo-50/50' : ''}`}
                     >
+                      <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(lead.id)}
+                          onChange={(e) => {
+                            setSelectedIds(prev => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(lead.id); else next.delete(lead.id);
+                              return next;
+                            });
+                          }}
+                          className="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-1 focus:ring-zinc-900 cursor-pointer accent-zinc-900"
+                        />
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
                           <div

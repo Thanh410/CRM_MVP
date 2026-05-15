@@ -13,9 +13,10 @@ import {
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell, Legend, LineChart, Line,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TrendingDown } from "lucide-react";
 
 export default function DashboardPage() {
   const { data: dash, isLoading } = useQuery({
@@ -44,11 +45,29 @@ export default function DashboardPage() {
     queryFn: () => api.get("/reporting/campaign-stats").then((r) => r.data),
   });
 
+  // Sparkline trend từ activities (7 ngày gần nhất, tổng activity/day)
+  const activityTrend: { date: string; value: number }[] = (activitiesTimeline as any[]).map((d: any) => {
+    const byType: Record<string, number> = d.byType ?? {};
+    const total = Object.values(byType).reduce<number>((s, v) => s + (Number(v) || 0), 0);
+    return { date: String(d.date), value: total };
+  });
+  // Delta: so sánh 3 ngày cuối vs 3 ngày đầu
+  const computeDelta = (data: { value: number }[]) => {
+    if (data.length < 4) return 0;
+    const half = Math.floor(data.length / 2);
+    const recent = data.slice(half).reduce((s, d) => s + d.value, 0);
+    const prior = data.slice(0, half).reduce((s, d) => s + d.value, 0);
+    if (prior === 0) return recent > 0 ? 100 : 0;
+    return Math.round(((recent - prior) / prior) * 100);
+  };
+  const activityDelta = computeDelta(activityTrend);
+
   const stats = [
     {
       label: "Khách hàng tiềm năng",
       value: dash?.leads?.total ?? 0,
       icon: Users,
+      sparkColor: '#3b82f6',
     },
     {
       label: "Cơ hội đang mở",
@@ -56,16 +75,19 @@ export default function DashboardPage() {
         dash?.deals?.byStage?.reduce((s: number, d: any) => s + d.count, 0) ??
         0,
       icon: TrendingUp,
+      sparkColor: '#10b981',
     },
     {
       label: "Nhiệm vụ đang mở",
       value: dash?.tasks?.open ?? 0,
       icon: CheckSquare,
+      sparkColor: '#f59e0b',
     },
     {
       label: "Hội thoại đang mở",
       value: dash?.conversations?.open ?? 0,
       icon: MessageCircle,
+      sparkColor: '#a78bfa',
     },
   ];
 
@@ -93,15 +115,36 @@ export default function DashboardPage() {
         {stats.map((s) => (
           <div
             key={s.label}
-            className="bg-white rounded-xl border border-zinc-200 p-5 shadow-sm"
+            className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm"
           >
-            <s.icon size={16} className="text-zinc-400 mb-3" />
+            <div className="flex items-start justify-between mb-3">
+              <s.icon size={16} className="text-zinc-400 dark:text-zinc-500" />
+              {!isLoading && activityTrend.length > 0 && (
+                <div className="w-16 h-6">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={activityTrend}>
+                      <Line type="monotone" dataKey="value" stroke={s.sparkColor} strokeWidth={1.5} dot={false} isAnimationActive={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
             {isLoading ? (
               <Skeleton className="h-9 w-20 mb-1" />
             ) : (
-              <p className="text-3xl font-bold text-zinc-900">{s.value.toLocaleString('vi-VN')}</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">{s.value.toLocaleString('vi-VN')}</p>
+                {activityDelta !== 0 && (
+                  <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${
+                    activityDelta > 0 ? 'text-emerald-600' : 'text-red-600'
+                  }`}>
+                    {activityDelta > 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                    {Math.abs(activityDelta)}%
+                  </span>
+                )}
+              </div>
             )}
-            <p className="text-sm text-zinc-500 mt-1">{s.label}</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{s.label}</p>
           </div>
         ))}
       </div>

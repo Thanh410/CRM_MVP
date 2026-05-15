@@ -238,6 +238,8 @@ function CreateDealModal({ onClose, stages }: { onClose: () => void; stages: any
 export default function DealsPage() {
   const { data: pipelines } = usePipelines();
   const [pipelineId, setPipelineId] = useState<string | undefined>(undefined);
+  const [filterAssignee, setFilterAssignee] = useState<string>('');
+  const [filterTimeRange, setFilterTimeRange] = useState<'all' | 'overdue' | 'this-week' | 'this-month'>('all');
   const { data, isLoading } = useDealsKanban(pipelineId);
   const moveDealStage = useMoveDealStage();
   const deleteDeal = useDeleteDeal();
@@ -268,13 +270,42 @@ export default function DealsPage() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64 text-zinc-400 text-sm">Đang tải pipeline...</div>;
+    return <KanbanSkeleton columns={4} cardsPerColumn={3} />;
   }
 
-  const stages = data?.stages ?? [];
+  const rawStages = data?.stages ?? [];
+
+  // Apply filters (assignee + time range)
+  const dealMatchesFilters = (deal: any): boolean => {
+    if (filterAssignee && deal.assignee?.id !== filterAssignee) return false;
+    if (filterTimeRange !== 'all' && deal.closeDate) {
+      const close = new Date(deal.closeDate).getTime();
+      const now = Date.now();
+      const weekMs = 7 * 24 * 3600 * 1000;
+      const monthMs = 30 * 24 * 3600 * 1000;
+      if (filterTimeRange === 'overdue' && close >= now) return false;
+      if (filterTimeRange === 'this-week' && (close < now || close > now + weekMs)) return false;
+      if (filterTimeRange === 'this-month' && (close < now || close > now + monthMs)) return false;
+    }
+    return true;
+  };
+
+  const stages = rawStages.map((s: any) => {
+    const filteredDeals = (s.deals ?? []).filter(dealMatchesFilters);
+    const filteredValue = filteredDeals.reduce((sum: number, d: any) => sum + (Number(d.value) || 0), 0);
+    return { ...s, deals: filteredDeals, totalValue: filteredValue };
+  });
+
   const totalValue = stages.reduce((sum: number, s: any) => sum + (s.totalValue ?? 0), 0);
   const totalDeals = stages.reduce((acc: number, s: any) => acc + (s.deals?.length ?? 0), 0);
   const allDeals = stages.flatMap((s: any) => s.deals ?? []);
+
+  // Collect unique assignees
+  const allAssignees = Array.from(
+    new Map(rawStages.flatMap((s: any) => s.deals ?? []).filter((d: any) => d.assignee).map((d: any) => [d.assignee.id, d.assignee])).values(),
+  ) as any[];
+
+  const hasFilters = filterAssignee || filterTimeRange !== 'all';
 
   const handleDelete = () => {
     if (!deleteConfirm) return;
@@ -319,6 +350,58 @@ export default function DealsPage() {
             <Plus size={14} /> Thêm deal
           </button>
         </div>
+      </div>
+
+      {/* Filter pills */}
+      <div className="flex items-center gap-2 flex-wrap shrink-0">
+        <span className="text-xs text-zinc-500">Lọc:</span>
+
+        {/* Time range */}
+        <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-0.5">
+          {([
+            ['all', 'Tất cả'],
+            ['overdue', 'Quá hạn'],
+            ['this-week', 'Tuần này'],
+            ['this-month', 'Tháng này'],
+          ] as const).map(([k, label]) => (
+            <button
+              key={k}
+              onClick={() => setFilterTimeRange(k)}
+              className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                filterTimeRange === k ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Assignee */}
+        {allAssignees.length > 0 && (
+          <select
+            value={filterAssignee}
+            onChange={(e) => setFilterAssignee(e.target.value)}
+            className="px-2.5 py-1.5 text-xs border border-zinc-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
+          >
+            <option value="">Tất cả phụ trách</option>
+            {allAssignees.map(a => (
+              <option key={a.id} value={a.id}>{a.fullName}</option>
+            ))}
+          </select>
+        )}
+
+        {hasFilters && (
+          <button
+            onClick={() => { setFilterAssignee(''); setFilterTimeRange('all'); }}
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition"
+          >
+            <X size={12} /> Xóa lọc
+          </button>
+        )}
+
+        <span className="ml-auto text-xs text-zinc-400">
+          Hiển thị <span className="font-medium text-zinc-700">{totalDeals}</span> cơ hội · {formatCompactVND(totalValue)}
+        </span>
       </div>
 
       {viewMode === 'kanban' ? (
