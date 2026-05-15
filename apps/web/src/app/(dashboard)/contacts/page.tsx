@@ -3,8 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { TagSelector } from '@/components/tag-selector';
+import { TableSkeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 import { api } from '@/lib/api';
 import { formatDate, getInitials, formatCurrency } from '@/lib/utils';
+import { avatarStyle } from '@/lib/avatar-color';
 import { toast } from 'sonner';
 import {
   Plus,
@@ -18,6 +21,7 @@ import {
   MapPin,
   Briefcase,
   User,
+  Users,
   TrendingUp,
   ChevronLeft,
   ChevronRight,
@@ -658,9 +662,21 @@ export default function ContactsPage() {
       {/* Table */}
       <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
-            Đang tải...
-          </div>
+          <TableSkeleton rows={6} cols={6} />
+        ) : contacts.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title={search ? 'Không tìm thấy liên hệ' : 'Chưa có liên hệ nào'}
+            description={search
+              ? 'Thử tìm với từ khoá khác.'
+              : 'Thêm liên hệ mới hoặc convert từ leads đã qualified.'}
+            hints={search ? undefined : [
+              'Liên hệ là người thật, có email/SĐT — khác với Lead là khách tiềm năng',
+              'Có thể gắn nhiều liên hệ vào 1 công ty',
+              'Convert lead → contact tự động giữ lịch sử trao đổi',
+            ]}
+            action={{ label: 'Thêm liên hệ', onClick: openCreate, icon: Plus }}
+          />
         ) : (
           <>
             <table className="w-full text-sm">
@@ -688,13 +704,7 @@ export default function ContactsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {contacts.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="text-center py-12 text-gray-400 text-sm">
-                      Chưa có liên hệ nào. Nhấn "Thêm liên hệ" để bắt đầu.
-                    </td>
-                  </tr>
-                )}
+                {/* empty state handled above */}
                 {contacts.map((contact) => (
                   <tr
                     key={contact.id}
@@ -704,8 +714,11 @@ export default function ContactsPage() {
                     {/* Name + avatar */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 bg-zinc-100 rounded-full flex items-center justify-center shrink-0">
-                          <span className="text-xs font-semibold text-zinc-700">
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                          style={avatarStyle(contact.id ?? contact.fullName)}
+                        >
+                          <span className="text-xs font-semibold">
                             {getInitials(contact.fullName)}
                           </span>
                         </div>

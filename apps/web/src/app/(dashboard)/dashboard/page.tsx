@@ -15,6 +15,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from "recharts";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
   const { data: dash, isLoading } = useQuery({
@@ -95,9 +96,11 @@ export default function DashboardPage() {
             className="bg-white rounded-xl border border-zinc-200 p-5 shadow-sm"
           >
             <s.icon size={16} className="text-zinc-400 mb-3" />
-            <p className="text-3xl font-bold text-zinc-900">
-              {isLoading ? "—" : s.value}
-            </p>
+            {isLoading ? (
+              <Skeleton className="h-9 w-20 mb-1" />
+            ) : (
+              <p className="text-3xl font-bold text-zinc-900">{s.value.toLocaleString('vi-VN')}</p>
+            )}
             <p className="text-sm text-zinc-500 mt-1">{s.label}</p>
           </div>
         ))}

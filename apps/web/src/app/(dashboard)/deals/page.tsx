@@ -3,7 +3,9 @@
 import { useState, useRef } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useDealsKanban, useMoveDealStage, useMarkDealWon, useMarkDealLost, useUpdateDeal, useDeleteDeal, usePipelines } from '@/hooks/use-deals';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, formatCompactVND } from '@/lib/utils';
+import { KanbanSkeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Plus, Trophy, TrendingUp, X, Pencil, ThumbsDown, Trash2, ChevronRight, LayoutGrid, List } from 'lucide-react';
 import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors, type DragStartEvent, type DragEndEvent } from '@dnd-kit/core';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
@@ -326,15 +328,22 @@ export default function DealsPage() {
         <div className="flex gap-4 overflow-x-auto pb-4 flex-1">
           {stages.map((stage: any) => (
             <StageColumn key={stage.id} stageId={stage.id}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: stage.color }} />
-                  <span className="text-sm font-medium text-zinc-700">{stage.name}</span>
-                  <span className="text-xs text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded-full">
+              <div className="mb-3">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: stage.color }} />
+                    <span className="text-sm font-semibold text-zinc-800 truncate">{stage.name}</span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded-full shrink-0">
                     {stage.deals?.length ?? 0}
                   </span>
                 </div>
-                <span className="text-xs text-zinc-400">{formatCurrency(stage.totalValue ?? 0)}</span>
+                <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 ml-4">
+                  <span className="font-medium text-zinc-600">{formatCompactVND(stage.totalValue ?? 0)}</span>
+                  {(stage.totalValue ?? 0) > 0 && stage.deals?.length > 0 && (
+                    <span>· TB {formatCompactVND((stage.totalValue ?? 0) / stage.deals.length)}/deal</span>
+                  )}
+                </div>
               </div>
 
               <div className="flex-1 space-y-2 min-h-[100px]">

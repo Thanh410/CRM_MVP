@@ -4,11 +4,15 @@ import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLeads, LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, SOURCE_LABELS, useDeleteLead, useConvertLead, useAssignLead, useImportLeads, useCreateLead } from '@/hooks/use-leads';
 import { formatDate, getInitials } from '@/lib/utils';
-import { Plus, Download, Upload, Search, RefreshCw, UserCheck, X, Trash2 } from 'lucide-react';
+import { avatarStyle } from '@/lib/avatar-color';
+import { Plus, Download, Upload, Search, RefreshCw, UserCheck, X, Trash2, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { EntityTimeline } from '@/components/entity-timeline';
 import { TagSelector } from '@/components/tag-selector';
+import { TableSkeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Drawer } from 'vaul';
 import { useQuery } from '@tanstack/react-query';
 
 const STATUSES = ['NEW', 'CONTACTED', 'QUALIFIED', 'UNQUALIFIED', 'CONVERTED'];
@@ -228,7 +232,30 @@ export default function LeadsPage() {
         {/* Table */}
         <div className={`bg-white rounded-xl border border-zinc-200 overflow-hidden transition-all ${selectedLead ? 'flex-1 min-w-0' : 'w-full'}`}>
           {isLoading ? (
-            <div className="flex items-center justify-center h-48 text-gray-400 text-sm">Đang tải...</div>
+            <TableSkeleton rows={6} cols={6} />
+          ) : data?.data?.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title={search || status ? 'Không tìm thấy lead nào' : 'Chưa có lead nào'}
+              description={search || status
+                ? 'Thử bỏ filter hoặc tìm với từ khoá khác.'
+                : 'Bắt đầu bằng cách thêm lead mới hoặc import từ file CSV.'}
+              hints={search || status ? undefined : [
+                'Tạo thủ công lead với thông tin cơ bản: họ tên, email, SĐT',
+                'Hoặc import hàng loạt từ file CSV (Excel xuất ra)',
+                'Lead có thể được tự động tạo từ form Facebook/Zalo (cần tích hợp)',
+              ]}
+              action={{
+                label: 'Thêm lead',
+                onClick: () => setCreateOpen(true),
+                icon: Plus,
+              }}
+              secondaryAction={{
+                label: 'Import CSV',
+                onClick: () => fileInputRef.current?.click(),
+                icon: Upload,
+              }}
+            />
           ) : (
             <>
               <table className="w-full text-sm">
@@ -244,13 +271,7 @@ export default function LeadsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {data?.data?.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="text-center py-12 text-gray-400 text-sm">
-                        Chưa có lead nào. Nhấn "Thêm lead" để bắt đầu.
-                      </td>
-                    </tr>
-                  )}
+                  {/* empty state moved above */}
                   {data?.data?.map((lead: any) => (
                     <tr
                       key={lead.id}
@@ -259,8 +280,11 @@ export default function LeadsPage() {
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 bg-zinc-100 rounded-full flex items-center justify-center shrink-0">
-                            <span className="text-xs font-semibold text-zinc-700">{getInitials(lead.fullName)}</span>
+                          <div
+                            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                            style={avatarStyle(lead.id ?? lead.fullName)}
+                          >
+                            <span className="text-xs font-semibold">{getInitials(lead.fullName)}</span>
                           </div>
                           <span className="font-medium text-gray-900 text-sm">{lead.fullName}</span>
                         </div>
@@ -333,14 +357,17 @@ export default function LeadsPage() {
           )}
         </div>
 
-        {/* Detail Panel */}
+        {/* Detail Panel — desktop only (mobile drawer ở dưới) */}
         {selectedLead && (
-          <div className="w-96 shrink-0 bg-white rounded-xl border border-zinc-200 overflow-hidden">
+          <div className="hidden md:block w-96 shrink-0 bg-white rounded-xl border border-zinc-200 overflow-hidden">
             {/* Panel Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 bg-zinc-100 rounded-full flex items-center justify-center shrink-0">
-                  <span className="text-xs font-semibold text-zinc-700">{getInitials(selectedLead.fullName)}</span>
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                  style={avatarStyle(selectedLead.id ?? selectedLead.fullName)}
+                >
+                  <span className="text-xs font-semibold">{getInitials(selectedLead.fullName)}</span>
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">{selectedLead.fullName}</p>
@@ -397,6 +424,47 @@ export default function LeadsPage() {
           </div>
         )}
       </div>
+
+      {/* Mobile drawer cho lead detail */}
+      <Drawer.Root open={!!selectedLead} onOpenChange={(o) => !o && setSelectedLead(null)}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 bg-black/40 z-50 md:hidden" />
+          <Drawer.Content className="bg-white flex flex-col rounded-t-2xl h-[92vh] mt-24 fixed bottom-0 left-0 right-0 z-50 md:hidden">
+            <div className="mx-auto mt-2 mb-1 h-1.5 w-12 rounded-full bg-zinc-300 shrink-0" />
+            {selectedLead && (
+              <>
+                <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 shrink-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                      style={avatarStyle(selectedLead.id ?? selectedLead.fullName)}
+                    >
+                      <span className="text-xs font-semibold">{getInitials(selectedLead.fullName)}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <Drawer.Title className="text-sm font-semibold text-gray-900 truncate">{selectedLead.fullName}</Drawer.Title>
+                      <span className={`inline-flex px-1.5 py-0.5 rounded-full text-xs font-medium ${LEAD_STATUS_COLORS[selectedLead.status]}`}>
+                        {LEAD_STATUS_LABELS[selectedLead.status]}
+                      </span>
+                    </div>
+                  </div>
+                  <button onClick={() => setSelectedLead(null)} className="p-1.5 text-gray-400 hover:bg-zinc-100 rounded-lg">
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <div className="px-4 py-3 border-b border-zinc-100 space-y-1.5 text-xs text-gray-500">
+                    {selectedLead.email && <div>📧 {selectedLead.email}</div>}
+                    {selectedLead.phone && <div>📞 {selectedLead.phone}</div>}
+                    {selectedLead.source && <div>🔗 Nguồn: {SOURCE_LABELS[selectedLead.source] ?? selectedLead.source}</div>}
+                  </div>
+                  <EntityTimeline entityType="LEAD" entityId={selectedLead.id} />
+                </div>
+              </>
+            )}
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
 
       {createOpen && <CreateLeadModal onClose={() => setCreateOpen(false)} />}
     </div>

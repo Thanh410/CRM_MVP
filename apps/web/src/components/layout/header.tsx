@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Bell, Check, CheckCheck, X, Search } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { getInitials, formatDate } from '@/lib/utils';
+import { avatarStyle } from '@/lib/avatar-color';
 import { useNotifications, useMarkRead, useMarkAllRead, useDeleteNotification } from '@/hooks/use-notifications';
 import { useRouter } from 'next/navigation';
 
@@ -130,11 +131,14 @@ export function Header({ onOpenSearch }: { onOpenSearch?: () => void }) {
         {/* Avatar */}
         {user && (
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-zinc-900 rounded-full flex items-center justify-center ring-2 ring-zinc-900/10">
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center ring-2 ring-zinc-900/10"
+              style={user.avatar ? undefined : avatarStyle(user.id ?? user.fullName)}
+            >
               {user.avatar ? (
                 <img src={user.avatar} alt={user.fullName} className="w-full h-full rounded-full object-cover" />
               ) : (
-                <span className="text-[11px] font-semibold text-white">
+                <span className="text-[11px] font-semibold">
                   {getInitials(user.fullName)}
                 </span>
               )}
