@@ -1,0 +1,1622 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<title>Aurora CRM — Redesign Preview</title>
+<meta name="viewport" content="width=1440" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+      },
+      colors: {
+        ink: { 50:'#f7f7f8',100:'#eeeef1',200:'#dcdce3',300:'#b9b9c5',400:'#8a8a9c',500:'#5b5b73',600:'#3f3f55',700:'#2c2c3f',800:'#1c1c2b',900:'#101019',950:'#08080f' },
+        aurora: { violet:'#7c5cff', indigo:'#5b6cff', cyan:'#3ad6e3', mint:'#3ee6b3', pink:'#ff6fb5', amber:'#ffb547', rose:'#ff5d7a' },
+      },
+      boxShadow: {
+        'soft': '0 1px 2px rgba(16,16,25,.04), 0 4px 16px rgba(16,16,25,.04)',
+        'pop':  '0 8px 28px -8px rgba(124,92,255,.35)',
+        'glass':'inset 0 1px 0 rgba(255,255,255,.08), 0 8px 32px rgba(8,8,15,.45)',
+        'ring-violet':'0 0 0 4px rgba(124,92,255,.15)',
+      },
+      backgroundImage: {
+        'aurora':'linear-gradient(135deg,#7c5cff 0%,#3ad6e3 50%,#ff6fb5 100%)',
+        'aurora-soft':'linear-gradient(135deg,rgba(124,92,255,.18) 0%,rgba(58,214,227,.12) 50%,rgba(255,111,181,.18) 100%)',
+        'mesh':'radial-gradient(at 10% 0%, rgba(124,92,255,.18) 0px, transparent 50%),radial-gradient(at 90% 0%, rgba(58,214,227,.14) 0px, transparent 50%),radial-gradient(at 50% 100%, rgba(255,111,181,.12) 0px, transparent 50%)',
+      },
+    }
+  }
+};
+</script>
+<style>
+  body { font-family:'Inter',sans-serif; background:#f5f5f8; color:#101019; overflow-x:hidden; }
+  .display { font-family:'Plus Jakarta Sans',Inter,sans-serif; letter-spacing:-0.02em; }
+  .frame { box-shadow: 0 30px 60px -20px rgba(8,8,15,.18), 0 18px 36px -18px rgba(8,8,15,.14); border-radius: 24px; overflow:hidden; background:#fff; transform: translateZ(0); }
+  .nav-section-title { letter-spacing:.14em; }
+  .dots { background-image: radial-gradient(rgba(124,92,255,.18) 1px, transparent 1px); background-size:14px 14px; }
+  .grid-bg { background-image: linear-gradient(rgba(124,92,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(124,92,255,.08) 1px,transparent 1px); background-size:24px 24px; }
+  .scrollbar-hide::-webkit-scrollbar{display:none}
+
+  /* ===========================================================
+     ANIMATIONS — gentle, professional, GPU-friendly
+  =========================================================== */
+
+  /* 1. Aurora hue shift on big bg */
+  @keyframes auroraShift {
+    0%   { filter: hue-rotate(0deg); }
+    50%  { filter: hue-rotate(25deg); }
+    100% { filter: hue-rotate(0deg); }
+  }
+  .aurora-anim { animation: auroraShift 18s ease-in-out infinite; }
+
+  /* 2. Floating blobs */
+  @keyframes float-y {
+    0%,100% { transform: translateY(0) translateX(0) scale(1); }
+    50%     { transform: translateY(-20px) translateX(10px) scale(1.05); }
+  }
+  @keyframes float-y2 {
+    0%,100% { transform: translateY(0) translateX(0) scale(1); }
+    50%     { transform: translateY(15px) translateX(-12px) scale(.95); }
+  }
+  .blob { animation: float-y 9s ease-in-out infinite; }
+  .blob-2 { animation: float-y2 11s ease-in-out infinite; }
+
+  /* 3. Sparkline reveal */
+  .spark path { stroke-dasharray: 200; stroke-dashoffset: 200; animation: dash 1.6s 0.4s ease forwards; }
+  @keyframes dash { to { stroke-dashoffset: 0; } }
+
+  /* 4. Glass sidebar with moving gradient */
+  .glass-side {
+    background: linear-gradient(180deg, #0c0c14 0%, #11101c 100%);
+    position:relative;
+    overflow:hidden;
+  }
+  .glass-side::before {
+    content:''; position:absolute; inset:-20%; pointer-events:none;
+    background:
+      radial-gradient(40% 30% at 20% 10%, rgba(124,92,255,.30), transparent 60%),
+      radial-gradient(35% 25% at 80% 90%, rgba(58,214,227,.22), transparent 60%),
+      radial-gradient(30% 20% at 50% 50%, rgba(255,111,181,.15), transparent 60%);
+    animation: sideAurora 14s ease-in-out infinite alternate;
+  }
+  @keyframes sideAurora {
+    0%   { transform: translate(0,0) rotate(0deg); }
+    100% { transform: translate(8%, -6%) rotate(8deg); }
+  }
+  .glass-side > * { position:relative; z-index:1; }
+
+  /* 5. Nav item active shimmer */
+  .nav-item-active {
+    background: linear-gradient(135deg, rgba(124,92,255,.22), rgba(58,214,227,.10));
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    position:relative;
+    overflow:hidden;
+  }
+  .nav-item-active::after {
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.18) 50%, transparent 70%);
+    transform: translateX(-100%);
+    animation: shimmer 4s ease-in-out infinite;
+  }
+  @keyframes shimmer { 0% { transform:translateX(-100%);} 60%,100% { transform:translateX(100%);} }
+
+  .pill { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:9999px; font-size:11px; font-weight:600; transition: transform .2s; }
+  .pill:hover { transform: translateY(-1px); }
+  .ring-soft { box-shadow: inset 0 0 0 1px rgba(16,16,25,.06); }
+
+  /* 6. Cards: hover lift + glow */
+  .card {
+    background:#fff; border-radius:20px;
+    box-shadow: 0 1px 2px rgba(16,16,25,.04), 0 6px 22px rgba(16,16,25,.04);
+    transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s;
+    will-change: transform;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 10px 30px -10px rgba(124,92,255,.18),
+      0 4px 14px rgba(58,214,227,.10);
+  }
+
+  .stage-dot { width:8px; height:8px; border-radius:9999px; box-shadow: 0 0 0 4px rgba(124,92,255,.12); }
+  .kbd { font-family:ui-monospace,monospace; font-size:11px; padding:2px 6px; border-radius:6px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); color:#dcdce3; }
+  .screen-label { position:sticky; top:0; z-index:20; }
+
+  /* 7. Stagger reveal — applied via JS IntersectionObserver */
+  .reveal { opacity:0; transform: translateY(14px); transition: opacity .6s ease, transform .6s cubic-bezier(.2,.8,.2,1); }
+  .reveal.in { opacity:1; transform: none; }
+
+  /* 8. Notification badge pulse */
+  @keyframes ping {
+    0%   { box-shadow: 0 0 0 0 rgba(255,93,122,.55); }
+    70%  { box-shadow: 0 0 0 10px rgba(255,93,122,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,93,122,0); }
+  }
+  .ping { animation: ping 1.8s ease-out infinite; }
+
+  /* 9. Online dot breathing */
+  @keyframes breathe {
+    0%,100% { transform: scale(1); opacity:1; }
+    50%     { transform: scale(1.15); opacity:.7; }
+  }
+  .breathe { animation: breathe 2.4s ease-in-out infinite; }
+
+  /* 10. Typing indicator */
+  .typing { display:inline-flex; gap:4px; align-items:center; }
+  .typing span {
+    width:6px; height:6px; border-radius:9999px; background:#9ca3af;
+    animation: typing 1.2s ease-in-out infinite;
+  }
+  .typing span:nth-child(2) { animation-delay:.15s; }
+  .typing span:nth-child(3) { animation-delay:.3s; }
+  @keyframes typing {
+    0%,60%,100% { transform: translateY(0); opacity:.4; }
+    30%        { transform: translateY(-4px); opacity:1; }
+  }
+
+  /* 11. Shimmer overlay (for Won card / featured) */
+  .shine { position:relative; overflow:hidden; }
+  .shine::after {
+    content:''; position:absolute; top:-50%; left:-60%; width:50%; height:200%;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%);
+    transform: rotate(20deg);
+    animation: shineMove 3.4s ease-in-out infinite;
+  }
+  @keyframes shineMove {
+    0%   { left:-60%; }
+    60%  { left:120%; }
+    100% { left:120%; }
+  }
+
+  /* 12. Funnel bars grow on reveal */
+  .grow-bar { width:0 !important; transition: width 1.4s cubic-bezier(.2,.8,.2,1); }
+  .reveal.in .grow-bar { /* set by JS to data-w */ }
+
+  /* 13. Ripple click */
+  .rip { position:relative; overflow:hidden; }
+  .rip-wave {
+    position:absolute; border-radius:9999px; pointer-events:none;
+    background: rgba(255,255,255,.4); transform: scale(0); opacity:.7;
+    animation: ripple .6s ease-out forwards;
+  }
+  @keyframes ripple {
+    to { transform: scale(4); opacity:0; }
+  }
+
+  /* 14. Hover row arrow on table */
+  .row-arrow { opacity:0; transform: translateX(-4px); transition: all .25s; }
+  .grid:hover .row-arrow,
+  tr:hover .row-arrow { opacity:1; transform: translateX(0); }
+
+  /* 15. Kanban card hover lift slightly different */
+  .deal-card { transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s; }
+  .deal-card:hover { transform: translateY(-4px) rotate(-.6deg); box-shadow: 0 14px 34px -10px rgba(124,92,255,.30); }
+
+  /* 16. Confetti corner shake on hover */
+  @keyframes wiggle {
+    0%,100% { transform: rotate(0); }
+    25%     { transform: rotate(-12deg); }
+    75%     { transform: rotate(12deg); }
+  }
+  .deal-card:hover .wiggle { animation: wiggle .6s ease; }
+
+  /* 17. Buttons primary glow pulse */
+  .btn-aurora {
+    background: linear-gradient(135deg,#7c5cff 0%,#3ad6e3 50%,#ff6fb5 100%);
+    background-size: 200% 200%;
+    animation: bgshift 6s ease infinite;
+  }
+  @keyframes bgshift {
+    0%,100% { background-position: 0% 50%; }
+    50%     { background-position: 100% 50%; }
+  }
+
+  /* 18. Filter chip switch */
+  .chip-switch { transition: all .2s; }
+  .chip-switch:hover { transform: translateY(-1px); }
+
+  /* 19. Loading skeleton shimmer (preview only) */
+  @keyframes skel { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
+  .skel { background: linear-gradient(90deg,#eee 0%,#f7f7f8 50%,#eee 100%); background-size:200px 100%; animation: skel 1.4s linear infinite; border-radius:8px; }
+
+  /* 20. Avatar online dot ring */
+  .av-on { position:relative; }
+  .av-on::after {
+    content:''; position:absolute; bottom:-2px; right:-2px; width:10px; height:10px;
+    border-radius:9999px; background:#3ee6b3; box-shadow:0 0 0 2px #fff;
+    animation: breathe 2.4s ease-in-out infinite;
+  }
+
+  /* respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body class="antialiased">
+
+<!-- Top intro -->
+<header class="max-w-[1400px] mx-auto px-8 pt-12 pb-8">
+  <div class="flex items-center gap-3 text-sm text-ink-500">
+    <div class="w-8 h-8 rounded-xl bg-aurora flex items-center justify-center text-white font-bold display">A</div>
+    <span class="font-semibold text-ink-900">Aurora CRM</span>
+    <span class="text-ink-300">·</span>
+    <span>Redesign preview cho CRM Vietnam</span>
+  </div>
+  <h1 class="display text-4xl md:text-5xl mt-6 font-bold text-ink-900">Một CRM <span class="bg-aurora bg-clip-text text-transparent">đẹp hơn</span>, dễ dùng hơn.</h1>
+  <p class="text-ink-500 mt-3 max-w-2xl">6 màn hình mockup so với bản hiện tại — giữ nguyên kiến trúc Linear nhưng thêm chiều sâu, màu sắc có chủ đích, hierarchy rõ và data-viz có hồn hơn.</p>
+
+  <div class="mt-6 flex flex-wrap gap-2 text-xs">
+    <span class="pill bg-ink-900 text-white">01 · Login</span>
+    <span class="pill bg-ink-100 text-ink-700">02 · Dashboard</span>
+    <span class="pill bg-ink-100 text-ink-700">03 · Leads list</span>
+    <span class="pill bg-ink-100 text-ink-700">04 · Deals Kanban</span>
+    <span class="pill bg-ink-100 text-ink-700">05 · Inbox</span>
+    <span class="pill bg-ink-100 text-ink-700">06 · Settings · RBAC</span>
+  </div>
+</header>
+
+<main class="max-w-[1400px] mx-auto px-8 pb-32 space-y-16">
+
+<!-- =======================================================
+     SCREEN 01 — LOGIN (Aurora split)
+======================================================= -->
+<section>
+  <div class="flex items-end justify-between mb-4">
+    <h2 class="display text-2xl font-bold">01 · Login</h2>
+    <p class="text-sm text-ink-500">Split panel: aurora marketing bên trái, form sạch bên phải</p>
+  </div>
+  <div class="frame">
+    <div class="grid grid-cols-2 min-h-[640px]">
+      <!-- Marketing side -->
+      <div class="relative overflow-hidden" style="background:#0a0a14">
+        <div class="absolute inset-0 bg-mesh opacity-90 aurora-anim"></div>
+        <div class="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-aurora opacity-30 blur-3xl blob"></div>
+        <div class="absolute -top-20 -left-10 w-72 h-72 rounded-full blob-2" style="background:radial-gradient(circle,#3ad6e3 0%,transparent 70%);opacity:.35;filter:blur(60px)"></div>
+        <div class="relative h-full p-12 flex flex-col text-white">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-aurora flex items-center justify-center font-bold display">A</div>
+            <div>
+              <div class="font-semibold display">Aurora CRM</div>
+              <div class="text-xs text-white/60">cho doanh nghiệp Việt Nam</div>
+            </div>
+          </div>
+          <div class="mt-auto">
+            <h3 class="display text-3xl font-bold leading-tight">Quản lý khách hàng,<br/>chốt deal nhanh hơn.</h3>
+            <p class="text-white/70 mt-3 text-sm max-w-sm">Phễu bán hàng · Kanban deals · Marketing đa kênh (Email/SMS/Zalo/Messenger) · RBAC chi tiết tới từng quyền.</p>
+            <div class="mt-8 flex items-center gap-6 text-xs text-white/60">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-aurora-mint rounded-full"></span>Đang hoạt động</div>
+              <div>1,284 doanh nghiệp Việt đang dùng</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Form -->
+      <div class="p-12 flex items-center">
+        <div class="w-full max-w-sm mx-auto">
+          <h3 class="display text-2xl font-bold">Đăng nhập</h3>
+          <p class="text-sm text-ink-500 mt-1">Chào mừng quay lại 👋</p>
+          <div class="mt-8 space-y-4">
+            <label class="block">
+              <span class="text-xs font-semibold text-ink-700">Email</span>
+              <input class="mt-1.5 w-full h-11 px-3.5 rounded-xl border border-ink-200 focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 outline-none text-sm" placeholder="ten@congty.vn"/>
+            </label>
+            <label class="block">
+              <div class="flex justify-between"><span class="text-xs font-semibold text-ink-700">Mật khẩu</span><a class="text-xs text-aurora-violet font-semibold">Quên mật khẩu?</a></div>
+              <input type="password" class="mt-1.5 w-full h-11 px-3.5 rounded-xl border border-ink-200 focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 outline-none text-sm" placeholder="••••••••"/>
+            </label>
+            <label class="flex items-center gap-2 text-sm text-ink-700">
+              <input type="checkbox" class="rounded text-aurora-violet"/> Ghi nhớ đăng nhập
+            </label>
+            <button class="rip btn-aurora w-full h-11 rounded-xl text-white text-sm font-semibold shadow-pop hover:shadow-lg transition">Đăng nhập</button>
+            <div class="relative text-center my-2"><span class="px-3 text-xs text-ink-400 bg-white relative z-10">hoặc</span><div class="absolute inset-x-0 top-1/2 border-t border-ink-100"></div></div>
+            <button class="w-full h-11 rounded-xl border border-ink-200 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-ink-50">
+              <span class="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-emerald-500"></span>
+              Đăng nhập bằng SSO
+            </button>
+          </div>
+          <p class="text-xs text-ink-400 mt-8 text-center">Demo: superadmin@abc.com.vn / Admin@123456</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- =======================================================
+     SHARED LAYOUT (sidebar + topbar) used in all next screens
+======================================================= -->
+
+<!-- =======================================================
+     SCREEN 02 — DASHBOARD (Bento grid)
+======================================================= -->
+<section>
+  <div class="flex items-end justify-between mb-4">
+    <h2 class="display text-2xl font-bold">02 · Dashboard</h2>
+    <p class="text-sm text-ink-500">Bento grid · sparklines có gradient · stage funnel hiển thị conversion</p>
+  </div>
+  <div class="frame flex" style="min-height:780px">
+    <!-- SIDEBAR -->
+    <aside class="glass-side w-60 text-white p-4 flex flex-col">
+      <div class="flex items-center gap-2 px-2 py-3">
+        <div class="w-9 h-9 rounded-xl bg-aurora flex items-center justify-center font-bold display">A</div>
+        <div>
+          <div class="text-sm font-semibold display">Aurora CRM</div>
+          <div class="text-[11px] text-white/50">Công ty ABC Việt Nam</div>
+        </div>
+      </div>
+
+      <button class="mt-4 mx-1 h-9 rounded-lg bg-white/10 hover:bg-white/15 flex items-center justify-between px-3 text-sm text-white/80">
+        <span class="flex items-center gap-2"><span>🔍</span>Tìm kiếm…</span>
+        <span class="kbd">⌘K</span>
+      </button>
+
+      <nav class="mt-6 space-y-6 text-sm flex-1 overflow-y-auto scrollbar-hide">
+        <div>
+          <div class="nav-section-title text-[10px] font-semibold uppercase text-white/40 px-3 mb-1">Tổng quan</div>
+          <a class="nav-item-active flex items-center gap-2.5 px-3 py-2 rounded-lg text-white">
+            <span>🏠</span><span>Tổng quan</span>
+          </a>
+        </div>
+        <div>
+          <div class="nav-section-title text-[10px] font-semibold uppercase text-white/40 px-3 mb-1">CRM</div>
+          <div class="space-y-0.5">
+            <a class="flex items-center justify-between px-3 py-2 rounded-lg text-white/70 hover:bg-white/5"><span class="flex items-center gap-2.5">👥<span>Khách hàng tiềm năng</span></span><span class="text-[10px] bg-aurora-violet/30 text-white px-1.5 rounded">12</span></a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">📇<span>Liên hệ</span></a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">🏢<span>Công ty</span></a>
+            <a class="flex items-center justify-between px-3 py-2 rounded-lg text-white/70 hover:bg-white/5"><span class="flex items-center gap-2.5">💼<span>Cơ hội</span></span><span class="text-[10px] text-aurora-mint">●</span></a>
+          </div>
+        </div>
+        <div>
+          <div class="nav-section-title text-[10px] font-semibold uppercase text-white/40 px-3 mb-1">Công việc</div>
+          <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">📋<span>Dự án</span></a>
+          <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">✅<span>Nhiệm vụ</span></a>
+        </div>
+        <div>
+          <div class="nav-section-title text-[10px] font-semibold uppercase text-white/40 px-3 mb-1">Kết nối</div>
+          <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">📣<span>Marketing</span></a>
+          <a class="flex items-center justify-between px-3 py-2 rounded-lg text-white/70 hover:bg-white/5"><span class="flex items-center gap-2.5">💬<span>Hộp thư</span></span><span class="w-2 h-2 rounded-full bg-aurora-pink"></span></a>
+        </div>
+      </nav>
+
+      <div class="mt-3 p-3 rounded-xl bg-white/5 border border-white/10">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-aurora-violet to-aurora-pink flex items-center justify-center text-xs font-bold">MK</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-semibold truncate">Trần Minh Khoa</div>
+            <div class="text-[10px] text-white/50 truncate">Super Admin</div>
+          </div>
+          <span class="text-white/40">⋯</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="flex-1 flex flex-col bg-ink-50/40">
+      <!-- TOPBAR -->
+      <div class="h-14 px-6 flex items-center justify-between border-b border-ink-100 bg-white">
+        <div class="flex items-center gap-3 text-sm">
+          <span class="font-semibold display text-base">Tổng quan</span>
+          <span class="text-ink-300">/</span>
+          <span class="text-ink-500">Tháng 5, 2026</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="h-9 px-3 rounded-lg text-sm border border-ink-200 hover:bg-ink-50">Xuất báo cáo</button>
+          <button class="h-9 px-3 rounded-lg text-sm bg-ink-900 text-white flex items-center gap-1.5">+ Tạo nhanh</button>
+          <div class="w-px h-6 bg-ink-200 mx-1"></div>
+          <button class="w-9 h-9 rounded-lg hover:bg-ink-50 grid place-items-center">🔔</button>
+          <button class="w-9 h-9 rounded-lg hover:bg-ink-50 grid place-items-center">🌙</button>
+        </div>
+      </div>
+
+      <!-- CONTENT -->
+      <div class="p-6 space-y-6 overflow-auto">
+        <!-- Greeting + KPIs -->
+        <div class="flex items-end justify-between">
+          <div>
+            <h1 class="display text-2xl font-bold">Chào buổi sáng, Khoa 👋</h1>
+            <p class="text-sm text-ink-500 mt-1">Hôm nay có <b>3 deal</b> sắp hết hạn và <b>5 lead mới</b> chưa được phân bổ.</p>
+          </div>
+          <div class="flex gap-1 bg-white p-1 rounded-lg ring-soft">
+            <button class="px-3 py-1.5 text-xs rounded-md bg-ink-900 text-white font-semibold">7 ngày</button>
+            <button class="px-3 py-1.5 text-xs rounded-md text-ink-500">30 ngày</button>
+            <button class="px-3 py-1.5 text-xs rounded-md text-ink-500">Quý này</button>
+          </div>
+        </div>
+
+        <!-- KPI Bento row -->
+        <div class="grid grid-cols-4 gap-4">
+          <!-- KPI 1 -->
+          <div class="card reveal p-5 relative overflow-hidden" style="transition-delay:.05s">
+            <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-aurora-violet/10 blur-2xl blob"></div>
+            <div class="flex items-center justify-between">
+              <div class="w-9 h-9 rounded-xl bg-aurora-violet/10 grid place-items-center text-aurora-violet">👥</div>
+              <span class="pill bg-emerald-50 text-emerald-700">↑ 12.4%</span>
+            </div>
+            <div class="mt-4 display text-3xl font-bold count" data-count="1284" data-format="comma">0</div>
+            <div class="text-xs text-ink-500">Lead tiềm năng</div>
+            <svg class="spark mt-3 w-full h-10" viewBox="0 0 100 30" preserveAspectRatio="none">
+              <defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0%" stop-color="#7c5cff"/><stop offset="100%" stop-color="#ff6fb5"/></linearGradient></defs>
+              <path d="M0 22 L12 18 L24 20 L36 14 L48 16 L60 10 L72 12 L84 6 L100 8" fill="none" stroke="url(#g1)" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <!-- KPI 2 -->
+          <div class="card reveal p-5 relative overflow-hidden" style="transition-delay:.12s">
+            <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-aurora-cyan/10 blur-2xl blob-2"></div>
+            <div class="flex items-center justify-between">
+              <div class="w-9 h-9 rounded-xl bg-aurora-cyan/10 grid place-items-center text-aurora-cyan">💼</div>
+              <span class="pill bg-emerald-50 text-emerald-700">↑ 8.1%</span>
+            </div>
+            <div class="mt-4 display text-3xl font-bold count" data-count="856" data-format="comma">0</div>
+            <div class="text-xs text-ink-500">Deal đang mở</div>
+            <svg class="spark mt-3 w-full h-10" viewBox="0 0 100 30" preserveAspectRatio="none">
+              <path d="M0 18 L12 20 L24 14 L36 16 L48 8 L60 12 L72 6 L84 10 L100 4" fill="none" stroke="#3ad6e3" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <!-- KPI 3 -->
+          <div class="card reveal p-5 relative overflow-hidden" style="transition-delay:.19s">
+            <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-aurora-mint/10 blur-2xl blob"></div>
+            <div class="flex items-center justify-between">
+              <div class="w-9 h-9 rounded-xl bg-aurora-mint/10 grid place-items-center text-aurora-mint">💰</div>
+              <span class="pill bg-emerald-50 text-emerald-700">↑ 23%</span>
+            </div>
+            <div class="mt-4 display text-3xl font-bold"><span class="count" data-count="4.5" data-format="decimal">0</span><span class="text-lg text-ink-400"> tỷ</span></div>
+            <div class="text-xs text-ink-500">Doanh thu dự kiến</div>
+            <svg class="spark mt-3 w-full h-10" viewBox="0 0 100 30" preserveAspectRatio="none">
+              <path d="M0 24 L20 18 L40 14 L60 12 L80 6 L100 4" fill="none" stroke="#3ee6b3" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <!-- KPI 4 -->
+          <div class="card reveal p-5 relative overflow-hidden" style="transition-delay:.26s">
+            <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-aurora-rose/10 blur-2xl blob-2"></div>
+            <div class="flex items-center justify-between">
+              <div class="w-9 h-9 rounded-xl bg-aurora-rose/10 grid place-items-center text-aurora-rose">🎯</div>
+              <span class="pill bg-rose-50 text-rose-700">↓ 2.1%</span>
+            </div>
+            <div class="mt-4 display text-3xl font-bold"><span class="count" data-count="68" data-format="percent">0</span>%</div>
+            <div class="text-xs text-ink-500">Tỉ lệ chuyển đổi</div>
+            <svg class="spark mt-3 w-full h-10" viewBox="0 0 100 30" preserveAspectRatio="none">
+              <path d="M0 8 L20 10 L40 14 L60 12 L80 18 L100 16" fill="none" stroke="#ff5d7a" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Bento grid -->
+        <div class="grid grid-cols-3 gap-4">
+          <!-- Sales funnel (col span 2) -->
+          <div class="card col-span-2 p-6 relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-60 h-60 bg-aurora-soft blur-3xl"></div>
+            <div class="relative">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="display text-base font-bold">Phễu bán hàng</h3>
+                  <p class="text-xs text-ink-500">Tổng giá trị 4.5 tỷ · 23 cơ hội</p>
+                </div>
+                <button class="text-xs text-aurora-violet font-semibold">Xem chi tiết →</button>
+              </div>
+              <!-- Funnel rows -->
+              <div class="mt-6 space-y-3 reveal funnel">
+                <div class="flex items-center gap-4">
+                  <div class="w-28 text-xs text-ink-700 font-medium">Tiềm năng</div>
+                  <div class="flex-1 h-9 rounded-lg bg-ink-50 overflow-hidden">
+                    <div class="bar h-full rounded-lg bg-gradient-to-r from-aurora-violet to-aurora-indigo flex items-center px-3 text-white text-xs font-semibold" data-w="92%" style="width:0">12 deal · 1.2 tỷ</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4">
+                  <div class="w-28 text-xs text-ink-700 font-medium">Đã liên hệ</div>
+                  <div class="flex-1 h-9 rounded-lg bg-ink-50 overflow-hidden">
+                    <div class="bar h-full rounded-lg bg-gradient-to-r from-aurora-indigo to-aurora-cyan flex items-center px-3 text-white text-xs font-semibold" data-w="74%" style="width:0;transition-delay:.1s">8 deal · 980 tr</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4">
+                  <div class="w-28 text-xs text-ink-700 font-medium">Báo giá</div>
+                  <div class="flex-1 h-9 rounded-lg bg-ink-50 overflow-hidden">
+                    <div class="bar h-full rounded-lg bg-gradient-to-r from-aurora-cyan to-aurora-mint flex items-center px-3 text-ink-900 text-xs font-semibold" data-w="55%" style="width:0;transition-delay:.2s">5 deal · 720 tr</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4">
+                  <div class="w-28 text-xs text-ink-700 font-medium">Đàm phán</div>
+                  <div class="flex-1 h-9 rounded-lg bg-ink-50 overflow-hidden">
+                    <div class="bar h-full rounded-lg bg-gradient-to-r from-amber-400 to-orange-500 flex items-center px-3 text-white text-xs font-semibold" data-w="34%" style="width:0;transition-delay:.3s">3 deal · 480 tr</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4">
+                  <div class="w-28 text-xs text-ink-700 font-medium">Chốt hợp đồng</div>
+                  <div class="flex-1 h-9 rounded-lg bg-ink-50 overflow-hidden">
+                    <div class="bar shine h-full rounded-lg bg-gradient-to-r from-emerald-400 to-emerald-600 flex items-center px-3 text-white text-xs font-semibold" data-w="18%" style="width:0;transition-delay:.4s">2 deal · 320 tr</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lead by source -->
+          <div class="card p-6">
+            <div class="flex items-center justify-between">
+              <h3 class="display text-base font-bold">Lead theo nguồn</h3>
+              <button class="text-ink-400">⋯</button>
+            </div>
+            <div class="mt-6 space-y-3">
+              <div>
+                <div class="flex justify-between text-xs"><span class="text-ink-700 font-medium">📘 Facebook</span><span class="text-ink-500">42</span></div>
+                <div class="mt-1 h-1.5 rounded-full bg-ink-100 overflow-hidden"><div class="h-full bg-blue-500" style="width:88%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs"><span class="text-ink-700 font-medium">🌐 Website</span><span class="text-ink-500">31</span></div>
+                <div class="mt-1 h-1.5 rounded-full bg-ink-100 overflow-hidden"><div class="h-full bg-aurora-violet" style="width:64%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs"><span class="text-ink-700 font-medium">💙 Zalo</span><span class="text-ink-500">28</span></div>
+                <div class="mt-1 h-1.5 rounded-full bg-ink-100 overflow-hidden"><div class="h-full bg-sky-500" style="width:58%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs"><span class="text-ink-700 font-medium">📞 Cold Call</span><span class="text-ink-500">17</span></div>
+                <div class="mt-1 h-1.5 rounded-full bg-ink-100 overflow-hidden"><div class="h-full bg-aurora-pink" style="width:38%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs"><span class="text-ink-700 font-medium">🤝 Giới thiệu</span><span class="text-ink-500">12</span></div>
+                <div class="mt-1 h-1.5 rounded-full bg-ink-100 overflow-hidden"><div class="h-full bg-aurora-mint" style="width:24%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity timeline -->
+          <div class="card p-6">
+            <div class="flex items-center justify-between">
+              <h3 class="display text-base font-bold">Hoạt động gần đây</h3>
+              <span class="pill bg-aurora-violet/10 text-aurora-violet">Live</span>
+            </div>
+            <div class="mt-4 space-y-3 text-xs">
+              <div class="flex gap-3">
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-aurora-violet to-aurora-pink grid place-items-center text-white text-[10px] font-bold flex-shrink-0">MK</div>
+                <div>
+                  <div><b>Khoa</b> đã chuyển deal <b>"Hợp đồng phần mềm ABC"</b> sang <span class="text-aurora-violet font-semibold">Đàm phán</span></div>
+                  <div class="text-ink-400 mt-0.5">2 phút trước</div>
+                </div>
+              </div>
+              <div class="flex gap-3">
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-aurora-cyan to-aurora-mint grid place-items-center text-white text-[10px] font-bold flex-shrink-0">LH</div>
+                <div>
+                  <div><b>Lan Hương</b> tạo lead mới <b>Nguyễn Văn A</b> từ Facebook</div>
+                  <div class="text-ink-400 mt-0.5">15 phút trước</div>
+                </div>
+              </div>
+              <div class="flex gap-3">
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 grid place-items-center text-white text-[10px] font-bold flex-shrink-0">TT</div>
+                <div>
+                  <div><b>Thanh Tùng</b> chốt deal <b>250 tr</b> với <b>Công ty XYZ</b> 🎉</div>
+                  <div class="text-ink-400 mt-0.5">1 giờ trước</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tasks today -->
+          <div class="card col-span-2 p-6">
+            <div class="flex items-center justify-between">
+              <h3 class="display text-base font-bold">Hôm nay của bạn</h3>
+              <span class="text-xs text-ink-500">3 / 8 hoàn thành</span>
+            </div>
+            <div class="mt-4 space-y-2">
+              <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-ink-50 group">
+                <input type="checkbox" class="rounded text-aurora-violet"/>
+                <div class="flex-1">
+                  <div class="text-sm font-medium">Gọi lại lead Nguyễn Văn A</div>
+                  <div class="text-xs text-ink-500">Hôm nay 14:00 · Phụ trách bởi bạn</div>
+                </div>
+                <span class="pill bg-rose-50 text-rose-700">Khẩn cấp</span>
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-aurora-violet to-aurora-pink"></div>
+              </div>
+              <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-ink-50">
+                <input type="checkbox" checked class="rounded text-aurora-violet"/>
+                <div class="flex-1">
+                  <div class="text-sm font-medium line-through text-ink-400">Gửi báo giá cho Công ty XYZ</div>
+                  <div class="text-xs text-ink-400">Hoàn thành lúc 10:23</div>
+                </div>
+                <span class="pill bg-ink-100 text-ink-500">Cao</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-ink-50">
+                <input type="checkbox" class="rounded text-aurora-violet"/>
+                <div class="flex-1">
+                  <div class="text-sm font-medium">Review đề xuất hợp tác Q3</div>
+                  <div class="text-xs text-ink-500">Mai 09:00 · Dự án Marketing 2026</div>
+                </div>
+                <span class="pill bg-amber-50 text-amber-700">Trung bình</span>
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-aurora-cyan to-aurora-mint"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- =======================================================
+     SCREEN 03 — LEADS LIST
+======================================================= -->
+<section>
+  <div class="flex items-end justify-between mb-4">
+    <h2 class="display text-2xl font-bold">03 · Leads — danh sách</h2>
+    <p class="text-sm text-ink-500">Filter chips · row có hover lift · status pill có gradient theo trạng thái</p>
+  </div>
+  <div class="frame flex" style="min-height:780px">
+    <aside class="glass-side w-60 text-white p-4 flex flex-col">
+      <div class="flex items-center gap-2 px-2 py-3">
+        <div class="w-9 h-9 rounded-xl bg-aurora flex items-center justify-center font-bold display">A</div>
+        <div class="text-sm font-semibold display">Aurora CRM</div>
+      </div>
+      <button class="mt-4 mx-1 h-9 rounded-lg bg-white/10 flex items-center justify-between px-3 text-sm text-white/80"><span class="flex items-center gap-2">🔍 Tìm kiếm…</span><span class="kbd">⌘K</span></button>
+      <nav class="mt-6 space-y-1 text-sm flex-1">
+        <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">🏠<span>Tổng quan</span></a>
+        <div class="nav-section-title text-[10px] font-semibold uppercase text-white/40 px-3 mt-4 mb-1">CRM</div>
+        <a class="nav-item-active flex items-center justify-between px-3 py-2 rounded-lg text-white"><span class="flex items-center gap-2.5">👥<span>Khách hàng tiềm năng</span></span><span class="text-[10px] bg-white/20 text-white px-1.5 rounded">12</span></a>
+        <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">📇<span>Liên hệ</span></a>
+        <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">🏢<span>Công ty</span></a>
+        <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">💼<span>Cơ hội</span></a>
+      </nav>
+    </aside>
+
+    <div class="flex-1 flex flex-col bg-ink-50/40">
+      <div class="h-14 px-6 flex items-center justify-between border-b border-ink-100 bg-white">
+        <div class="flex items-center gap-3 text-sm">
+          <span class="font-semibold display text-base">Khách hàng tiềm năng</span>
+          <span class="pill bg-ink-100 text-ink-700">35 lead</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="h-9 px-3 rounded-lg text-sm border border-ink-200 hover:bg-ink-50">⬆ Import CSV</button>
+          <button class="h-9 px-3 rounded-lg text-sm border border-ink-200 hover:bg-ink-50">⬇ Export</button>
+          <button class="rip btn-aurora h-9 px-3 rounded-lg text-sm text-white shadow-pop font-semibold">+ Thêm lead</button>
+        </div>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <!-- Toolbar -->
+        <div class="flex items-center gap-3">
+          <div class="flex-1 flex items-center bg-white rounded-xl ring-soft h-10 px-3 gap-2">
+            <span class="text-ink-400">🔍</span>
+            <input class="flex-1 outline-none text-sm" placeholder="Tìm tên, email, số điện thoại…"/>
+            <span class="kbd bg-ink-100 text-ink-500 border border-ink-200">⌘F</span>
+          </div>
+          <button class="h-10 px-3 rounded-xl bg-white ring-soft text-sm flex items-center gap-2">⚡ Trạng thái <span class="text-ink-400">▾</span></button>
+          <button class="h-10 px-3 rounded-xl bg-white ring-soft text-sm flex items-center gap-2">📡 Nguồn <span class="text-ink-400">▾</span></button>
+          <button class="h-10 px-3 rounded-xl bg-white ring-soft text-sm flex items-center gap-2">👤 Phụ trách <span class="text-ink-400">▾</span></button>
+          <button class="h-10 px-3 rounded-xl bg-white ring-soft text-sm">+ Bộ lọc</button>
+          <div class="w-px h-6 bg-ink-200"></div>
+          <div class="flex bg-white rounded-xl p-0.5 ring-soft">
+            <button class="px-2.5 h-9 rounded-lg bg-ink-900 text-white text-xs font-semibold">Bảng</button>
+            <button class="px-2.5 h-9 rounded-lg text-ink-500 text-xs">Kanban</button>
+            <button class="px-2.5 h-9 rounded-lg text-ink-500 text-xs">Card</button>
+          </div>
+        </div>
+
+        <!-- Active filter chips -->
+        <div class="flex items-center gap-2 text-xs">
+          <span class="text-ink-500">Đang lọc:</span>
+          <span class="pill bg-aurora-violet/10 text-aurora-violet">Trạng thái: Mới ✕</span>
+          <span class="pill bg-aurora-cyan/10 text-cyan-700">Nguồn: Facebook ✕</span>
+          <button class="text-ink-400 hover:text-ink-700">Xóa tất cả</button>
+        </div>
+
+        <!-- Table -->
+        <div class="card overflow-hidden">
+          <div class="grid grid-cols-[40px_1.4fr_1.4fr_1fr_1fr_1fr_120px_60px] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-ink-400 border-b border-ink-100">
+            <div><input type="checkbox" class="rounded"/></div>
+            <div>Họ tên ↕</div>
+            <div>Liên hệ</div>
+            <div>Trạng thái ↕</div>
+            <div>Nguồn</div>
+            <div>Phụ trách</div>
+            <div>Ngày tạo ↓</div>
+            <div></div>
+          </div>
+
+          <!-- Row 1 -->
+          <div class="grid grid-cols-[40px_1.4fr_1.4fr_1fr_1fr_1fr_120px_60px] px-5 py-3.5 items-center hover:bg-aurora-soft/30 border-b border-ink-50 transition">
+            <div><input type="checkbox" class="rounded"/></div>
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-aurora-violet to-aurora-pink grid place-items-center text-white text-xs font-bold">NA</div>
+              <div>
+                <div class="text-sm font-semibold text-ink-900">Nguyễn Văn A</div>
+                <div class="text-xs text-ink-500">Công ty TNHH Alpha</div>
+              </div>
+            </div>
+            <div class="text-xs">
+              <div class="text-ink-700">a.nguyen@alpha.vn</div>
+              <div class="text-ink-400">+84 90 123 4567</div>
+            </div>
+            <div><span class="pill bg-aurora-violet/10 text-aurora-violet">● Mới</span></div>
+            <div class="text-sm text-ink-700">📘 Facebook</div>
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-full bg-gradient-to-br from-aurora-cyan to-aurora-mint grid place-items-center text-white text-[10px] font-bold">LH</div>
+              <span class="text-xs text-ink-700">Lan Hương</span>
+            </div>
+            <div class="text-xs text-ink-500">Hôm nay</div>
+            <div class="text-right text-ink-300 text-lg">⋯</div>
+          </div>
+
+          <!-- Row 2 -->
+          <div class="grid grid-cols-[40px_1.4fr_1.4fr_1fr_1fr_1fr_120px_60px] px-5 py-3.5 items-center hover:bg-aurora-soft/30 border-b border-ink-50">
+            <div><input type="checkbox" class="rounded" checked/></div>
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-aurora-cyan to-aurora-indigo grid place-items-center text-white text-xs font-bold">TB</div>
+              <div>
+                <div class="text-sm font-semibold text-ink-900">Trần Thị B</div>
+                <div class="text-xs text-ink-500">Beta Solutions JSC</div>
+              </div>
+            </div>
+            <div class="text-xs">
+              <div class="text-ink-700">b.tran@beta.vn</div>
+              <div class="text-ink-400">+84 91 234 5678</div>
+            </div>
+            <div><span class="pill bg-amber-50 text-amber-700">● Đang chăm</span></div>
+            <div class="text-sm text-ink-700">🌐 Website</div>
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 grid place-items-center text-white text-[10px] font-bold">TT</div>
+              <span class="text-xs text-ink-700">Thanh Tùng</span>
+            </div>
+            <div class="text-xs text-ink-500">Hôm qua</div>
+            <div class="text-right text-ink-300 text-lg">⋯</div>
+          </div>
+
+          <!-- Row 3 -->
+          <div class="grid grid-cols-[40px_1.4fr_1.4fr_1fr_1fr_1fr_120px_60px] px-5 py-3.5 items-center hover:bg-aurora-soft/30 border-b border-ink-50">
+            <div><input type="checkbox" class="rounded"/></div>
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 grid place-items-center text-white text-xs font-bold">PC</div>
+              <div>
+                <div class="text-sm font-semibold text-ink-900">Phạm Văn C</div>
+                <div class="text-xs text-ink-500">Gamma Tech Co.</div>
+              </div>
+            </div>
+            <div class="text-xs">
+              <div class="text-ink-700">c.pham@gamma.vn</div>
+              <div class="text-ink-400">+84 92 345 6789</div>
+            </div>
+            <div><span class="pill bg-emerald-50 text-emerald-700">● Đủ điều kiện</span></div>
+            <div class="text-sm text-ink-700">💙 Zalo</div>
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-full bg-gradient-to-br from-aurora-violet to-aurora-pink grid place-items-center text-white text-[10px] font-bold">MK</div>
+              <span class="text-xs text-ink-700">Minh Khoa</span>
+            </div>
+            <div class="text-xs text-ink-500">3 ngày</div>
+            <div class="text-right text-ink-300 text-lg">⋯</div>
+          </div>
+
+          <!-- Row 4 -->
+          <div class="grid grid-cols-[40px_1.4fr_1.4fr_1fr_1fr_1fr_120px_60px] px-5 py-3.5 items-center hover:bg-aurora-soft/30 border-b border-ink-50">
+            <div><input type="checkbox" class="rounded"/></div>
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-rose-400 to-aurora-pink grid place-items-center text-white text-xs font-bold">LD</div>
+              <div>
+                <div class="text-sm font-semibold text-ink-900">Lê Thị D</div>
+                <div class="text-xs text-ink-500">Delta Group</div>
+              </div>
+            </div>
+            <div class="text-xs">
+              <div class="text-ink-700">d.le@delta.vn</div>
+              <div class="text-ink-400">+84 93 456 7890</div>
+            </div>
+            <div><span class="pill bg-rose-50 text-rose-700">● Mất</span></div>
+            <div class="text-sm text-ink-700">📞 Cold Call</div>
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-full bg-gradient-to-br from-aurora-cyan to-aurora-mint grid place-items-center text-white text-[10px] font-bold">LH</div>
+              <span class="text-xs text-ink-700">Lan Hương</span>
+            </div>
+            <div class="text-xs text-ink-500">Tuần trước</div>
+            <div class="text-right text-ink-300 text-lg">⋯</div>
+          </div>
+
+          <!-- Pagination -->
+          <div class="px-5 py-3 flex items-center justify-between text-xs text-ink-500 bg-ink-50/40">
+            <div>Hiển thị 1–4 trên 35 lead</div>
+            <div class="flex items-center gap-1">
+              <button class="h-7 px-2 rounded-md hover:bg-white">‹</button>
+              <button class="h-7 w-7 rounded-md bg-ink-900 text-white">1</button>
+              <button class="h-7 w-7 rounded-md hover:bg-white">2</button>
+              <button class="h-7 w-7 rounded-md hover:bg-white">3</button>
+              <button class="h-7 px-2 rounded-md hover:bg-white">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- =======================================================
+     SCREEN 04 — DEALS KANBAN
+======================================================= -->
+<section>
+  <div class="flex items-end justify-between mb-4">
+    <h2 class="display text-2xl font-bold">04 · Deals — Kanban</h2>
+    <p class="text-sm text-ink-500">Mỗi cột có gradient header riêng · card có thumbnail công ty · WIP indicator</p>
+  </div>
+  <div class="frame flex" style="min-height:760px">
+    <aside class="glass-side w-60 text-white p-4">
+      <div class="flex items-center gap-2 px-2 py-3">
+        <div class="w-9 h-9 rounded-xl bg-aurora flex items-center justify-center font-bold display">A</div>
+        <div class="text-sm font-semibold display">Aurora CRM</div>
+      </div>
+      <nav class="mt-6 space-y-1 text-sm">
+        <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">🏠<span>Tổng quan</span></a>
+        <div class="nav-section-title text-[10px] font-semibold uppercase text-white/40 px-3 mt-4 mb-1">CRM</div>
+        <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">👥<span>Lead</span></a>
+        <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">📇<span>Liên hệ</span></a>
+        <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">🏢<span>Công ty</span></a>
+        <a class="nav-item-active flex items-center justify-between px-3 py-2 rounded-lg text-white"><span class="flex items-center gap-2.5">💼<span>Cơ hội</span></span><span class="text-[10px] bg-white/20 px-1.5 rounded">23</span></a>
+      </nav>
+    </aside>
+
+    <div class="flex-1 flex flex-col bg-ink-50/40">
+      <div class="h-14 px-6 flex items-center justify-between border-b border-ink-100 bg-white">
+        <div class="flex items-center gap-3 text-sm">
+          <span class="font-semibold display text-base">Cơ hội kinh doanh</span>
+          <span class="pill bg-ink-100 text-ink-700">23 deal · 4.5 tỷ</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="flex bg-white rounded-lg p-0.5 ring-soft text-xs">
+            <button class="px-3 h-8 rounded-md bg-ink-900 text-white font-semibold">Kanban</button>
+            <button class="px-3 h-8 rounded-md text-ink-500">Bảng</button>
+            <button class="px-3 h-8 rounded-md text-ink-500">Lịch</button>
+          </div>
+          <button class="rip btn-aurora h-9 px-3 rounded-lg text-sm text-white shadow-pop font-semibold">+ Thêm deal</button>
+        </div>
+      </div>
+
+      <!-- Filter row -->
+      <div class="px-6 py-3 border-b border-ink-100 bg-white flex items-center gap-2 text-sm">
+        <span class="text-xs text-ink-500 mr-2">Lọc nhanh:</span>
+        <button class="px-3 h-8 rounded-full bg-ink-900 text-white text-xs font-semibold">Tất cả · 23</button>
+        <button class="px-3 h-8 rounded-full bg-rose-50 text-rose-700 text-xs font-semibold">⏰ Quá hạn · 3</button>
+        <button class="px-3 h-8 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold">📅 Tuần này · 7</button>
+        <button class="px-3 h-8 rounded-full bg-ink-50 text-ink-700 text-xs">🗓 Tháng này · 18</button>
+        <div class="w-px h-5 bg-ink-200 mx-2"></div>
+        <button class="h-8 px-3 rounded-full bg-white ring-soft text-xs">👤 Phụ trách ▾</button>
+      </div>
+
+      <div class="p-6 overflow-x-auto">
+        <div class="flex gap-4 min-w-max">
+
+          <!-- Column TIEM NANG -->
+          <div class="w-72 flex-shrink-0">
+            <div class="rounded-xl p-3 bg-gradient-to-br from-aurora-violet/10 to-aurora-violet/5 ring-1 ring-aurora-violet/20">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-aurora-violet"></span>
+                  <span class="text-xs font-bold text-ink-900">TIỀM NĂNG</span>
+                  <span class="text-[10px] text-aurora-violet font-bold">5</span>
+                </div>
+                <button class="text-aurora-violet">+</button>
+              </div>
+              <div class="text-[11px] text-ink-500 mt-0.5">1.2 tỷ · TB 240tr/deal</div>
+            </div>
+            <div class="mt-3 space-y-2.5">
+              <div class="card deal-card reveal p-3.5 cursor-pointer">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs font-semibold text-ink-900">Hợp đồng phần mềm ABC</div>
+                  <span class="text-[10px] text-ink-400">#D-1042</span>
+                </div>
+                <div class="display font-bold mt-2 text-aurora-violet">250.000.000₫</div>
+                <div class="mt-2 flex items-center gap-1.5">
+                  <div class="w-5 h-5 rounded bg-gradient-to-br from-blue-400 to-aurora-cyan grid place-items-center text-white text-[9px] font-bold">A</div>
+                  <span class="text-[11px] text-ink-500">Công ty Alpha</span>
+                </div>
+                <div class="mt-3 pt-3 border-t border-ink-100 flex items-center justify-between">
+                  <div class="flex items-center gap-1 text-[11px] text-ink-500">📅 15/05</div>
+                  <div class="flex -space-x-1.5">
+                    <div class="w-5 h-5 rounded-full bg-gradient-to-br from-aurora-violet to-aurora-pink ring-2 ring-white"></div>
+                    <div class="w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 ring-2 ring-white"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card deal-card reveal p-3.5 cursor-pointer">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs font-semibold text-ink-900">CRM cho Beta JSC</div>
+                  <span class="text-[10px] text-ink-400">#D-1041</span>
+                </div>
+                <div class="display font-bold mt-2 text-aurora-violet">180.000.000₫</div>
+                <div class="mt-2 flex items-center gap-1.5">
+                  <div class="w-5 h-5 rounded bg-gradient-to-br from-emerald-400 to-emerald-600 grid place-items-center text-white text-[9px] font-bold">B</div>
+                  <span class="text-[11px] text-ink-500">Beta Solutions</span>
+                </div>
+                <div class="mt-3 pt-3 border-t border-ink-100 flex items-center justify-between">
+                  <div class="flex items-center gap-1 text-[11px] text-rose-600 font-medium">⏰ Quá 2 ngày</div>
+                  <div class="flex -space-x-1.5">
+                    <div class="w-5 h-5 rounded-full bg-gradient-to-br from-aurora-cyan to-aurora-mint ring-2 ring-white"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column DA LIEN HE -->
+          <div class="w-72 flex-shrink-0">
+            <div class="rounded-xl p-3 bg-gradient-to-br from-aurora-indigo/10 to-aurora-cyan/10 ring-1 ring-aurora-indigo/20">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-aurora-indigo"></span>
+                  <span class="text-xs font-bold text-ink-900">ĐÃ LIÊN HỆ</span>
+                  <span class="text-[10px] text-aurora-indigo font-bold">8</span>
+                </div>
+                <button class="text-aurora-indigo">+</button>
+              </div>
+              <div class="text-[11px] text-ink-500 mt-0.5">980 tr · TB 122tr/deal</div>
+            </div>
+            <div class="mt-3 space-y-2.5">
+              <div class="card deal-card reveal p-3.5 cursor-pointer">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs font-semibold text-ink-900">Tư vấn Marketing Q3</div>
+                  <span class="text-[10px] text-ink-400">#D-1038</span>
+                </div>
+                <div class="display font-bold mt-2 text-aurora-indigo">120.000.000₫</div>
+                <div class="mt-2 flex items-center gap-1.5">
+                  <div class="w-5 h-5 rounded bg-gradient-to-br from-aurora-pink to-rose-500 grid place-items-center text-white text-[9px] font-bold">D</div>
+                  <span class="text-[11px] text-ink-500">Delta Group</span>
+                </div>
+                <div class="mt-2 flex items-center gap-1 flex-wrap">
+                  <span class="pill bg-aurora-cyan/10 text-cyan-700">marketing</span>
+                  <span class="pill bg-aurora-violet/10 text-aurora-violet">VIP</span>
+                </div>
+                <div class="mt-3 pt-3 border-t border-ink-100 flex items-center justify-between">
+                  <div class="flex items-center gap-1 text-[11px] text-ink-500">📅 22/05</div>
+                  <div class="text-[11px] text-emerald-600 font-medium">75%</div>
+                </div>
+              </div>
+
+              <div class="card deal-card reveal p-3.5 cursor-pointer">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs font-semibold text-ink-900">License Office cho Echo</div>
+                  <span class="text-[10px] text-ink-400">#D-1035</span>
+                </div>
+                <div class="display font-bold mt-2 text-aurora-indigo">85.000.000₫</div>
+                <div class="mt-3 pt-3 border-t border-ink-100 flex items-center justify-between text-[11px] text-ink-500"><span>📅 28/05</span><span>50%</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column BAO GIA -->
+          <div class="w-72 flex-shrink-0">
+            <div class="rounded-xl p-3 bg-gradient-to-br from-aurora-cyan/10 to-aurora-mint/10 ring-1 ring-aurora-cyan/20">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-aurora-cyan"></span>
+                  <span class="text-xs font-bold text-ink-900">BÁO GIÁ</span>
+                  <span class="text-[10px] text-cyan-700 font-bold">5</span>
+                </div>
+              </div>
+              <div class="text-[11px] text-ink-500 mt-0.5">720 tr · TB 144tr/deal</div>
+            </div>
+            <div class="mt-3 space-y-2.5">
+              <div class="card deal-card reveal p-3.5 cursor-pointer">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs font-semibold text-ink-900">Triển khai ERP Foxtrot</div>
+                  <span class="text-[10px] text-ink-400">#D-1029</span>
+                </div>
+                <div class="display font-bold mt-2 text-cyan-700">320.000.000₫</div>
+                <div class="mt-3 pt-3 border-t border-ink-100 flex items-center justify-between text-[11px] text-ink-500"><span>📅 02/06</span><span class="text-emerald-600 font-medium">85%</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column DAM PHAN -->
+          <div class="w-72 flex-shrink-0">
+            <div class="rounded-xl p-3 bg-gradient-to-br from-amber-100 to-orange-100/60 ring-1 ring-amber-300/40">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                  <span class="text-xs font-bold text-ink-900">ĐÀM PHÁN</span>
+                  <span class="text-[10px] text-amber-700 font-bold">3</span>
+                </div>
+              </div>
+              <div class="text-[11px] text-ink-500 mt-0.5">480 tr · TB 160tr/deal</div>
+            </div>
+            <div class="mt-3 space-y-2.5">
+              <div class="card deal-card reveal p-3.5 cursor-pointer ring-2 ring-amber-300/40 shine">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs font-semibold text-ink-900">Dịch vụ tư vấn Golf</div>
+                  <span class="text-[10px] text-ink-400">#D-1024</span>
+                </div>
+                <div class="display font-bold mt-2 text-amber-700">220.000.000₫</div>
+                <div class="mt-3 pt-3 border-t border-ink-100 flex items-center justify-between text-[11px]"><span class="text-ink-500">📅 08/06</span><span class="text-emerald-600 font-medium">90%</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column CHOT -->
+          <div class="w-72 flex-shrink-0">
+            <div class="rounded-xl p-3 bg-gradient-to-br from-emerald-100 to-emerald-50 ring-1 ring-emerald-300/40">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span class="text-xs font-bold text-ink-900">CHỐT HỢP ĐỒNG</span>
+                  <span class="text-[10px] text-emerald-700 font-bold">2</span>
+                </div>
+              </div>
+              <div class="text-[11px] text-ink-500 mt-0.5">320 tr · 🏆 chiến thắng</div>
+            </div>
+            <div class="mt-3 space-y-2.5">
+              <div class="card deal-card reveal p-3.5 cursor-pointer relative overflow-hidden shine">
+                <div class="absolute -top-3 -right-3 text-2xl wiggle inline-block">🏆</div>
+                <div class="text-xs font-semibold text-ink-900">Bảo trì hệ thống Hotel</div>
+                <div class="display font-bold mt-2 text-emerald-700">200.000.000₫</div>
+                <div class="mt-3 pt-3 border-t border-ink-100 flex items-center justify-between text-[11px] text-ink-500"><span>Won 12/05</span><span class="text-emerald-600 font-bold">100%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- =======================================================
+     SCREEN 05 — INBOX
+======================================================= -->
+<section>
+  <div class="flex items-end justify-between mb-4">
+    <h2 class="display text-2xl font-bold">05 · Inbox — đa kênh</h2>
+    <p class="text-sm text-ink-500">3 cột Linear-style với chip kênh có màu · message bubble mềm · context lead bên phải</p>
+  </div>
+  <div class="frame flex" style="min-height:780px">
+    <aside class="glass-side w-60 text-white p-4">
+      <div class="flex items-center gap-2 px-2 py-3">
+        <div class="w-9 h-9 rounded-xl bg-aurora flex items-center justify-center font-bold display">A</div>
+        <div class="text-sm font-semibold display">Aurora CRM</div>
+      </div>
+      <nav class="mt-6 space-y-1 text-sm">
+        <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">🏠<span>Tổng quan</span></a>
+        <div class="nav-section-title text-[10px] font-semibold uppercase text-white/40 px-3 mt-4 mb-1">Kết nối</div>
+        <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">📣<span>Marketing</span></a>
+        <a class="nav-item-active flex items-center justify-between px-3 py-2 rounded-lg text-white"><span class="flex items-center gap-2.5">💬<span>Hộp thư</span></span><span class="text-[10px] bg-aurora-pink text-white px-1.5 rounded ping">3</span></a>
+      </nav>
+    </aside>
+
+    <div class="flex-1 flex flex-col bg-white">
+      <div class="h-14 px-6 flex items-center justify-between border-b border-ink-100">
+        <span class="font-semibold display text-base">Hộp thư đa kênh</span>
+        <div class="flex items-center gap-2">
+          <button class="h-9 px-3 rounded-lg text-sm border border-ink-200">⚙ Tích hợp</button>
+        </div>
+      </div>
+
+      <div class="flex-1 grid grid-cols-[280px_1fr_320px] divide-x divide-ink-100">
+        <!-- Conversation list -->
+        <div class="flex flex-col">
+          <div class="p-3 border-b border-ink-100">
+            <div class="flex items-center bg-ink-50 rounded-lg h-9 px-3 gap-2">
+              <span class="text-ink-400">🔍</span>
+              <input class="flex-1 bg-transparent outline-none text-sm" placeholder="Tìm hội thoại…"/>
+            </div>
+            <div class="flex gap-1 mt-3 text-xs">
+              <button class="flex-1 h-7 rounded-md bg-ink-900 text-white font-semibold">Mở · 12</button>
+              <button class="flex-1 h-7 rounded-md text-ink-500">Chờ · 3</button>
+              <button class="flex-1 h-7 rounded-md text-ink-500">Đóng</button>
+            </div>
+          </div>
+          <div class="overflow-auto flex-1">
+            <!-- conv item active -->
+            <div class="p-3 border-l-2 border-aurora-violet bg-aurora-soft/40">
+              <div class="flex items-start gap-2.5">
+                <div class="relative">
+                  <div class="w-9 h-9 rounded-full bg-gradient-to-br from-aurora-violet to-aurora-pink grid place-items-center text-white text-xs font-bold">NA</div>
+                  <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-blue-500 ring-2 ring-white grid place-items-center text-[8px]">📘</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-semibold truncate">Nguyễn Văn A</span>
+                    <span class="text-[10px] text-ink-400">2'</span>
+                  </div>
+                  <div class="text-xs text-ink-700 truncate">Em muốn hỏi thêm về gói Pro...</div>
+                  <div class="mt-1 flex items-center gap-1.5">
+                    <span class="pill bg-blue-100 text-blue-700">Facebook</span>
+                    <span class="text-[10px] text-aurora-pink font-semibold">● mới</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- conv item -->
+            <div class="p-3 hover:bg-ink-50 cursor-pointer">
+              <div class="flex items-start gap-2.5">
+                <div class="relative">
+                  <div class="w-9 h-9 rounded-full bg-gradient-to-br from-aurora-cyan to-aurora-mint grid place-items-center text-white text-xs font-bold">TB</div>
+                  <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-sky-500 ring-2 ring-white grid place-items-center text-[8px]">💙</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between"><span class="text-sm font-semibold truncate">Trần Thị B</span><span class="text-[10px] text-ink-400">15'</span></div>
+                  <div class="text-xs text-ink-500 truncate">Cảm ơn anh, em sẽ check lại</div>
+                  <div class="mt-1"><span class="pill bg-sky-100 text-sky-700">Zalo</span></div>
+                </div>
+              </div>
+            </div>
+            <!-- conv item -->
+            <div class="p-3 hover:bg-ink-50 cursor-pointer">
+              <div class="flex items-start gap-2.5">
+                <div class="relative">
+                  <div class="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 grid place-items-center text-white text-xs font-bold">PC</div>
+                  <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white grid place-items-center text-[8px]">📧</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between"><span class="text-sm font-semibold truncate">Phạm Văn C</span><span class="text-[10px] text-ink-400">1h</span></div>
+                  <div class="text-xs text-ink-500 truncate">Đính kèm: Báo giá v2.pdf</div>
+                  <div class="mt-1"><span class="pill bg-emerald-100 text-emerald-700">Email</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message thread -->
+        <div class="flex flex-col">
+          <div class="p-4 border-b border-ink-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="av-on w-10 h-10 rounded-full bg-gradient-to-br from-aurora-violet to-aurora-pink grid place-items-center text-white text-sm font-bold">NA</div>
+              <div>
+                <div class="text-sm font-semibold">Nguyễn Văn A</div>
+                <div class="text-xs text-ink-500">📘 Facebook · <span class="text-emerald-600 font-medium">● đang online</span></div>
+              </div>
+            </div>
+            <div class="flex gap-1">
+              <button class="w-9 h-9 rounded-lg hover:bg-ink-50 grid place-items-center">📞</button>
+              <button class="w-9 h-9 rounded-lg hover:bg-ink-50 grid place-items-center">⭐</button>
+              <button class="w-9 h-9 rounded-lg hover:bg-ink-50 grid place-items-center">⋯</button>
+            </div>
+          </div>
+          <div class="flex-1 overflow-auto p-6 space-y-4 bg-ink-50/30">
+            <div class="text-center text-xs text-ink-400">Hôm nay</div>
+            <!-- incoming -->
+            <div class="flex gap-2 max-w-md">
+              <div class="w-7 h-7 rounded-full bg-gradient-to-br from-aurora-violet to-aurora-pink flex-shrink-0"></div>
+              <div>
+                <div class="bg-white rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm shadow-soft">Chào shop, em muốn hỏi thêm về gói Pro mình ạ</div>
+                <div class="text-[10px] text-ink-400 mt-1 ml-1">10:24</div>
+              </div>
+            </div>
+            <!-- outgoing -->
+            <div class="flex gap-2 max-w-md ml-auto justify-end">
+              <div>
+                <div class="bg-aurora text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm shadow-pop">Dạ chào anh A, gói Pro của bên em bao gồm: <br/>• 100 lead/tháng<br/>• 5 user<br/>• Tích hợp Zalo/Messenger</div>
+                <div class="text-[10px] text-ink-400 mt-1 mr-1 text-right">10:25 · ✓✓ đã xem</div>
+              </div>
+            </div>
+            <div class="flex gap-2 max-w-md">
+              <div class="w-7 h-7 rounded-full bg-gradient-to-br from-aurora-violet to-aurora-pink flex-shrink-0"></div>
+              <div>
+                <div class="bg-white rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm shadow-soft">Giá bao nhiêu vậy ạ?</div>
+                <div class="text-[10px] text-ink-400 mt-1 ml-1">vừa xong</div>
+              </div>
+            </div>
+            <!-- Typing indicator -->
+            <div class="flex gap-2 max-w-md">
+              <div class="w-7 h-7 rounded-full bg-gradient-to-br from-aurora-violet to-aurora-pink flex-shrink-0"></div>
+              <div class="bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-soft">
+                <span class="typing"><span></span><span></span><span></span></span>
+              </div>
+            </div>
+          </div>
+          <div class="p-4 border-t border-ink-100">
+            <div class="flex items-end gap-2 bg-ink-50 rounded-2xl p-2 ring-soft">
+              <button class="w-9 h-9 rounded-lg hover:bg-white grid place-items-center">📎</button>
+              <button class="w-9 h-9 rounded-lg hover:bg-white grid place-items-center">😊</button>
+              <textarea class="flex-1 bg-transparent outline-none text-sm py-2 resize-none" rows="1" placeholder="Trả lời Nguyễn Văn A…"></textarea>
+              <button class="rip btn-aurora px-4 h-9 rounded-lg text-white text-sm font-semibold shadow-pop">Gửi</button>
+            </div>
+            <div class="flex items-center gap-2 mt-2 text-xs text-ink-500">
+              <button class="pill bg-ink-100 text-ink-700 hover:bg-ink-200">⚡ Snippet: Bảng giá</button>
+              <button class="pill bg-aurora-violet/10 text-aurora-violet">🤖 Gợi ý AI</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Context panel -->
+        <div class="overflow-auto">
+          <div class="p-5 text-center border-b border-ink-100">
+            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-aurora-violet to-aurora-pink mx-auto grid place-items-center text-white display text-xl font-bold">NA</div>
+            <div class="mt-3 font-semibold display">Nguyễn Văn A</div>
+            <div class="text-xs text-ink-500">a.nguyen@alpha.vn · +84 90 123 4567</div>
+            <div class="mt-3 flex justify-center gap-2">
+              <button class="pill bg-aurora-violet/10 text-aurora-violet">+ Tạo lead</button>
+              <button class="pill bg-ink-100 text-ink-700">Liên kết</button>
+            </div>
+          </div>
+          <div class="p-5 space-y-4 text-sm">
+            <div>
+              <div class="text-[10px] uppercase tracking-wider font-semibold text-ink-400">Phụ trách</div>
+              <div class="mt-2 flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-aurora-cyan to-aurora-mint"></div>
+                <span>Lan Hương</span>
+                <button class="ml-auto text-xs text-aurora-violet">Đổi</button>
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-wider font-semibold text-ink-400">Tags</div>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <span class="pill bg-aurora-violet/10 text-aurora-violet">vip</span>
+                <span class="pill bg-amber-100 text-amber-700">cần follow-up</span>
+                <button class="pill bg-ink-50 text-ink-500 ring-1 ring-dashed ring-ink-300">+ thêm</button>
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-wider font-semibold text-ink-400">Deal liên quan</div>
+              <div class="mt-2 card p-3">
+                <div class="text-xs font-semibold">Hợp đồng phần mềm ABC</div>
+                <div class="display font-bold text-aurora-violet text-sm mt-1">250.000.000₫</div>
+                <div class="text-[11px] text-ink-500 mt-1">Đàm phán · 90%</div>
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-wider font-semibold text-ink-400">Hoạt động</div>
+              <div class="mt-2 space-y-2 text-xs">
+                <div class="flex gap-2"><span class="text-aurora-violet">●</span><span>Tạo deal hôm qua</span></div>
+                <div class="flex gap-2"><span class="text-emerald-500">●</span><span>Reply email cách đây 2h</span></div>
+                <div class="flex gap-2"><span class="text-aurora-cyan">●</span><span>Add tag "vip" 3 ngày trước</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- =======================================================
+     SCREEN 06 — SETTINGS · RBAC matrix
+======================================================= -->
+<section>
+  <div class="flex items-end justify-between mb-4">
+    <h2 class="display text-2xl font-bold">06 · Settings — RBAC Matrix</h2>
+    <p class="text-sm text-ink-500">Vai trò bên trái có gradient cap · matrix phải có header dính · cell có color theo state</p>
+  </div>
+  <div class="frame flex" style="min-height:760px">
+    <aside class="glass-side w-60 text-white p-4">
+      <div class="flex items-center gap-2 px-2 py-3">
+        <div class="w-9 h-9 rounded-xl bg-aurora flex items-center justify-center font-bold display">A</div>
+        <div class="text-sm font-semibold display">Aurora CRM</div>
+      </div>
+      <nav class="mt-6 space-y-1 text-sm">
+        <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">🏠<span>Tổng quan</span></a>
+        <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">👥<span>CRM</span></a>
+        <div class="nav-section-title text-[10px] font-semibold uppercase text-white/40 px-3 mt-4 mb-1">Hệ thống</div>
+        <a class="nav-item-active flex items-center px-3 py-2 rounded-lg text-white gap-2.5">⚙<span>Cài đặt</span></a>
+        <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">👤<span>Người dùng</span></a>
+        <a class="flex items-center px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 gap-2.5">📜<span>Audit log</span></a>
+      </nav>
+    </aside>
+
+    <div class="flex-1 flex flex-col bg-ink-50/40">
+      <div class="h-14 px-6 flex items-center border-b border-ink-100 bg-white text-sm">
+        <span class="font-semibold display text-base">Cài đặt</span>
+        <span class="text-ink-300 mx-2">/</span>
+        <span class="text-ink-500">Phân quyền</span>
+      </div>
+
+      <!-- Tabs -->
+      <div class="px-6 pt-4 bg-white border-b border-ink-100 flex gap-1">
+        <button class="px-4 h-10 text-sm text-ink-500">🏢 Tổ chức</button>
+        <button class="px-4 h-10 text-sm text-ink-500">👥 Phòng ban</button>
+        <button class="px-4 h-10 text-sm text-ink-500">🤝 Nhóm</button>
+        <button class="px-4 h-10 text-sm font-semibold text-ink-900 border-b-2 border-aurora-violet -mb-px">🛡 Phân quyền</button>
+        <button class="px-4 h-10 text-sm text-ink-500">🏷 Tags</button>
+        <button class="px-4 h-10 text-sm text-ink-500">🔌 Tích hợp</button>
+      </div>
+
+      <div class="p-6 grid grid-cols-[240px_1fr] gap-6">
+        <!-- Roles list -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-ink-500">Vai trò</h3>
+            <button class="w-6 h-6 rounded-md bg-ink-900 text-white text-sm">+</button>
+          </div>
+          <div class="space-y-1.5">
+            <button class="w-full p-3 rounded-xl bg-white ring-soft text-left flex items-center gap-3">
+              <div class="w-1 self-stretch rounded bg-gradient-to-b from-aurora-violet to-aurora-pink"></div>
+              <div class="flex-1">
+                <div class="text-sm font-semibold">SUPER_ADMIN</div>
+                <div class="text-[11px] text-ink-500">43/43 quyền</div>
+              </div>
+            </button>
+            <button class="w-full p-3 rounded-xl ring-2 ring-aurora-violet bg-aurora-soft/40 text-left flex items-center gap-3">
+              <div class="w-1 self-stretch rounded bg-gradient-to-b from-aurora-violet to-aurora-cyan"></div>
+              <div class="flex-1">
+                <div class="text-sm font-semibold">ADMIN</div>
+                <div class="text-[11px] text-aurora-violet font-semibold">38/43 quyền · đang chọn</div>
+              </div>
+            </button>
+            <button class="w-full p-3 rounded-xl bg-white ring-soft text-left flex items-center gap-3">
+              <div class="w-1 self-stretch rounded bg-gradient-to-b from-aurora-cyan to-aurora-mint"></div>
+              <div class="flex-1">
+                <div class="text-sm font-semibold">MANAGER</div>
+                <div class="text-[11px] text-ink-500">18/43 quyền</div>
+              </div>
+            </button>
+            <button class="w-full p-3 rounded-xl bg-white ring-soft text-left flex items-center gap-3">
+              <div class="w-1 self-stretch rounded bg-gradient-to-b from-amber-400 to-orange-500"></div>
+              <div class="flex-1">
+                <div class="text-sm font-semibold">SALES</div>
+                <div class="text-[11px] text-ink-500">12/43 quyền</div>
+              </div>
+            </button>
+            <button class="w-full p-3 rounded-xl bg-white ring-soft text-left flex items-center gap-3">
+              <div class="w-1 self-stretch rounded bg-gradient-to-b from-ink-400 to-ink-600"></div>
+              <div class="flex-1">
+                <div class="text-sm font-semibold">VIEWER</div>
+                <div class="text-[11px] text-ink-500">5/43 quyền</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Matrix -->
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div class="display text-base font-bold">ADMIN — 38/43 quyền</div>
+              <div class="text-xs text-ink-500">Quản lý gần như toàn bộ trừ thao tác super-admin</div>
+            </div>
+            <div class="flex gap-2">
+              <button class="h-8 px-3 rounded-lg text-xs border border-ink-200">Bỏ tất cả</button>
+              <button class="h-8 px-3 rounded-lg text-xs border border-ink-200">Hủy</button>
+              <button class="rip btn-aurora h-8 px-3 rounded-lg text-xs text-white shadow-pop font-semibold">💾 Lưu</button>
+            </div>
+          </div>
+          <div class="flex items-center bg-ink-50 rounded-lg h-9 px-3 gap-2 mb-4">
+            <span class="text-ink-400">🔍</span>
+            <input class="flex-1 bg-transparent outline-none text-sm" placeholder="Tìm tài nguyên…"/>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-[11px] uppercase tracking-wider text-ink-500 border-b border-ink-100">
+                  <th class="text-left py-2 pr-4 font-semibold">Tài nguyên</th>
+                  <th class="py-2 px-2 font-semibold text-aurora-violet"><div>TẠO</div><div class="text-[10px] text-ink-400 normal-case font-normal">3/5</div></th>
+                  <th class="py-2 px-2 font-semibold text-emerald-600"><div>XEM</div><div class="text-[10px] text-ink-400 normal-case font-normal">5/5</div></th>
+                  <th class="py-2 px-2 font-semibold text-amber-600"><div>SỬA</div><div class="text-[10px] text-ink-400 normal-case font-normal">5/5</div></th>
+                  <th class="py-2 px-2 font-semibold text-rose-600"><div>XÓA</div><div class="text-[10px] text-ink-400 normal-case font-normal">0/5</div></th>
+                  <th class="py-2 px-2 font-semibold text-aurora-cyan"><div>GIAO</div><div class="text-[10px] text-ink-400 normal-case font-normal">2/4</div></th>
+                  <th class="py-2 pl-4 text-right font-semibold">Tổng</th>
+                </tr>
+              </thead>
+              <tbody class="text-sm">
+                <tr class="border-b border-ink-50 hover:bg-aurora-soft/30">
+                  <td class="py-3 pr-4">
+                    <div class="flex items-center gap-2">
+                      <span class="w-7 h-7 rounded-lg bg-aurora-violet/10 text-aurora-violet grid place-items-center text-xs">👥</span>
+                      <div>
+                        <div class="font-semibold text-sm">Lead</div>
+                        <div class="text-[11px] text-ink-400">leads · CRM</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-ink-50 text-ink-300 grid place-items-center mx-auto">—</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-right text-xs font-semibold text-emerald-600">4/5</td>
+                </tr>
+                <tr class="border-b border-ink-50 hover:bg-aurora-soft/30">
+                  <td class="py-3 pr-4">
+                    <div class="flex items-center gap-2">
+                      <span class="w-7 h-7 rounded-lg bg-aurora-cyan/10 text-aurora-cyan grid place-items-center text-xs">📇</span>
+                      <div>
+                        <div class="font-semibold text-sm">Liên hệ</div>
+                        <div class="text-[11px] text-ink-400">contacts · CRM</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-ink-100 text-ink-300 grid place-items-center mx-auto">○</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-ink-100 text-ink-300 grid place-items-center mx-auto">○</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-ink-50 text-ink-300 grid place-items-center mx-auto">—</div></td>
+                  <td class="text-right text-xs font-semibold text-amber-600">2/4</td>
+                </tr>
+                <tr class="border-b border-ink-50 hover:bg-aurora-soft/30">
+                  <td class="py-3 pr-4">
+                    <div class="flex items-center gap-2">
+                      <span class="w-7 h-7 rounded-lg bg-aurora-mint/15 text-emerald-700 grid place-items-center text-xs">🏢</span>
+                      <div>
+                        <div class="font-semibold text-sm">Công ty</div>
+                        <div class="text-[11px] text-ink-400">companies · CRM</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-ink-100 text-ink-300 grid place-items-center mx-auto">○</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-ink-50 text-ink-300 grid place-items-center mx-auto">—</div></td>
+                  <td class="text-right text-xs font-semibold text-emerald-600">3/4</td>
+                </tr>
+                <tr class="border-b border-ink-50 hover:bg-aurora-soft/30">
+                  <td class="py-3 pr-4">
+                    <div class="flex items-center gap-2">
+                      <span class="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 grid place-items-center text-xs">💼</span>
+                      <div>
+                        <div class="font-semibold text-sm">Cơ hội</div>
+                        <div class="text-[11px] text-ink-400">deals · CRM</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-ink-100 text-ink-300 grid place-items-center mx-auto">○</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-ink-100 text-ink-300 grid place-items-center mx-auto">○</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-right text-xs font-semibold text-amber-600">3/5</td>
+                </tr>
+                <tr class="hover:bg-aurora-soft/30">
+                  <td class="py-3 pr-4">
+                    <div class="flex items-center gap-2">
+                      <span class="w-7 h-7 rounded-lg bg-aurora-pink/15 text-aurora-pink grid place-items-center text-xs">✅</span>
+                      <div>
+                        <div class="font-semibold text-sm">Nhiệm vụ</div>
+                        <div class="text-[11px] text-ink-400">tasks · Công việc</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-ink-100 text-ink-300 grid place-items-center mx-auto">○</div></td>
+                  <td class="text-center"><div class="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 grid place-items-center mx-auto">✓</div></td>
+                  <td class="text-right text-xs font-semibold text-emerald-600">4/5</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-4 flex items-center justify-between text-xs text-ink-500">
+            <div class="flex items-center gap-4">
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-100"></span>Có quyền</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-ink-100"></span>Không có</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-ink-50"></span>Không áp dụng</span>
+            </div>
+            <span class="text-aurora-violet font-semibold">3 thay đổi chưa lưu</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- =======================================================
+     CHANGES SUMMARY
+======================================================= -->
+<section class="card p-8">
+  <h2 class="display text-2xl font-bold">Tóm tắt thay đổi so với bản hiện tại</h2>
+  <p class="text-sm text-ink-500 mt-1">Những điểm chính được redesign — không phải đổi mới hoàn toàn, mà nâng cấp.</p>
+  <div class="mt-6 grid grid-cols-3 gap-6 text-sm">
+    <div>
+      <div class="display font-bold text-base">🎨 Hệ màu</div>
+      <ul class="mt-2 text-ink-700 space-y-1.5 list-disc pl-5 text-[13px]">
+        <li><b>Aurora gradient</b> (violet → cyan → pink) làm signature accent</li>
+        <li>Status pills bo tròn với màu pastel + ring nhẹ thay vì badge phẳng</li>
+        <li>Sidebar có aurora glow subtly chứ không đen tuyền</li>
+        <li>Stage colors có ngữ nghĩa: violet/indigo/cyan/amber/emerald</li>
+      </ul>
+    </div>
+    <div>
+      <div class="display font-bold text-base">📐 Layout</div>
+      <ul class="mt-2 text-ink-700 space-y-1.5 list-disc pl-5 text-[13px]">
+        <li>Card radius lớn hơn (<code>20px</code>) cho cảm giác mềm mại</li>
+        <li>Bento grid cho dashboard (KPI 4 ô + funnel/source/activity/tasks)</li>
+        <li>Topbar có breadcrumb + quick action buttons</li>
+        <li>Toolbar cho list pages có view switcher (Bảng/Kanban/Card)</li>
+      </ul>
+    </div>
+    <div>
+      <div class="display font-bold text-base">✨ Chi tiết</div>
+      <ul class="mt-2 text-ink-700 space-y-1.5 list-disc pl-5 text-[13px]">
+        <li><b>Plus Jakarta Sans</b> cho headlines, Inter cho body</li>
+        <li>Avatar gradient (đa hue) thay vì 1 màu pastel</li>
+        <li>Sparkline có gradient stroke + animation reveal</li>
+        <li>Kanban column header có gradient theo stage</li>
+        <li>Inbox: chip kênh (FB/Zalo/Email) màu thương hiệu</li>
+        <li>RBAC matrix: cell có màu nền theo state (✓/○/—)</li>
+        <li>Greeting "Chào buổi sáng" có nhân hóa</li>
+      </ul>
+    </div>
+  </div>
+  <div class="mt-8 p-5 rounded-xl bg-aurora-soft/40 ring-1 ring-aurora-violet/20 text-sm">
+    <div class="font-semibold display">Sau khi bạn duyệt mockup này</div>
+    <div class="text-ink-700 mt-1">Mình sẽ viết file <code class="bg-white px-1.5 py-0.5 rounded">docs/UI-REDESIGN.md</code> chứa: bộ design tokens mới (Tailwind config + CSS variables), spec từng component (props, variants, states), checklist migration theo từng page, và sample code cho các pattern khó (sidebar glass, sparkline gradient, kanban gradient header, RBAC matrix cell). File này dùng làm task list để build tuần tự.</div>
+  </div>
+</section>
+
+</main>
+
+<footer class="text-center text-xs text-ink-400 pb-12">Aurora CRM redesign · mockup tĩnh · không có dependency runtime ngoài Tailwind CDN + Google Fonts</footer>
+
+<script>
+/* =========================================================
+   Aurora CRM mockup — interactivity layer
+   - IntersectionObserver: reveal-on-scroll (.reveal)
+   - Counter-up: number tweens for KPI (.count)
+   - Funnel bars: grow width on reveal (.funnel .bar[data-w])
+   - Ripple click: any .rip button
+========================================================= */
+
+// ---------- Counter-up easing ----------
+function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+function tweenNumber(el, target, format, duration=1400) {
+  const start = performance.now();
+  function tick(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const v = target * easeOutCubic(p);
+    if (format === 'comma')      el.textContent = Math.round(v).toLocaleString('vi-VN');
+    else if (format === 'decimal') el.textContent = v.toFixed(1);
+    else if (format === 'percent') el.textContent = Math.round(v);
+    else                         el.textContent = Math.round(v);
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// ---------- Reveal observer ----------
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target;
+    el.classList.add('in');
+
+    // counter-up children
+    el.querySelectorAll('.count').forEach(c => {
+      const target = parseFloat(c.dataset.count || '0');
+      const fmt = c.dataset.format || 'int';
+      tweenNumber(c, target, fmt);
+    });
+    // counter on self
+    if (el.classList.contains('count')) {
+      const target = parseFloat(el.dataset.count || '0');
+      tweenNumber(el, target, el.dataset.format || 'int');
+    }
+    // funnel bars
+    if (el.classList.contains('funnel')) {
+      el.querySelectorAll('.bar').forEach(b => {
+        const w = b.dataset.w; if (w) requestAnimationFrame(() => b.style.width = w);
+      });
+    }
+
+    io.unobserve(el);
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.reveal, .count').forEach(el => io.observe(el));
+
+// ---------- Ripple click ----------
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('.rip');
+  if (!btn) return;
+  const rect = btn.getBoundingClientRect();
+  const wave = document.createElement('span');
+  wave.className = 'rip-wave';
+  const size = Math.max(rect.width, rect.height);
+  wave.style.width = wave.style.height = size + 'px';
+  wave.style.left = (ev.clientX - rect.left - size/2) + 'px';
+  wave.style.top  = (ev.clientY - rect.top  - size/2) + 'px';
+  btn.appendChild(wave);
+  setTimeout(() => wave.remove(), 700);
+});
+
+// ---------- Pretend-live activity dot ----------
+setInterval(() => {
+  document.querySelectorAll('.breathe, .ping').forEach(()=>{}); // no-op, CSS does the work
+}, 3000);
+</script>
+</body>
+</html>
