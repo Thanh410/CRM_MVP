@@ -12,6 +12,7 @@ import {
 import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import { AvatarGradient } from '@/components/ui/avatar-gradient';
 
 interface NavItem {
   label: string;
@@ -90,18 +91,18 @@ function NavGroup({ group, pathname }: { group: NavGroupDef; pathname: string })
         className={cn(
           'w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
           hasActive
-            ? 'bg-white/10 text-white'
-            : 'text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-100',
+            ? 'nav-item-active text-white'
+            : 'text-sidebar-muted hover:bg-white/[0.06] hover:text-white',
         )}
       >
-        <GroupIcon size={15} className={cn(hasActive ? 'text-white' : 'text-zinc-500')} />
+        <GroupIcon size={15} className={cn(hasActive ? 'text-white' : 'text-white/40')} />
         <span className="flex-1 text-left truncate">{group.label}</span>
         <ChevronRight
           size={12}
           className={cn(
             'shrink-0 transition-transform duration-200',
             open ? 'rotate-90' : '',
-            hasActive ? 'text-white/50' : 'text-zinc-600',
+            hasActive ? 'text-white/50' : 'text-white/30',
           )}
         />
       </button>
@@ -124,11 +125,11 @@ function NavGroup({ group, pathname }: { group: NavGroupDef; pathname: string })
                   className={cn(
                     'flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors',
                     active
-                      ? 'bg-white/10 text-white font-medium'
-                      : 'text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-100',
+                      ? 'nav-item-active shimmer text-white font-medium'
+                      : 'text-sidebar-muted hover:bg-white/[0.06] hover:text-white',
                   )}
                 >
-                  <Icon size={13} className={cn(active ? 'text-white' : 'text-zinc-500')} />
+                  <Icon size={13} className={cn(active ? 'text-white' : 'text-white/40')} />
                   <span className="truncate">{item.label}</span>
                 </Link>
               </li>
@@ -158,14 +159,14 @@ export function Sidebar() {
     pathname === href || pathname.startsWith(href + '/');
 
   return (
-    <aside className="w-56 bg-[#0f0f0f] flex flex-col h-full shrink-0">
+    <aside className="aurora-glow w-56 bg-sidebar text-sidebar-fg flex flex-col h-full shrink-0">
       {/* Logo */}
       <div className="h-14 flex items-center px-4 shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-white/15 rounded-md flex items-center justify-center">
-            <span className="text-white font-bold text-sm">C</span>
+          <div className="w-8 h-8 bg-aurora rounded-xl flex items-center justify-center shadow-pop">
+            <span className="text-white font-bold text-sm font-display">A</span>
           </div>
-          <span className="font-semibold text-white text-sm tracking-tight">CRM Vietnam</span>
+          <span className="font-semibold text-white text-sm tracking-tight font-display">Aurora CRM</span>
         </div>
       </div>
 
@@ -177,13 +178,13 @@ export function Sidebar() {
           className={cn(
             'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
             isActive('/dashboard')
-              ? 'bg-white/10 text-white'
-              : 'text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-100',
+              ? 'nav-item-active shimmer text-white'
+              : 'text-sidebar-muted hover:bg-white/[0.06] hover:text-white',
           )}
         >
           <LayoutDashboard
             size={15}
-            className={cn(isActive('/dashboard') ? 'text-white' : 'text-zinc-500')}
+            className={cn(isActive('/dashboard') ? 'text-white' : 'text-white/40')}
           />
           <span className="truncate">Tổng quan</span>
         </Link>
@@ -201,25 +202,32 @@ export function Sidebar() {
           className={cn(
             'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
             isActive('/settings')
-              ? 'bg-white/10 text-white'
-              : 'text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-100',
+              ? 'nav-item-active shimmer text-white'
+              : 'text-sidebar-muted hover:bg-white/[0.06] hover:text-white',
           )}
         >
-          <Settings size={15} className={cn(isActive('/settings') ? 'text-white' : 'text-zinc-500')} />
+          <Settings size={15} className={cn(isActive('/settings') ? 'text-white' : 'text-white/40')} />
           Cài đặt
         </Link>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-zinc-400 hover:bg-white/[0.06] hover:text-red-400 transition-colors"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-sidebar-muted hover:bg-white/[0.06] hover:text-rose-400 transition-colors"
         >
-          <LogOut size={15} className="text-zinc-500" />
+          <LogOut size={15} className="text-white/40" />
           Đăng xuất
         </button>
 
         {user && (
-          <div className="px-3 py-2.5 mt-2 bg-white/5 rounded-md">
-            <p className="text-xs font-medium text-white truncate leading-tight">{user.fullName}</p>
-            <p className="text-[11px] text-zinc-400 truncate mt-0.5">{user.email}</p>
+          <div className="px-3 py-2.5 mt-2 bg-white/5 rounded-xl border border-white/10 flex items-center gap-2.5">
+            <AvatarGradient
+              id={user.id ?? user.email ?? user.fullName}
+              name={user.fullName}
+              size="sm"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-white truncate leading-tight">{user.fullName}</p>
+              <p className="text-[11px] text-sidebar-muted truncate mt-0.5">{user.email}</p>
+            </div>
           </div>
         )}
       </div>
