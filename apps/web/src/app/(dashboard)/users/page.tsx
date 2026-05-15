@@ -4,7 +4,10 @@ import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, MoreHorizontal, Pencil, Trash2, UserX, UserCheck, Shield, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { api } from '@/lib/api';
-import { formatDate, getInitials } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
+import { AvatarGradient } from '@/components/ui/avatar-gradient';
+import { RippleButton } from '@/components/ui/ripple-button';
+import { StatusPill, type StatusTone } from '@/components/ui/status-pill';
 import { toast } from 'sonner';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -19,10 +22,10 @@ interface User {
   userRoles: { role: Role }[];
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  ACTIVE: 'bg-green-100 text-green-700',
-  INACTIVE: 'bg-zinc-100 text-zinc-500',
-  INVITED: 'bg-yellow-100 text-yellow-700',
+const STATUS_TONES: Record<string, StatusTone> = {
+  ACTIVE: 'emerald',
+  INACTIVE: 'muted',
+  INVITED: 'amber',
 };
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Hoạt động', INACTIVE: 'Vô hiệu', INVITED: 'Đã mời',
@@ -72,7 +75,7 @@ function UserModal({ user, onClose }: { user: User | null; onClose: () => void }
   };
   const isPending = createMutation.isPending || updateMutation.isPending;
 
-  const inputCls = 'w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900';
+  const inputCls = 'w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition';
   const labelCls = 'block text-xs font-medium text-zinc-600 mb-1';
 
   return (
@@ -81,10 +84,10 @@ function UserModal({ user, onClose }: { user: User | null; onClose: () => void }
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       onMouseDown={e => { if (e.target === overlayRef.current) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
+      <div className="bg-card text-card-foreground rounded-2xl shadow-lift border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-base font-semibold text-zinc-900">{isEdit ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}</h2>
-          <button onClick={onClose} className="p-1 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-zinc-100"><X size={16} /></button>
+          <button onClick={onClose} className="p-1 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-muted"><X size={16} /></button>
         </div>
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -134,11 +137,11 @@ function UserModal({ user, onClose }: { user: User | null; onClose: () => void }
               </div>
             )}
           </div>
-          <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Hủy</button>
-            <button type="submit" disabled={isPending} className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60">
+          <div className="flex justify-end gap-2 pt-3 border-t border-border">
+            <RippleButton type="button" variant="outline" onClick={onClose}>Hủy</RippleButton>
+            <RippleButton type="submit" variant="aurora" disabled={isPending}>
               {isPending ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo người dùng'}
-            </button>
+            </RippleButton>
           </div>
         </form>
       </div>
@@ -179,31 +182,31 @@ function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: (
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 shrink-0">
-          <h3 className="text-sm font-semibold text-zinc-900">Chi tiết người dùng</h3>
-          <button onClick={onClose} className="p-1 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-zinc-100"><X size={16} /></button>
+      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-card text-card-foreground border-l border-border shadow-2xl flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+          <h3 className="font-display text-sm font-bold">Chi tiết người dùng</h3>
+          <button onClick={onClose} className="p-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted"><X size={16} /></button>
         </div>
         {isLoading ? (
-          <div className="flex-1 flex items-center justify-center text-zinc-400 text-sm">Đang tải...</div>
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">Đang tải...</div>
         ) : user ? (
           <div className="flex-1 overflow-y-auto">
             {/* Header */}
-            <div className="px-5 py-5 border-b border-gray-50 flex items-start gap-4">
-              <div className="w-14 h-14 bg-zinc-100 rounded-full flex items-center justify-center shrink-0">
-                {user.avatar
-                  ? <img src={user.avatar} alt={user.fullName} className="w-full h-full rounded-full object-cover" />
-                  : <span className="text-lg font-bold text-indigo-700">{getInitials(user.fullName)}</span>}
-              </div>
+            <div className="px-5 py-5 border-b border-border bg-aurora-soft/30 flex items-start gap-4">
+              {user.avatar ? (
+                <img src={user.avatar} alt={user.fullName} className="w-12 h-12 rounded-full object-cover" />
+              ) : (
+                <AvatarGradient id={user.id ?? user.fullName} name={user.fullName} size="lg" />
+              )}
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-zinc-900">{user.fullName}</p>
-                {user.jobTitle && <p className="text-sm text-zinc-500 mt-0.5">{user.jobTitle}</p>}
+                <p className="font-display font-bold text-foreground">{user.fullName}</p>
+                {user.jobTitle && <p className="text-sm text-muted-foreground mt-0.5">{user.jobTitle}</p>}
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[user.status]}`}>
+                  <StatusPill tone={STATUS_TONES[user.status] ?? 'muted'}>
                     {STATUS_LABELS[user.status]}
-                  </span>
+                  </StatusPill>
                   {user.userRoles?.[0]?.role && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-zinc-50 text-indigo-700 rounded-full text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-aurora-violet/10 text-aurora-violet rounded-full text-xs font-semibold">
                       <Shield size={10} />{user.userRoles[0].role.displayName}
                     </span>
                   )}
@@ -235,7 +238,7 @@ function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: (
               <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Vai trò</p>
               <div className="flex flex-wrap gap-2">
                 {user.userRoles?.map(({ role }) => (
-                  <div key={role.id} className="flex items-center gap-1 bg-zinc-50 text-indigo-700 px-2 py-1 rounded-lg text-xs font-medium">
+                  <div key={role.id} className="flex items-center gap-1 bg-muted text-indigo-700 px-2 py-1 rounded-lg text-xs font-medium">
                     <Shield size={11} />
                     {role.displayName}
                     <button
@@ -257,7 +260,7 @@ function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: (
                 <select
                   value=""
                   onChange={e => { if (e.target.value) assignRoleMutation.mutate(e.target.value); }}
-                  className="w-full px-2 py-1.5 text-xs border border-zinc-200 rounded-lg focus:ring-1 focus:ring-indigo-500 bg-white text-zinc-600"
+                  className="w-full px-2 py-1.5 text-xs border border-border rounded-lg focus:ring-1 focus:ring-indigo-500 bg-white text-zinc-600"
                 >
                   <option value="">+ Thêm vai trò...</option>
                   {allRoles
@@ -271,7 +274,7 @@ function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: (
             <div className="px-5 py-4 flex gap-2">
               <button
                 onClick={() => onEdit(user)}
-                className="flex-1 px-3 py-2 text-sm text-zinc-900 border border-indigo-200 rounded-lg hover:bg-zinc-50 flex items-center justify-center gap-1.5"
+                className="flex-1 px-3 py-2 text-sm text-zinc-900 border border-indigo-200 rounded-lg hover:bg-aurora-soft/30 flex items-center justify-center gap-1.5"
               >
                 <Pencil size={14} />Chỉnh sửa
               </button>
@@ -343,26 +346,28 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-zinc-900">Người dùng</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">{meta?.total ?? 0} người dùng trong hệ thống</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Người dùng</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            <span className="font-semibold text-foreground">{meta?.total ?? 0}</span> người dùng trong hệ thống
+          </p>
         </div>
-        <button onClick={openCreate} className="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
+        <RippleButton variant="aurora" onClick={openCreate}>
           <Plus size={16} />Thêm người dùng
-        </button>
+        </RippleButton>
       </div>
 
       {/* Search */}
       <div className="relative max-w-xs">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm theo tên, email..."
-          className="w-full pl-9 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white" />
+          className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition" />
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+      <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-zinc-50 border-b border-zinc-200">
+            <tr className="bg-muted border-b border-border">
               <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Người dùng</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide hidden md:table-cell">Vai trò</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide hidden lg:table-cell">Phòng ban</th>
@@ -376,7 +381,7 @@ export default function UsersPage() {
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
                   {Array.from({ length: 6 }).map((_, j) => (
-                    <td key={j} className="px-4 py-3"><div className="h-4 bg-zinc-100 rounded animate-pulse" /></td>
+                    <td key={j} className="px-4 py-3"><div className="h-4 bg-muted rounded animate-pulse" /></td>
                   ))}
                 </tr>
               ))
@@ -385,33 +390,33 @@ export default function UsersPage() {
             ) : (
               users.map(u => (
                 <tr key={u.id} onClick={() => setSlideOverId(u.id)}
-                  className="hover:bg-zinc-50/60 transition-colors cursor-pointer group">
+                  className="hover:bg-aurora-soft/30 transition-colors cursor-pointer group">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-zinc-100 rounded-full flex items-center justify-center shrink-0">
-                        {u.avatar
-                          ? <img src={u.avatar} alt={u.fullName} className="w-full h-full rounded-full object-cover" />
-                          : <span className="text-xs font-bold text-indigo-700">{getInitials(u.fullName)}</span>}
-                      </div>
+                      {u.avatar ? (
+                        <img src={u.avatar} alt={u.fullName} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <AvatarGradient id={u.id ?? u.fullName} name={u.fullName} size="sm" />
+                      )}
                       <div>
-                        <p className="font-medium text-zinc-900">{u.fullName}</p>
-                        <p className="text-xs text-zinc-500">{u.email}</p>
+                        <p className="font-semibold text-foreground">{u.fullName}</p>
+                        <p className="text-xs text-muted-foreground">{u.email}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3 hidden md:table-cell">
                     {u.userRoles?.[0]?.role
-                      ? <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-zinc-50 text-indigo-700 rounded-full text-xs font-medium">
+                      ? <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-aurora-violet/10 text-aurora-violet rounded-full text-xs font-semibold">
                           <Shield size={10} />{u.userRoles[0].role.displayName}
                         </span>
-                      : <span className="text-zinc-400 text-xs">—</span>}
+                      : <span className="text-muted-foreground/60 text-xs">—</span>}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 hidden lg:table-cell">{u.dept?.name ?? '—'}</td>
-                  <td className="px-4 py-3 text-zinc-500 hidden xl:table-cell">{u.lastLoginAt ? formatDate(u.lastLoginAt) : '—'}</td>
+                  <td className="px-4 py-3 text-foreground/80 hidden lg:table-cell">{u.dept?.name ?? '—'}</td>
+                  <td className="px-4 py-3 text-muted-foreground hidden xl:table-cell">{u.lastLoginAt ? formatDate(u.lastLoginAt) : '—'}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[u.status]}`}>
+                    <StatusPill tone={STATUS_TONES[u.status] ?? 'muted'}>
                       {STATUS_LABELS[u.status]}
-                    </span>
+                    </StatusPill>
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                     <UserRowMenu user={u} onEdit={() => openEdit(u)} onDelete={() => handleDelete(u)} />
@@ -424,7 +429,7 @@ export default function UsersPage() {
 
         {/* Pagination */}
         {meta && meta.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100 bg-zinc-50">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted">
             <p className="text-xs text-zinc-500">Trang {page}/{meta.totalPages} · {meta.total} người dùng</p>
             <div className="flex items-center gap-1">
               <button onClick={() => setPage(p => p - 1)} disabled={page <= 1}
@@ -461,12 +466,12 @@ function UserRowMenu({ user, onEdit, onDelete }: { user: User; onEdit: () => voi
   }, []);
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setOpen(o => !o)} className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-zinc-100 opacity-0 group-hover:opacity-100 transition-opacity">
+      <button onClick={() => setOpen(o => !o)} className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity">
         <MoreHorizontal size={15} />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-zinc-200 z-10 overflow-hidden">
-          <button onClick={() => { onEdit(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
+        <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-border z-10 overflow-hidden">
+          <button onClick={() => { onEdit(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-aurora-soft/30">
             <Pencil size={13} />Chỉnh sửa
           </button>
           <button onClick={() => { onDelete(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50">

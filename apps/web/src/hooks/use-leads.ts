@@ -20,6 +20,18 @@ export const LEAD_STATUS_COLORS: Record<string, string> = {
   CONVERTED: 'bg-purple-100 text-purple-700',
 };
 
+/** Aurora StatusPill tone mapping for lead status */
+export const LEAD_STATUS_TONES: Record<
+  string,
+  'violet' | 'indigo' | 'amber' | 'emerald' | 'rose' | 'muted' | 'pink'
+> = {
+  NEW: 'violet',
+  CONTACTED: 'amber',
+  QUALIFIED: 'emerald',
+  UNQUALIFIED: 'muted',
+  CONVERTED: 'pink',
+};
+
 export const SOURCE_LABELS: Record<string, string> = {
   facebook: 'Facebook',
   zalo: 'Zalo',

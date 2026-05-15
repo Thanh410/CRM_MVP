@@ -3,10 +3,12 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { formatDate, formatCurrency, getInitials } from '@/lib/utils';
+import { formatDate, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import { TagSelector } from '@/components/tag-selector';
 import { EntityTimeline } from '@/components/entity-timeline';
+import { AvatarGradient } from '@/components/ui/avatar-gradient';
+import { RippleButton } from '@/components/ui/ripple-button';
 import {
   Plus,
   Search,
@@ -90,7 +92,7 @@ const EMPTY_FORM: FormState = {
 };
 
 const DEAL_STAGE_COLORS: Record<string, string> = {
-  LEAD: 'bg-zinc-100 text-zinc-600',
+  LEAD: 'bg-muted text-zinc-600',
   QUALIFIED: 'bg-blue-100 text-blue-700',
   PROPOSAL: 'bg-yellow-100 text-yellow-700',
   NEGOTIATION: 'bg-orange-100 text-orange-700',
@@ -195,15 +197,15 @@ function CompanyModal({
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-card text-card-foreground rounded-2xl shadow-lift border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-base font-semibold text-zinc-900">
             {isEdit ? 'Chỉnh sửa công ty' : 'Thêm công ty mới'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition"
+            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-muted rounded-lg transition"
           >
             <X size={16} />
           </button>
@@ -220,7 +222,7 @@ function CompanyModal({
               value={form.name}
               onChange={(e) => set('name', e.target.value)}
               placeholder="VD: Công ty TNHH ABC"
-              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
             />
           </div>
 
@@ -232,7 +234,7 @@ function CompanyModal({
                 value={form.industry}
                 onChange={(e) => set('industry', e.target.value)}
                 placeholder="Công nghệ, Bán lẻ..."
-                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
               />
             </div>
             <div>
@@ -241,7 +243,7 @@ function CompanyModal({
                 value={form.size}
                 onChange={(e) => set('size', e.target.value)}
                 placeholder="1-10, 11-50, 51-200..."
-                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
               />
             </div>
           </div>
@@ -254,7 +256,7 @@ function CompanyModal({
                 value={form.website}
                 onChange={(e) => set('website', e.target.value)}
                 placeholder="https://example.com"
-                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
               />
             </div>
             <div>
@@ -263,7 +265,7 @@ function CompanyModal({
                 value={form.taxCode}
                 onChange={(e) => set('taxCode', e.target.value)}
                 placeholder="0123456789"
-                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
               />
             </div>
           </div>
@@ -276,7 +278,7 @@ function CompanyModal({
                 value={form.phone}
                 onChange={(e) => set('phone', e.target.value)}
                 placeholder="028 1234 5678"
-                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
               />
             </div>
             <div>
@@ -286,7 +288,7 @@ function CompanyModal({
                 value={form.email}
                 onChange={(e) => set('email', e.target.value)}
                 placeholder="info@example.com"
-                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
               />
             </div>
           </div>
@@ -298,7 +300,7 @@ function CompanyModal({
               value={form.address}
               onChange={(e) => set('address', e.target.value)}
               placeholder="123 Đường ABC, Quận 1, TP.HCM"
-              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
             />
           </div>
 
@@ -310,26 +312,16 @@ function CompanyModal({
               onChange={(e) => set('description', e.target.value)}
               rows={3}
               placeholder="Thông tin thêm về công ty..."
-              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none"
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition resize-none"
             />
           </div>
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition"
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60 transition"
-            >
+            <RippleButton type="button" variant="outline" onClick={onClose}>Hủy</RippleButton>
+            <RippleButton type="submit" variant="aurora" disabled={isPending}>
               {isPending ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo công ty'}
-            </button>
+            </RippleButton>
           </div>
         </form>
       </div>
@@ -362,13 +354,13 @@ function CompanySlideOver({
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col">
+      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-card text-card-foreground border-l border-border shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
           <h2 className="text-base font-semibold text-zinc-900">Chi tiết công ty</h2>
           <button
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition"
+            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-muted rounded-lg transition"
           >
             <X size={16} />
           </button>
@@ -383,30 +375,23 @@ function CompanySlideOver({
         {company && (
           <div className="flex-1 overflow-y-auto">
             {/* Avatar + name */}
-            <div className="px-5 py-5 border-b border-gray-50">
+            <div className="px-5 py-5 border-b border-border bg-aurora-soft/30">
               <div className="flex items-start gap-4">
-                <div className="w-14 h-14 bg-zinc-100 rounded-xl flex items-center justify-center shrink-0">
-                  <span className="text-lg font-bold text-indigo-700">
-                    {getInitials(company.name)}
-                  </span>
-                </div>
+                <AvatarGradient id={company.id ?? company.name} name={company.name} size="lg" />
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-zinc-900 truncate">{company.name}</h3>
+                  <h3 className="font-display text-lg font-bold truncate">{company.name}</h3>
                   {company.industry && (
-                    <p className="text-sm text-zinc-500 mt-0.5">{company.industry}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{company.industry}</p>
                   )}
                   {company.size && (
-                    <span className="inline-block mt-1 text-xs bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">
+                    <span className="inline-block mt-1 text-xs bg-aurora-violet/10 text-aurora-violet px-2 py-0.5 rounded-full font-semibold">
                       {company.size} nhân viên
                     </span>
                   )}
                 </div>
-                <button
-                  onClick={() => onEdit(company)}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs border border-zinc-200 rounded-lg hover:bg-zinc-50 transition text-zinc-600"
-                >
+                <RippleButton variant="outline" size="sm" onClick={() => onEdit(company)}>
                   <Pencil size={12} /> Sửa
-                </button>
+                </RippleButton>
               </div>
             </div>
 
@@ -488,25 +473,21 @@ function CompanySlideOver({
                   {company.contacts.map((contact) => (
                     <div
                       key={contact.id}
-                      className="flex items-center gap-3 p-2.5 bg-zinc-50 rounded-lg border border-zinc-100"
+                      className="flex items-center gap-3 p-2.5 bg-muted rounded-lg border border-border"
                     >
-                      <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
-                        <span className="text-xs font-semibold text-emerald-700">
-                          {getInitials(contact.fullName)}
-                        </span>
-                      </div>
+                      <AvatarGradient id={contact.id ?? contact.fullName} name={contact.fullName} size="sm" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">
+                        <p className="text-sm font-semibold text-foreground truncate">
                           {contact.fullName}
                         </p>
                         {contact.jobTitle && (
-                          <p className="text-xs text-zinc-400 truncate">{contact.jobTitle}</p>
+                          <p className="text-xs text-muted-foreground truncate">{contact.jobTitle}</p>
                         )}
                       </div>
                       {contact.email && (
                         <a
                           href={`mailto:${contact.email}`}
-                          className="text-zinc-400 hover:text-zinc-900 transition shrink-0"
+                          className="text-muted-foreground hover:text-aurora-violet transition shrink-0"
                           title={contact.email}
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -534,7 +515,7 @@ function CompanySlideOver({
                   {company.deals.map((deal) => (
                     <div
                       key={deal.id}
-                      className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg border border-zinc-100"
+                      className="flex items-center justify-between p-3 bg-muted rounded-lg border border-border"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-800 truncate">{deal.title}</p>
@@ -548,7 +529,7 @@ function CompanySlideOver({
                         {deal.stage && (
                           <span
                             className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                              DEAL_STAGE_COLORS[deal.stage] ?? 'bg-zinc-100 text-zinc-600'
+                              DEAL_STAGE_COLORS[deal.stage] ?? 'bg-muted text-zinc-600'
                             }`}
                           >
                             {DEAL_STAGE_LABELS[deal.stage] ?? deal.stage}
@@ -654,19 +635,18 @@ export default function CompaniesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">Công ty</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">{meta?.total ?? 0} công ty</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Công ty</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            <span className="font-semibold text-foreground">{meta?.total ?? 0}</span> công ty trong hệ thống
+          </p>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition"
-        >
+        <RippleButton variant="aurora" onClick={openCreate}>
           <Plus size={14} /> Thêm công ty
-        </button>
+        </RippleButton>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl border border-zinc-200 p-4">
+      <div className="bg-card border border-border rounded-2xl shadow-soft p-4">
         <div className="relative max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
           <input
@@ -676,7 +656,7 @@ export default function CompaniesPage() {
               setPage(1);
             }}
             placeholder="Tìm tên công ty, ngành nghề..."
-            className="w-full pl-8 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
           />
         </div>
       </div>
@@ -698,14 +678,14 @@ export default function CompaniesPage() {
           <div
             key={company.id}
             onClick={() => setSlideOverId(company.id)}
-            className="group relative bg-white border border-zinc-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
+            className="group relative bg-white border border-border rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
           >
             {/* Action buttons — visible on hover */}
             <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={(e) => openEdit(company, e)}
                 title="Chỉnh sửa"
-                className="p-1.5 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition"
+                className="p-1.5 text-zinc-400 hover:text-zinc-900 hover:bg-muted rounded-lg transition"
               >
                 <Pencil size={13} />
               </button>
@@ -720,15 +700,11 @@ export default function CompaniesPage() {
 
             {/* Card content */}
             <div className="flex items-start gap-3 mb-3 pr-12">
-              <div className="w-10 h-10 bg-zinc-100 rounded-lg flex items-center justify-center shrink-0">
-                <span className="text-sm font-bold text-indigo-700">
-                  {getInitials(company.name)}
-                </span>
-              </div>
+              <AvatarGradient id={company.id ?? company.name} name={company.name} size="md" className="rounded-xl" />
               <div className="min-w-0">
-                <h3 className="font-semibold text-zinc-900 truncate">{company.name}</h3>
+                <h3 className="font-display font-bold text-foreground truncate">{company.name}</h3>
                 {company.industry && (
-                  <span className="text-xs text-zinc-400 mt-0.5 block truncate">
+                  <span className="text-xs text-muted-foreground mt-0.5 block truncate">
                     {company.industry}
                   </span>
                 )}
@@ -737,7 +713,7 @@ export default function CompaniesPage() {
 
             {company.size && (
               <div className="mb-3">
-                <span className="text-xs bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">
+                <span className="text-xs bg-muted text-zinc-600 px-2 py-0.5 rounded-full">
                   {company.size} nhân viên
                 </span>
               </div>
@@ -787,7 +763,7 @@ export default function CompaniesPage() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="p-1.5 text-zinc-500 border border-zinc-200 rounded-lg disabled:opacity-40 hover:bg-zinc-50 transition"
+              className="p-1.5 text-zinc-500 border border-border rounded-lg disabled:opacity-40 hover:bg-aurora-soft/30 transition"
             >
               <ChevronLeft size={14} />
             </button>
@@ -797,7 +773,7 @@ export default function CompaniesPage() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="p-1.5 text-zinc-500 border border-zinc-200 rounded-lg disabled:opacity-40 hover:bg-zinc-50 transition"
+              className="p-1.5 text-zinc-500 border border-border rounded-lg disabled:opacity-40 hover:bg-aurora-soft/30 transition"
             >
               <ChevronRight size={14} />
             </button>

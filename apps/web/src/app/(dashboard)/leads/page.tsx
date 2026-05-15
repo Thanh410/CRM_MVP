@@ -2,16 +2,18 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useLeads, LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, SOURCE_LABELS, useDeleteLead, useConvertLead, useAssignLead, useImportLeads, useCreateLead } from '@/hooks/use-leads';
-import { formatDate, getInitials } from '@/lib/utils';
-import { avatarStyle } from '@/lib/avatar-color';
-import { Plus, Download, Upload, Search, RefreshCw, UserCheck, X, Trash2, Users, ArrowUp, ArrowDown, ArrowUpDown, CheckSquare, Square } from 'lucide-react';
+import { useLeads, LEAD_STATUS_LABELS, LEAD_STATUS_TONES, SOURCE_LABELS, useDeleteLead, useConvertLead, useAssignLead, useImportLeads, useCreateLead } from '@/hooks/use-leads';
+import { formatDate } from '@/lib/utils';
+import { Plus, Download, Upload, Search, RefreshCw, UserCheck, X, Trash2, Users, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { EntityTimeline } from '@/components/entity-timeline';
 import { TagSelector } from '@/components/tag-selector';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
+import { AvatarGradient } from '@/components/ui/avatar-gradient';
+import { StatusPill } from '@/components/ui/status-pill';
+import { RippleButton } from '@/components/ui/ripple-button';
 import { Drawer } from 'vaul';
 import { useQuery } from '@tanstack/react-query';
 
@@ -31,13 +33,13 @@ function SortHeader({
   return (
     <th
       onClick={() => onSort({ field, dir: isActive && sortBy.dir === 'asc' ? 'desc' : 'asc' })}
-      className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide cursor-pointer hover:text-zinc-900 select-none"
+      className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground select-none"
     >
       <span className="inline-flex items-center gap-1">
         {label}
-        {!isActive && <ArrowUpDown size={10} className="text-zinc-300" />}
-        {isActive && sortBy.dir === 'asc' && <ArrowUp size={10} className="text-zinc-900" />}
-        {isActive && sortBy.dir === 'desc' && <ArrowDown size={10} className="text-zinc-900" />}
+        {!isActive && <ArrowUpDown size={10} className="opacity-40" />}
+        {isActive && sortBy.dir === 'asc' && <ArrowUp size={10} className="text-aurora-violet" />}
+        {isActive && sortBy.dir === 'desc' && <ArrowDown size={10} className="text-aurora-violet" />}
       </span>
     </th>
   );
@@ -54,22 +56,22 @@ function BulkCheck({ all, some, onChange }: { all: boolean; some: boolean; onCha
       type="checkbox"
       checked={all}
       onChange={(e) => onChange(e.target.checked)}
-      className="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-1 focus:ring-zinc-900 cursor-pointer accent-zinc-900"
+      className="w-4 h-4 rounded border-border text-aurora-violet focus:ring-1 focus:ring-aurora-violet cursor-pointer accent-[hsl(var(--aurora-violet))]"
     />
   );
 }
 
 function BulkActionBar({ count, onClear, onDelete }: { count: number; onClear: () => void; onDelete: () => void }) {
   return (
-    <div className="bg-zinc-900 text-white px-4 py-2.5 flex items-center justify-between text-sm">
+    <div className="btn-aurora text-white px-4 py-2.5 flex items-center justify-between text-sm">
       <div className="flex items-center gap-3">
-        <span className="font-medium">{count} đã chọn</span>
-        <button onClick={onClear} className="text-zinc-400 hover:text-white text-xs underline">Bỏ chọn</button>
+        <span className="font-semibold">● {count} đã chọn</span>
+        <button onClick={onClear} className="text-white/70 hover:text-white text-xs underline">Bỏ chọn</button>
       </div>
       <div className="flex items-center gap-2">
         <button
           onClick={onDelete}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 rounded-md transition"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-white/15 hover:bg-white/25 rounded-md transition backdrop-blur"
         >
           <Trash2 size={12} /> Xóa đã chọn
         </button>
@@ -107,16 +109,16 @@ function CreateLeadModal({ onClose }: { onClose: () => void }) {
     );
   };
 
-  const inputCls = 'w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900';
-  const labelCls = 'block text-xs font-medium text-gray-600 mb-1';
+  const inputCls = 'w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition';
+  const labelCls = 'block text-xs font-semibold text-foreground mb-1';
 
   return (
     <div ref={overlayRef} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       onMouseDown={e => { if (e.target === overlayRef.current) onClose(); }}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">Thêm lead mới</h2>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-zinc-100">
+      <div className="bg-card text-card-foreground rounded-2xl shadow-lift border border-border w-full max-w-md">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="font-display text-base font-bold">Thêm lead mới</h2>
+          <button onClick={onClose} className="p-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted">
             <X size={16} />
           </button>
         </div>
@@ -165,11 +167,11 @@ function CreateLeadModal({ onClose }: { onClose: () => void }) {
             <label className={labelCls}>Ghi chú</label>
             <textarea className={`${inputCls} resize-none`} rows={3} value={form.notes} onChange={set('notes')} placeholder="Ghi chú thêm..." />
           </div>
-          <div className="flex justify-end gap-2 pt-1 border-t border-gray-100">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Hủy</button>
-            <button type="submit" disabled={createLead.isPending} className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60">
+          <div className="flex justify-end gap-2 pt-3 border-t border-border">
+            <RippleButton type="button" variant="outline" onClick={onClose}>Hủy</RippleButton>
+            <RippleButton type="submit" variant="aurora" disabled={createLead.isPending}>
               {createLead.isPending ? 'Đang lưu...' : 'Tạo lead'}
-            </button>
+            </RippleButton>
           </div>
         </form>
       </div>
@@ -248,50 +250,52 @@ export default function LeadsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Khách hàng tiềm năng</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{data?.meta?.total ?? 0} leads</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Khách hàng tiềm năng</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            <span className="font-semibold text-foreground">{data?.meta?.total ?? 0}</span> lead trong hệ thống
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={handleImport} />
-          <button
+          <RippleButton
+            variant="outline"
             onClick={() => fileInputRef.current?.click()}
             disabled={importLeads.isPending}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-zinc-50 transition disabled:opacity-50"
           >
             <Upload size={14} /> {importLeads.isPending ? 'Đang nhập...' : 'Nhập CSV'}
-          </button>
-          <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-zinc-50 transition">
+          </RippleButton>
+          <RippleButton variant="outline" onClick={handleExport}>
             <Download size={14} /> Export CSV
-          </button>
-          <button onClick={() => setCreateOpen(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition">
+          </RippleButton>
+          <RippleButton variant="aurora" onClick={() => setCreateOpen(true)}>
             <Plus size={14} /> Thêm lead
-          </button>
+          </RippleButton>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-zinc-200 p-4">
+      <div className="bg-card border border-border rounded-2xl p-4 shadow-soft">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Tìm tên, email, số điện thoại..."
-              className="w-full pl-8 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
             />
           </div>
           <select
             value={status}
             onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white"
+            className="px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
           >
             <option value="">Tất cả trạng thái</option>
             {STATUSES.map((s) => (
               <option key={s} value={s}>{LEAD_STATUS_LABELS[s]}</option>
             ))}
           </select>
-          <button onClick={() => refetch()} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-zinc-100 rounded-lg transition">
+          <button onClick={() => refetch()} className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition" aria-label="Làm mới">
             <RefreshCw size={14} />
           </button>
         </div>
@@ -299,7 +303,7 @@ export default function LeadsPage() {
 
       <div className="flex gap-5 items-start">
         {/* Table */}
-        <div className={`bg-white rounded-xl border border-zinc-200 overflow-hidden transition-all ${selectedLead ? 'flex-1 min-w-0' : 'w-full'}`}>
+        <div className={`bg-card border border-border rounded-2xl shadow-soft overflow-hidden transition-all ${selectedLead ? 'flex-1 min-w-0' : 'w-full'}`}>
           {isLoading ? (
             <TableSkeleton rows={6} cols={6} />
           ) : data?.data?.length === 0 ? (
@@ -341,7 +345,7 @@ export default function LeadsPage() {
               )}
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-zinc-50/50">
+                  <tr className="border-b border-border bg-muted/40">
                     <th className="px-3 py-3 w-10">
                       <BulkCheck
                         all={(data?.data ?? []).every((l: any) => selectedIds.has(l.id)) && (data?.data?.length ?? 0) > 0}
@@ -353,21 +357,27 @@ export default function LeadsPage() {
                       />
                     </th>
                     <SortHeader field="fullName" label="Họ tên" sortBy={sortBy} onSort={setSortBy} />
-                    {!selectedLead && <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Liên hệ</th>}
+                    {!selectedLead && <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Liên hệ</th>}
                     <SortHeader field="status" label="Trạng thái" sortBy={sortBy} onSort={setSortBy} />
-                    {!selectedLead && <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Nguồn</th>}
-                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Phụ trách</th>
+                    {!selectedLead && <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Nguồn</th>}
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Phụ trách</th>
                     {!selectedLead && <SortHeader field="createdAt" label="Ngày tạo" sortBy={sortBy} onSort={setSortBy} />}
                     <th className="px-4 py-3 w-16" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-border/60">
                   {/* empty state moved above */}
                   {data?.data?.map((lead: any) => (
                     <tr
                       key={lead.id}
                       onClick={() => setSelectedLead(selectedLead?.id === lead.id ? null : lead)}
-                      className={`hover:bg-zinc-50 transition-colors cursor-pointer ${selectedLead?.id === lead.id ? 'bg-zinc-50 border-l-2 border-l-zinc-900' : ''} ${selectedIds.has(lead.id) ? 'bg-indigo-50/50' : ''}`}
+                      className={`group transition-colors cursor-pointer ${
+                        selectedLead?.id === lead.id
+                          ? 'bg-aurora-soft border-l-2 border-l-aurora-violet'
+                          : selectedIds.has(lead.id)
+                          ? 'bg-aurora-violet/5'
+                          : 'hover:bg-aurora-soft/30'
+                      }`}
                     >
                       <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                         <input
@@ -380,41 +390,41 @@ export default function LeadsPage() {
                               return next;
                             });
                           }}
-                          className="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-1 focus:ring-zinc-900 cursor-pointer accent-zinc-900"
+                          className="w-4 h-4 rounded border-border text-aurora-violet focus:ring-1 focus:ring-aurora-violet cursor-pointer accent-[hsl(var(--aurora-violet))]"
                         />
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
-                          <div
-                            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                            style={avatarStyle(lead.id ?? lead.fullName)}
-                          >
-                            <span className="text-xs font-semibold">{getInitials(lead.fullName)}</span>
-                          </div>
-                          <span className="font-medium text-gray-900 text-sm">{lead.fullName}</span>
+                          <AvatarGradient id={lead.id ?? lead.fullName} name={lead.fullName} size="sm" />
+                          <span className="font-semibold text-foreground text-sm">{lead.fullName}</span>
                         </div>
                       </td>
                       {!selectedLead && (
-                        <td className="px-4 py-3 text-gray-500 text-xs">
-                          <div>{lead.email}</div>
+                        <td className="px-4 py-3 text-muted-foreground text-xs">
+                          <div className="text-foreground/80">{lead.email}</div>
                           <div>{lead.phone}</div>
                         </td>
                       )}
                       <td className="px-4 py-3">
-                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${LEAD_STATUS_COLORS[lead.status]}`}>
+                        <StatusPill tone={LEAD_STATUS_TONES[lead.status] ?? 'muted'}>
                           {LEAD_STATUS_LABELS[lead.status]}
-                        </span>
+                        </StatusPill>
                       </td>
                       {!selectedLead && (
-                        <td className="px-4 py-3 text-gray-500 text-xs">
+                        <td className="px-4 py-3 text-muted-foreground text-xs">
                           {SOURCE_LABELS[lead.source ?? ''] ?? lead.source ?? '—'}
                         </td>
                       )}
-                      <td className="px-4 py-3 text-gray-500 text-xs">
-                        {lead.assignee?.fullName ?? <span className="text-gray-300">—</span>}
+                      <td className="px-4 py-3 text-foreground/80 text-xs">
+                        {lead.assignee?.fullName ? (
+                          <div className="flex items-center gap-1.5">
+                            <AvatarGradient id={lead.assignee.id ?? lead.assignee.fullName} name={lead.assignee.fullName} size="xs" />
+                            <span>{lead.assignee.fullName}</span>
+                          </div>
+                        ) : <span className="text-muted-foreground/60">—</span>}
                       </td>
                       {!selectedLead && (
-                        <td className="px-4 py-3 text-gray-400 text-xs">{formatDate(lead.createdAt)}</td>
+                        <td className="px-4 py-3 text-muted-foreground text-xs">{formatDate(lead.createdAt)}</td>
                       )}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-0.5">
@@ -422,14 +432,14 @@ export default function LeadsPage() {
                             <button
                               onClick={(e) => { e.stopPropagation(); convertLead.mutate(lead.id); }}
                               title="Chuyển thành Contact"
-                              className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition"
+                              className="p-1.5 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-md transition"
                             >
                               <UserCheck size={13} />
                             </button>
                           )}
                           <button
                             onClick={(e) => handleDelete(e, lead.id)}
-                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition"
+                            className="p-1.5 text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-md transition"
                           >
                             <Trash2 size={13} />
                           </button>
@@ -441,19 +451,19 @@ export default function LeadsPage() {
               </table>
 
               {data?.meta && (
-                <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-                  <span className="text-xs text-gray-400">
-                    {((page - 1) * 20) + 1}–{Math.min(page * 20, data.meta.total)} / {data.meta.total}
+                <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
+                  <span className="text-xs text-muted-foreground">
+                    Hiển thị <span className="font-semibold text-foreground">{((page - 1) * 20) + 1}–{Math.min(page * 20, data.meta.total)}</span> / {data.meta.total}
                   </span>
                   <div className="flex items-center gap-1">
                     <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-                      className="px-2.5 py-1.5 text-xs border border-zinc-200 rounded-lg disabled:opacity-40 hover:bg-zinc-50 transition">
-                      Trước
+                      className="px-2.5 py-1.5 text-xs border border-border rounded-lg bg-card disabled:opacity-40 hover:bg-muted transition">
+                      ← Trước
                     </button>
-                    <span className="px-3 py-1.5 text-xs text-gray-600">{page} / {data.meta.totalPages}</span>
+                    <span className="px-3 py-1.5 text-xs font-semibold text-foreground">{page} / {data.meta.totalPages}</span>
                     <button onClick={() => setPage((p) => Math.min(data.meta.totalPages, p + 1))} disabled={page >= data.meta.totalPages}
-                      className="px-2.5 py-1.5 text-xs border border-zinc-200 rounded-lg disabled:opacity-40 hover:bg-zinc-50 transition">
-                      Sau
+                      className="px-2.5 py-1.5 text-xs border border-border rounded-lg bg-card disabled:opacity-40 hover:bg-muted transition">
+                      Sau →
                     </button>
                   </div>
                 </div>
@@ -464,37 +474,32 @@ export default function LeadsPage() {
 
         {/* Detail Panel — desktop only (mobile drawer ở dưới) */}
         {selectedLead && (
-          <div className="hidden md:block w-96 shrink-0 bg-white rounded-xl border border-zinc-200 overflow-hidden">
+          <div className="hidden md:block w-96 shrink-0 bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
             {/* Panel Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-aurora-soft/40">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                  style={avatarStyle(selectedLead.id ?? selectedLead.fullName)}
-                >
-                  <span className="text-xs font-semibold">{getInitials(selectedLead.fullName)}</span>
-                </div>
+                <AvatarGradient id={selectedLead.id ?? selectedLead.fullName} name={selectedLead.fullName} size="md" />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{selectedLead.fullName}</p>
-                  <span className={`inline-flex px-1.5 py-0.5 rounded-full text-xs font-medium ${LEAD_STATUS_COLORS[selectedLead.status]}`}>
+                  <p className="text-sm font-semibold text-foreground truncate">{selectedLead.fullName}</p>
+                  <StatusPill tone={LEAD_STATUS_TONES[selectedLead.status] ?? 'muted'}>
                     {LEAD_STATUS_LABELS[selectedLead.status]}
-                  </span>
+                  </StatusPill>
                 </div>
               </div>
-              <button onClick={() => setSelectedLead(null)} className="p-1 text-gray-400 hover:text-gray-600 rounded">
+              <button onClick={() => setSelectedLead(null)} className="p-1 text-muted-foreground hover:text-foreground rounded">
                 <X size={16} />
               </button>
             </div>
 
             {/* Contact Info */}
-            <div className="px-4 py-3 border-b border-gray-100 space-y-1.5 text-xs text-gray-500">
+            <div className="px-4 py-3 border-b border-border space-y-1.5 text-xs text-muted-foreground">
               {selectedLead.email && <div>📧 {selectedLead.email}</div>}
               {selectedLead.phone && <div>📞 {selectedLead.phone}</div>}
               {selectedLead.source && <div>🔗 Nguồn: {SOURCE_LABELS[selectedLead.source] ?? selectedLead.source}</div>}
               <div className="flex items-center gap-2 pt-1">
-                <span className="text-gray-400">👤 Phụ trách:</span>
+                <span>👤 Phụ trách:</span>
                 <select
-                  className="flex-1 border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-zinc-900 bg-white"
+                  className="flex-1 border border-border rounded px-2 py-1 text-xs focus:outline-none focus:border-aurora-violet focus:ring-2 focus:ring-aurora-violet/15 bg-card"
                   value={selectedLead.assignee?.id ?? ''}
                   onChange={(e) => {
                     if (!e.target.value) return;
@@ -534,31 +539,26 @@ export default function LeadsPage() {
       <Drawer.Root open={!!selectedLead} onOpenChange={(o) => !o && setSelectedLead(null)}>
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 z-50 md:hidden" />
-          <Drawer.Content className="bg-white flex flex-col rounded-t-2xl h-[92vh] mt-24 fixed bottom-0 left-0 right-0 z-50 md:hidden">
-            <div className="mx-auto mt-2 mb-1 h-1.5 w-12 rounded-full bg-zinc-300 shrink-0" />
+          <Drawer.Content className="bg-card text-card-foreground flex flex-col rounded-t-2xl h-[92vh] mt-24 fixed bottom-0 left-0 right-0 z-50 md:hidden">
+            <div className="mx-auto mt-2 mb-1 h-1.5 w-12 rounded-full bg-muted-foreground/30 shrink-0" />
             {selectedLead && (
               <>
-                <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 shrink-0">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0 bg-aurora-soft/40">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                      style={avatarStyle(selectedLead.id ?? selectedLead.fullName)}
-                    >
-                      <span className="text-xs font-semibold">{getInitials(selectedLead.fullName)}</span>
-                    </div>
+                    <AvatarGradient id={selectedLead.id ?? selectedLead.fullName} name={selectedLead.fullName} size="md" />
                     <div className="min-w-0">
-                      <Drawer.Title className="text-sm font-semibold text-gray-900 truncate">{selectedLead.fullName}</Drawer.Title>
-                      <span className={`inline-flex px-1.5 py-0.5 rounded-full text-xs font-medium ${LEAD_STATUS_COLORS[selectedLead.status]}`}>
+                      <Drawer.Title className="text-sm font-semibold text-foreground truncate">{selectedLead.fullName}</Drawer.Title>
+                      <StatusPill tone={LEAD_STATUS_TONES[selectedLead.status] ?? 'muted'}>
                         {LEAD_STATUS_LABELS[selectedLead.status]}
-                      </span>
+                      </StatusPill>
                     </div>
                   </div>
-                  <button onClick={() => setSelectedLead(null)} className="p-1.5 text-gray-400 hover:bg-zinc-100 rounded-lg">
+                  <button onClick={() => setSelectedLead(null)} className="p-1.5 text-muted-foreground hover:bg-muted rounded-lg">
                     <X size={16} />
                   </button>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                  <div className="px-4 py-3 border-b border-zinc-100 space-y-1.5 text-xs text-gray-500">
+                  <div className="px-4 py-3 border-b border-border space-y-1.5 text-xs text-muted-foreground">
                     {selectedLead.email && <div>📧 {selectedLead.email}</div>}
                     {selectedLead.phone && <div>📞 {selectedLead.phone}</div>}
                     {selectedLead.source && <div>🔗 Nguồn: {SOURCE_LABELS[selectedLead.source] ?? selectedLead.source}</div>}
