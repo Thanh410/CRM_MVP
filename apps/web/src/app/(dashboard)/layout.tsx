@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
+import { BottomNav } from '@/components/layout/bottom-nav';
 import { CommandPalette } from '@/components/ui/command-palette';
 import { KeyboardShortcutsProvider } from '@/components/ui/keyboard-shortcuts';
 
@@ -50,10 +51,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           onOpenSearch={() => setCmdOpen(true)}
           onOpenMobileNav={() => setMobileNavOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-muted/40">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 md:pb-6 bg-muted/40">
           {children}
         </main>
       </div>
+      {/* Mobile bottom tab bar */}
+      <BottomNav onOpenMore={() => setMobileNavOpen(true)} />
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
       <KeyboardShortcutsProvider />
     </div>

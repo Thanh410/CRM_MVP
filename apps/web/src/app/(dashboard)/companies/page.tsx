@@ -645,9 +645,15 @@ export default function CompaniesPage() {
         </RippleButton>
       </div>
 
+      {/* FAB — mobile only */}
+      <button onClick={openCreate}
+        className="md:hidden fixed bottom-20 right-4 z-30 w-12 h-12 rounded-2xl bg-gradient-to-br from-aurora-violet to-aurora-cyan text-white shadow-[0_8px_24px_rgba(124,58,237,0.5)] flex items-center justify-center text-2xl font-light active:scale-95 transition-transform">
+        +
+      </button>
+
       {/* Search */}
-      <div className="bg-card border border-border rounded-2xl shadow-soft p-4">
-        <div className="relative max-w-sm">
+      <div className="bg-card border border-border rounded-2xl shadow-soft p-3 sm:p-4">
+        <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
           <input
             value={search}
@@ -678,7 +684,7 @@ export default function CompaniesPage() {
           <div
             key={company.id}
             onClick={() => setSlideOverId(company.id)}
-            className="group relative bg-white border border-border rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
+            className="group relative bg-card border border-border rounded-xl p-4 hover:shadow-md hover:border-aurora-violet/30 transition-all cursor-pointer active:scale-[0.99]"
           >
             {/* Action buttons — visible on hover */}
             <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

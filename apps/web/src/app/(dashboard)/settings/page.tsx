@@ -884,8 +884,41 @@ export default function SettingsPage() {
         <p className="text-sm text-muted-foreground mt-1">Quản lý tổ chức, phòng ban, nhóm, phân quyền &amp; tích hợp</p>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-border">
+      {/* Mobile: iOS-style grouped list nav */}
+      <div className="md:hidden space-y-1">
+        {TABS.map(t => {
+          const Icon = t.icon;
+          const active = tab === t.key;
+          return active ? (
+            <div key={t.key} className="bg-aurora-violet/10 border border-aurora-violet/30 rounded-2xl p-4 space-y-4">
+              <button onClick={() => setTab('')} className="flex items-center gap-3 text-aurora-violet font-semibold text-sm">
+                <Icon size={16} /> {t.label}
+                <span className="ml-auto text-xs opacity-60">Thu gọn ↑</span>
+              </button>
+              <div>
+                {tab === 'org' && <OrgTab />}
+                {tab === 'depts' && <DeptsTab />}
+                {tab === 'teams' && <TeamsTab />}
+                {tab === 'rbac' && <RbacTab />}
+                {tab === 'tags' && <TagsTab />}
+                {tab === 'integrations' && <IntegrationsTab />}
+              </div>
+            </div>
+          ) : (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className="w-full flex items-center gap-3 px-4 py-3.5 bg-card border border-border rounded-2xl text-sm font-medium hover:border-aurora-violet/30 transition-colors">
+              <div className="w-8 h-8 rounded-xl bg-aurora-violet/10 flex items-center justify-center flex-shrink-0">
+                <Icon size={15} className="text-aurora-violet" />
+              </div>
+              <span className="flex-1 text-left">{t.label}</span>
+              <ChevronRight size={14} className="text-muted-foreground" />
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Desktop: Tabs */}
+      <div className="hidden md:block border-b border-border">
         <nav className="flex gap-1 -mb-px">
           {TABS.map(t => {
             const Icon = t.icon;
@@ -908,8 +941,8 @@ export default function SettingsPage() {
         </nav>
       </div>
 
-      {/* Tab content */}
-      <div>
+      {/* Desktop Tab content */}
+      <div className="hidden md:block">
         {tab === 'org' && <OrgTab />}
         {tab === 'depts' && <DeptsTab />}
         {tab === 'teams' && <TeamsTab />}

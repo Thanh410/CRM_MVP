@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Check, CheckCheck, X, Search, Menu } from 'lucide-react';
+import { Bell, Check, CheckCheck, X, Search } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { formatDate } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -40,26 +40,23 @@ export function Header({ onOpenSearch, onOpenMobileNav }: HeaderProps) {
 
   return (
     <header className="h-14 bg-card border-b border-border flex items-center px-4 sm:px-6 gap-3 sm:gap-4 shrink-0">
-      {/* Mobile hamburger */}
-      <button
-        onClick={onOpenMobileNav}
-        className="md:hidden p-2 -ml-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition shrink-0"
-        aria-label="Mở menu"
-      >
-        <Menu size={20} />
-      </button>
-
-      {/* Search — opens CommandPalette */}
+      {/* Search — desktop only full bar, mobile just icon */}
       <div className="flex-1 max-w-md">
+        {/* Desktop search bar */}
         <button
           onClick={onOpenSearch}
-          className="w-full flex items-center gap-2 pl-3 pr-2 py-1.5 text-sm bg-muted border border-border rounded-lg hover:border-aurora-violet/40 hover:bg-aurora-violet/5 transition text-muted-foreground group"
+          className="hidden sm:flex w-full items-center gap-2 pl-3 pr-2 py-1.5 text-sm bg-muted border border-border rounded-lg hover:border-aurora-violet/40 hover:bg-aurora-violet/5 transition text-muted-foreground group"
         >
           <Search size={14} className="shrink-0" />
           <span className="flex-1 text-left">Tìm kiếm...</span>
           <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-card border border-border text-muted-foreground transition">
             <span className="text-[11px]">⌘</span>K
           </kbd>
+        </button>
+        {/* Mobile search icon only */}
+        <button onClick={onOpenSearch}
+          className="sm:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition">
+          <Search size={18} />
         </button>
       </div>
 
@@ -84,7 +81,7 @@ export function Header({ onOpenSearch, onOpenMobileNav }: HeaderProps) {
           </button>
 
           {open && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-popover text-popover-foreground rounded-xl shadow-lift border border-border z-50 overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-sm bg-popover text-popover-foreground rounded-xl shadow-lift border border-border z-50 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold font-display">Thông báo</span>

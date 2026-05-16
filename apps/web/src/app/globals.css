@@ -116,6 +116,11 @@
    See docs/UI-REDESIGN.md §3 for usage.
 ============================================================ */
 @layer utilities {
+  /* Mobile utilities */
+  .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+  .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
   .ease-spring { transition-timing-function: cubic-bezier(.2,.8,.2,1); }
   .ease-out-cubic { transition-timing-function: cubic-bezier(.33,1,.68,1); }
 

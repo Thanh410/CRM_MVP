@@ -623,8 +623,59 @@ export default function ContactsPage() {
         </RippleButton>
       </div>
 
-      {/* Search */}
-      <div className="bg-card border border-border rounded-2xl shadow-soft p-4">
+      {/* Mobile search (md:hidden) */}
+      <div className="md:hidden">
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Tìm liên hệ..."
+            className="w-full pl-8 pr-3 py-2.5 text-sm border border-border rounded-xl bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition" />
+        </div>
+      </div>
+
+      {/* Mobile card list (md:hidden) */}
+      <div className="md:hidden space-y-3">
+        {isLoading ? (
+          [1,2,3].map(i => <div key={i} className="bg-card border border-border rounded-2xl h-20 animate-pulse" />)
+        ) : contacts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+            <span className="text-4xl mb-3">👥</span>
+            <p className="text-sm font-semibold">{search ? 'Không tìm thấy liên hệ' : 'Chưa có liên hệ nào'}</p>
+          </div>
+        ) : contacts.map((contact: Contact) => (
+          <div key={contact.id} onClick={() => setSlideOverId(contact.id)}
+            className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3 active:scale-[0.99] transition-all cursor-pointer hover:border-aurora-violet/30">
+            <AvatarGradient id={contact.id ?? contact.fullName} name={contact.fullName} size="md" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm truncate">{contact.fullName}</p>
+              {contact.jobTitle && <p className="text-xs text-muted-foreground">{contact.jobTitle}</p>}
+              {contact.company && <p className="text-xs text-muted-foreground flex items-center gap-1"><Building2 size={10}/>{contact.company.name}</p>}
+            </div>
+            <div className="text-right shrink-0">
+              {contact.phone && <p className="text-xs text-muted-foreground">{contact.phone}</p>}
+              {contact.email && <p className="text-xs text-aurora-violet truncate max-w-[100px]">{contact.email}</p>}
+            </div>
+          </div>
+        ))}
+        {meta && meta.totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+              className="px-4 py-2 text-xs border border-border rounded-xl bg-card disabled:opacity-40">← Trước</button>
+            <span className="text-xs text-muted-foreground">{page} / {totalPages}</span>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+              className="px-4 py-2 text-xs border border-border rounded-xl bg-card disabled:opacity-40">Sau →</button>
+          </div>
+        )}
+      </div>
+
+      {/* FAB mobile */}
+      <button onClick={openCreate}
+        className="md:hidden fixed bottom-20 right-4 z-30 w-12 h-12 rounded-2xl bg-gradient-to-br from-aurora-violet to-aurora-cyan text-white shadow-[0_8px_24px_rgba(124,58,237,0.5)] flex items-center justify-center text-2xl font-light active:scale-95 transition-transform">
+        +
+      </button>
+
+      {/* Desktop search */}
+      <div className="hidden md:block bg-card border border-border rounded-2xl shadow-soft p-4">
         <div className="relative max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -639,8 +690,8 @@ export default function ContactsPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
         {isLoading ? (
           <TableSkeleton rows={6} cols={6} />
         ) : contacts.length === 0 ? (

@@ -273,8 +273,90 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-card border border-border rounded-2xl p-4 shadow-soft">
+      {/* Mobile search + chips (md:hidden) */}
+      <div className="md:hidden space-y-3">
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Tìm lead..."
+            className="w-full pl-8 pr-3 py-2.5 text-sm border border-border rounded-xl bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
+          />
+        </div>
+        <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+          {[{ value: '', label: 'Tất cả' }, ...STATUSES.map(s => ({ value: s, label: LEAD_STATUS_LABELS[s] }))].map(({ value, label }) => (
+            <button key={value} onClick={() => { setStatus(value); setPage(1); }}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                status === value
+                  ? 'bg-aurora-violet/20 border-aurora-violet/40 text-aurora-violet'
+                  : 'bg-card border-border text-muted-foreground hover:text-foreground'
+              }`}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile card list (md:hidden) */}
+      <div className="md:hidden space-y-3">
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="bg-card border border-border rounded-2xl h-24 animate-pulse" />
+            ))}
+          </div>
+        ) : data?.data?.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+            <span className="text-4xl mb-3">👤</span>
+            <p className="text-sm font-semibold">Chưa có lead nào</p>
+            <p className="text-xs mt-1">Nhấn + để thêm lead mới</p>
+          </div>
+        ) : (
+          data?.data?.map((lead: any) => (
+            <div key={lead.id} onClick={() => setSelectedLead(selectedLead?.id === lead.id ? null : lead)}
+              className="bg-card border border-border rounded-2xl p-4 flex items-start gap-3 active:scale-[0.99] transition-all cursor-pointer hover:border-aurora-violet/30">
+              <AvatarGradient id={lead.id ?? lead.fullName} name={lead.fullName} size="md" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-semibold text-sm text-foreground truncate">{lead.fullName}</p>
+                  <StatusPill tone={LEAD_STATUS_TONES[lead.status] ?? 'muted'}>
+                    {LEAD_STATUS_LABELS[lead.status]}
+                  </StatusPill>
+                </div>
+                {lead.email && <p className="text-xs text-muted-foreground mt-0.5 truncate">{lead.email}</p>}
+                <div className="flex items-center gap-3 mt-2">
+                  {lead.phone && <span className="text-xs text-muted-foreground">{lead.phone}</span>}
+                  {lead.assignee?.fullName && (
+                    <div className="flex items-center gap-1 ml-auto">
+                      <AvatarGradient id={lead.assignee.id ?? lead.assignee.fullName} name={lead.assignee.fullName} size="xs" />
+                      <span className="text-xs text-muted-foreground">{lead.assignee.fullName}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+        {data?.meta && data.meta.totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+              className="px-4 py-2 text-xs border border-border rounded-xl bg-card disabled:opacity-40">← Trước</button>
+            <span className="text-xs text-muted-foreground">{page} / {data.meta.totalPages}</span>
+            <button onClick={() => setPage(p => Math.min(data.meta.totalPages, p + 1))} disabled={page >= data.meta.totalPages}
+              className="px-4 py-2 text-xs border border-border rounded-xl bg-card disabled:opacity-40">Sau →</button>
+          </div>
+        )}
+      </div>
+
+      {/* FAB — mobile only */}
+      <button onClick={() => setCreateOpen(true)}
+        className="md:hidden fixed bottom-20 right-4 z-30 w-12 h-12 rounded-2xl bg-gradient-to-br from-aurora-violet to-aurora-cyan text-white shadow-[0_8px_24px_rgba(124,58,237,0.5)] flex items-center justify-center text-2xl font-light active:scale-95 transition-transform">
+        +
+      </button>
+
+      {/* Filters — desktop only */}
+      <div className="hidden md:block bg-card border border-border rounded-2xl p-4 shadow-soft">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -301,7 +383,8 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      <div className="flex gap-5 items-start">
+      {/* Desktop table+detail */}
+      <div className="hidden md:flex gap-5 items-start">
         {/* Table */}
         <div className={`bg-card border border-border rounded-2xl shadow-soft overflow-hidden transition-all ${selectedLead ? 'flex-1 min-w-0' : 'w-full'}`}>
           {isLoading ? (

@@ -355,8 +355,14 @@ export default function DealsPage() {
         </div>
       </div>
 
+      {/* FAB — mobile only */}
+      <button onClick={() => setCreateOpen(true)}
+        className="md:hidden fixed bottom-20 right-4 z-30 w-12 h-12 rounded-2xl bg-gradient-to-br from-aurora-violet to-aurora-cyan text-white shadow-[0_8px_24px_rgba(124,58,237,0.5)] flex items-center justify-center text-2xl font-light active:scale-95 transition-transform">
+        +
+      </button>
+
       {/* Filter pills */}
-      <div className="flex items-center gap-2 flex-wrap shrink-0">
+      <div className="flex items-center gap-2 flex-wrap shrink-0 overflow-x-auto scrollbar-none">
         <span className="text-xs text-muted-foreground mr-1">Lọc nhanh:</span>
 
         {/* Time range — chip style */}
@@ -417,12 +423,12 @@ export default function DealsPage() {
       <div className="flex gap-4 flex-1 min-h-0">
         {/* Kanban Board */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4 flex-1">
+        <div className="flex gap-4 overflow-x-auto pb-4 flex-1 snap-x snap-mandatory md:snap-none scroll-smooth">
           {stages.map((stage: any) => {
             const stageColor = stage.color ?? 'hsl(var(--aurora-violet))';
             const isWonStage = stage.name?.toLowerCase().includes('chốt') || stage.name?.toLowerCase().includes('won');
             return (
-            <StageColumn key={stage.id} stageId={stage.id}>
+            <StageColumn key={stage.id} stageId={stage.id} className="snap-start md:snap-align-none">
               {/* Aurora gradient header */}
               <div
                 className="rounded-xl p-3 mb-3"
@@ -612,10 +618,10 @@ export default function DealsPage() {
 }
 
 // ─── DnD helpers ──────────────────────────────────────────────────────────────
-function StageColumn({ stageId, children }: { stageId: string; children: React.ReactNode }) {
+function StageColumn({ stageId, children, className }: { stageId: string; children: React.ReactNode; className?: string }) {
   const { setNodeRef, isOver } = useDroppable({ id: stageId });
   return (
-    <div ref={setNodeRef} className={`w-64 shrink-0 flex flex-col transition-colors rounded-2xl ${isOver ? 'bg-aurora-soft ring-2 ring-aurora-violet/40 ring-inset' : ''}`}>
+    <div ref={setNodeRef} className={`w-[82vw] md:w-64 shrink-0 flex flex-col transition-colors rounded-2xl ${isOver ? 'bg-aurora-soft ring-2 ring-aurora-violet/40 ring-inset' : ''} ${className ?? ''}`}>
       {children}
     </div>
   );
