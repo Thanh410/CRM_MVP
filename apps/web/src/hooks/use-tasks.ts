@@ -86,7 +86,17 @@ export function useTask(id: string) {
     queryKey: ['tasks', id],
     queryFn: async () => {
       const res = await api.get(`/tasks/${id}`);
-      return res.data;
+      const task = res.data;
+      // API returns watchers as { id, user: { id, fullName, avatar } }
+      // Normalize to flat { id, fullName, avatar } the UI expects
+      if (task.watchers) {
+        task.watchers = task.watchers.map((w: any) => ({
+          id: w.user?.id ?? w.userId ?? w.id,
+          fullName: w.user?.fullName ?? w.fullName,
+          avatar: w.user?.avatar ?? w.avatar,
+        }));
+      }
+      return task;
     },
     enabled: !!id,
   });
