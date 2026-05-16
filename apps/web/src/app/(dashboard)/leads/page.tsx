@@ -273,8 +273,8 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      {/* Mobile search + chips (md:hidden) */}
-      <div className="md:hidden space-y-3">
+      {/* Mobile search + chips (lg:hidden) */}
+      <div className="lg:hidden space-y-3">
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -298,8 +298,8 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      {/* Mobile card list (md:hidden) */}
-      <div className="md:hidden space-y-3">
+      {/* Mobile card list (lg:hidden) */}
+      <div className="lg:hidden space-y-3">
         {isLoading ? (
           <div className="space-y-3">
             {[1,2,3,4].map(i => (
@@ -351,12 +351,12 @@ export default function LeadsPage() {
 
       {/* FAB — mobile only */}
       <button onClick={() => setCreateOpen(true)}
-        className="md:hidden fixed bottom-20 right-4 z-30 w-12 h-12 rounded-2xl bg-gradient-to-br from-aurora-violet to-aurora-cyan text-white shadow-[0_8px_24px_rgba(124,58,237,0.5)] flex items-center justify-center text-2xl font-light active:scale-95 transition-transform">
+        className="lg:hidden fixed bottom-20 right-4 z-30 w-12 h-12 rounded-2xl bg-gradient-to-br from-aurora-violet to-aurora-cyan text-white shadow-[0_8px_24px_rgba(124,58,237,0.5)] flex items-center justify-center text-2xl font-light active:scale-95 transition-transform">
         +
       </button>
 
       {/* Filters — desktop only */}
-      <div className="hidden md:block bg-card border border-border rounded-2xl p-4 shadow-soft">
+      <div className="hidden lg:block bg-card border border-border rounded-2xl p-4 shadow-soft">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -384,7 +384,7 @@ export default function LeadsPage() {
       </div>
 
       {/* Desktop table+detail */}
-      <div className="hidden md:flex gap-5 items-start">
+      <div className="hidden lg:flex gap-5 items-start">
         {/* Table */}
         <div className={`bg-card border border-border rounded-2xl shadow-soft overflow-hidden transition-all ${selectedLead ? 'flex-1 min-w-0' : 'w-full'}`}>
           {isLoading ? (
@@ -557,7 +557,7 @@ export default function LeadsPage() {
 
         {/* Detail Panel — desktop only (mobile drawer ở dưới) */}
         {selectedLead && (
-          <div className="hidden md:block w-96 shrink-0 bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
+          <div className="hidden lg:block w-96 shrink-0 bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
             {/* Panel Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-aurora-soft/40">
               <div className="flex items-center gap-2.5 min-w-0">
@@ -621,8 +621,8 @@ export default function LeadsPage() {
       {/* Mobile drawer cho lead detail */}
       <Drawer.Root open={!!selectedLead} onOpenChange={(o) => !o && setSelectedLead(null)}>
         <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 bg-black/40 z-50 md:hidden" />
-          <Drawer.Content className="bg-card text-card-foreground flex flex-col rounded-t-2xl h-[92vh] mt-24 fixed bottom-0 left-0 right-0 z-50 md:hidden">
+          <Drawer.Overlay className="fixed inset-0 bg-black/40 z-50 lg:hidden" />
+          <Drawer.Content className="bg-card text-card-foreground flex flex-col rounded-t-2xl h-[92vh] mt-24 fixed bottom-0 left-0 right-0 z-50 lg:hidden">
             <div className="mx-auto mt-2 mb-1 h-1.5 w-12 rounded-full bg-muted-foreground/30 shrink-0" />
             {selectedLead && (
               <>

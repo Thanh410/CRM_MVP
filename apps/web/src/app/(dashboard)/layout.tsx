@@ -51,7 +51,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           onOpenSearch={() => setCmdOpen(true)}
           onOpenMobileNav={() => setMobileNavOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 md:pb-6 bg-muted/40">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 lg:pb-6 bg-muted/40">
           {children}
         </main>
       </div>

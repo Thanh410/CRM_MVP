@@ -623,8 +623,8 @@ export default function ContactsPage() {
         </RippleButton>
       </div>
 
-      {/* Mobile search (md:hidden) */}
-      <div className="md:hidden">
+      {/* Mobile search (lg:hidden) */}
+      <div className="lg:hidden">
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -633,8 +633,8 @@ export default function ContactsPage() {
         </div>
       </div>
 
-      {/* Mobile card list (md:hidden) */}
-      <div className="md:hidden space-y-3">
+      {/* Mobile card list (lg:hidden) */}
+      <div className="lg:hidden space-y-3">
         {isLoading ? (
           [1,2,3].map(i => <div key={i} className="bg-card border border-border rounded-2xl h-20 animate-pulse" />)
         ) : contacts.length === 0 ? (
@@ -670,12 +670,12 @@ export default function ContactsPage() {
 
       {/* FAB mobile */}
       <button onClick={openCreate}
-        className="md:hidden fixed bottom-20 right-4 z-30 w-12 h-12 rounded-2xl bg-gradient-to-br from-aurora-violet to-aurora-cyan text-white shadow-[0_8px_24px_rgba(124,58,237,0.5)] flex items-center justify-center text-2xl font-light active:scale-95 transition-transform">
+        className="lg:hidden fixed bottom-20 right-4 z-30 w-12 h-12 rounded-2xl bg-gradient-to-br from-aurora-violet to-aurora-cyan text-white shadow-[0_8px_24px_rgba(124,58,237,0.5)] flex items-center justify-center text-2xl font-light active:scale-95 transition-transform">
         +
       </button>
 
       {/* Desktop search */}
-      <div className="hidden md:block bg-card border border-border rounded-2xl shadow-soft p-4">
+      <div className="hidden lg:block bg-card border border-border rounded-2xl shadow-soft p-4">
         <div className="relative max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -691,7 +691,7 @@ export default function ContactsPage() {
       </div>
 
       {/* Desktop Table */}
-      <div className="hidden md:block bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
+      <div className="hidden lg:block bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
         {isLoading ? (
           <TableSkeleton rows={6} cols={6} />
         ) : contacts.length === 0 ? (

@@ -28,7 +28,7 @@ export function BottomNav({ onOpenMore }: BottomNavProps) {
   ].some((p) => pathname === p || pathname.startsWith(p + '/'));
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 h-16 bg-card/95 backdrop-blur-xl border-t border-border flex items-end pb-2 px-1 safe-area-bottom">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 h-16 bg-card/95 backdrop-blur-xl border-t border-border flex items-end pb-2 px-1 safe-area-bottom">
       {PRIMARY_TABS.map(({ label, href, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(href + '/');
         return (

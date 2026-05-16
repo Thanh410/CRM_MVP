@@ -175,7 +175,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
       {/* Mobile overlay backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
           onClick={onMobileClose}
           aria-hidden="true"
         />
@@ -184,11 +184,11 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
       <aside
         className={cn(
           'aurora-glow w-56 bg-sidebar text-sidebar-fg flex flex-col h-full shrink-0',
-          // Mobile: fixed slide-in drawer
+          // Mobile/tablet (<1024px): fixed slide-in drawer, off-screen by default
           'fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-spring',
           mobileOpen ? 'translate-x-0' : '-translate-x-full',
-          // Desktop: static
-          'md:relative md:translate-x-0 md:transition-none',
+          // Desktop (≥1024px): static in flex layout, always visible
+          'lg:relative lg:translate-x-0 lg:transition-none',
         )}
       >
       {/* Logo + mobile close */}
@@ -201,7 +201,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
         </div>
         <button
           onClick={onMobileClose}
-          className="md:hidden p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-md transition"
+          className="lg:hidden p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-md transition"
           aria-label="Đóng menu"
         >
           <X size={18} />

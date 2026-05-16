@@ -885,7 +885,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Mobile: iOS-style grouped list nav */}
-      <div className="md:hidden space-y-1">
+      <div className="lg:hidden space-y-1">
         {TABS.map(t => {
           const Icon = t.icon;
           const active = tab === t.key;
@@ -918,7 +918,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Desktop: Tabs */}
-      <div className="hidden md:block border-b border-border">
+      <div className="hidden lg:block border-b border-border">
         <nav className="flex gap-1 -mb-px">
           {TABS.map(t => {
             const Icon = t.icon;
@@ -942,7 +942,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Desktop Tab content */}
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         {tab === 'org' && <OrgTab />}
         {tab === 'depts' && <DeptsTab />}
         {tab === 'teams' && <TeamsTab />}
