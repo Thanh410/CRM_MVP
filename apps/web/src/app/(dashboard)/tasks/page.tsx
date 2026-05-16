@@ -21,6 +21,9 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { EntityTimeline } from '@/components/entity-timeline';
 import { DatePicker } from '@/components/ui/date-picker';
+import { AvatarGradient } from '@/components/ui/avatar-gradient';
+import { RippleButton } from '@/components/ui/ripple-button';
+import { StatusPill, type StatusTone } from '@/components/ui/status-pill';
 import { toast } from 'sonner';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -30,18 +33,27 @@ const STATUS_LABELS: Record<string, string> = {
   DONE: 'Hoàn thành',
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  TODO: 'bg-zinc-100',
-  IN_PROGRESS: 'bg-blue-50',
-  REVIEW: 'bg-yellow-50',
-  DONE: 'bg-green-50',
+/** Aurora gradient header backgrounds cho mỗi status */
+const STATUS_HEADER_BG: Record<string, string> = {
+  TODO: 'bg-gradient-to-br from-muted to-muted/50',
+  IN_PROGRESS: 'bg-gradient-to-br from-aurora-indigo/10 to-aurora-cyan/10',
+  REVIEW: 'bg-gradient-to-br from-amber-100 to-orange-100/60 dark:from-amber-950/40 dark:to-orange-950/30',
+  DONE: 'bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-950/40 dark:to-emerald-950/20',
 };
 
-const PRIORITY_BADGE: Record<string, string> = {
-  LOW: 'bg-zinc-100 text-zinc-600',
-  MEDIUM: 'bg-blue-100 text-blue-700',
-  HIGH: 'bg-orange-100 text-orange-700',
-  URGENT: 'bg-red-100 text-red-700',
+/** Stage indicator dot color */
+const STATUS_DOT: Record<string, string> = {
+  TODO: 'bg-muted-foreground',
+  IN_PROGRESS: 'bg-aurora-indigo',
+  REVIEW: 'bg-amber-500',
+  DONE: 'bg-emerald-500',
+};
+
+const PRIORITY_TONES: Record<string, StatusTone> = {
+  LOW: 'muted',
+  MEDIUM: 'indigo',
+  HIGH: 'amber',
+  URGENT: 'rose',
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -105,7 +117,7 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
         <h2 className="text-lg font-semibold mb-4">Chỉnh sửa nhiệm vụ</h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Tiêu đề *</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Tiêu đề *</label>
             <input
               className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900 focus:border-transparent"
               value={form.title}
@@ -115,7 +127,7 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Mô tả</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Mô tả</label>
             <textarea
               className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900 focus:border-transparent resize-none"
               rows={3}
@@ -127,7 +139,7 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Ưu tiên</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Ưu tiên</label>
               <select
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900"
                 value={form.priority}
@@ -139,7 +151,7 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Hạn chót</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Hạn chót</label>
               <DatePicker
                 value={form.dueDate}
                 onChange={(v) => setForm((f) => ({ ...f, dueDate: v }))}
@@ -148,7 +160,7 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Người thực hiện</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Người thực hiện</label>
             <select
               className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900"
               value={form.assigneeId}
@@ -162,7 +174,7 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Dự án</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Dự án</label>
             <select
               className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900"
               value={form.projectId}
@@ -176,20 +188,12 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button
-              type="submit"
-              disabled={update.isPending}
-              className="flex-1 bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-50"
-            >
+            <RippleButton type="submit" variant="aurora" disabled={update.isPending} className="flex-1">
               {update.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 border border-zinc-300 rounded-lg py-2 text-sm font-medium hover:bg-zinc-50"
-            >
+            </RippleButton>
+            <RippleButton type="button" variant="outline" onClick={onClose} className="flex-1">
               Hủy
-            </button>
+            </RippleButton>
           </div>
         </form>
       </div>
@@ -221,11 +225,11 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
       <div className="fixed right-0 top-0 h-full w-[520px] bg-white shadow-2xl z-50 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="font-semibold text-zinc-900 truncate pr-4">
+          <h2 className="font-semibold text-foreground truncate pr-4">
             {isLoading ? 'Đang tải...' : task?.title}
           </h2>
-          <button onClick={onClose} className="p-1 hover:bg-zinc-100 rounded-lg">
-            <X className="w-5 h-5 text-zinc-500" />
+          <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg">
+            <X className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
@@ -238,17 +242,17 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
             {/* Task Meta */}
             <div className="p-4 border-b space-y-2">
               <div className="flex items-center gap-3 flex-wrap">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_BADGE[task.priority]}`}>
+                <StatusPill tone={PRIORITY_TONES[task.priority] ?? 'muted'}>
                   {PRIORITY_LABELS[task.priority]}
-                </span>
-                <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded-full">
+                </StatusPill>
+                <StatusPill tone="muted">
                   {STATUS_LABELS[task.status]}
-                </span>
+                </StatusPill>
               </div>
               {task.description && (
-                <p className="text-sm text-zinc-600">{task.description}</p>
+                <p className="text-sm text-foreground/80">{task.description}</p>
               )}
-              <div className="flex gap-4 text-xs text-zinc-500 flex-wrap">
+              <div className="flex gap-4 text-xs text-muted-foreground flex-wrap">
                 {task.assignee && (
                   <span>👤 {task.assignee.fullName}</span>
                 )}
@@ -263,7 +267,7 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
 
             {/* Comments */}
             <div className="p-4 border-b">
-              <h3 className="text-sm font-semibold text-zinc-700 mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                 <MessageSquare className="w-4 h-4" />
                 Bình luận ({task.comments?.length ?? 0})
               </h3>
@@ -271,53 +275,47 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
               <div className="space-y-3 mb-4">
                 {task.comments?.map((c) => (
                   <div key={c.id} className="flex gap-2">
-                    <div className="w-7 h-7 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-medium text-zinc-700 flex-shrink-0">
-                      {c.author?.fullName?.[0] ?? '?'}
-                    </div>
+                    <AvatarGradient id={c.author?.id ?? c.author?.fullName ?? c.id} name={c.author?.fullName ?? '?'} size="sm" />
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-xs font-medium text-gray-800">{c.author?.fullName ?? 'Ẩn danh'}</span>
-                        <span className="text-xs text-zinc-400">
+                        <span className="text-xs font-semibold text-foreground">{c.author?.fullName ?? 'Ẩn danh'}</span>
+                        <span className="text-xs text-muted-foreground">
                           {new Date(c.createdAt).toLocaleString('vi-VN')}
                         </span>
                       </div>
-                      <p className="text-sm text-zinc-700">{c.content}</p>
+                      <p className="text-sm text-foreground">{c.content}</p>
                     </div>
                   </div>
                 ))}
                 {(!task.comments || task.comments.length === 0) && (
-                  <p className="text-xs text-zinc-400 text-center py-2">Chưa có bình luận</p>
+                  <p className="text-xs text-muted-foreground text-center py-2">Chưa có bình luận</p>
                 )}
               </div>
 
               {/* Add comment form */}
               <form onSubmit={handleAddComment} className="flex gap-2">
                 <input
-                  className="flex-1 border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900 focus:border-transparent"
+                  className="flex-1 border border-border rounded-lg px-3 py-2 text-sm bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   placeholder="Thêm bình luận..."
                 />
-                <button
-                  type="submit"
-                  disabled={addComment.isPending || !comment.trim()}
-                  className="bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-50"
-                >
+                <RippleButton type="submit" variant="aurora" disabled={addComment.isPending || !comment.trim()}>
                   Gửi
-                </button>
+                </RippleButton>
               </form>
             </div>
 
             {/* Watchers */}
             <div className="p-4 border-b">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <Eye className="w-4 h-4" />
                   Người theo dõi ({task.watchers?.length ?? 0})
                 </h3>
                 <button
                   onClick={() => setShowWatcherPicker(v => !v)}
-                  className="flex items-center gap-1 text-xs text-zinc-900 hover:text-zinc-900 px-2 py-1 rounded-lg hover:bg-zinc-100"
+                  className="flex items-center gap-1 text-xs text-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-muted"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
                   Thêm
@@ -325,23 +323,21 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
               </div>
 
               {showWatcherPicker && (
-                <div className="mb-3 border border-zinc-200 rounded-lg overflow-hidden max-h-40 overflow-y-auto">
+                <div className="mb-3 border border-border rounded-lg overflow-hidden max-h-40 overflow-y-auto">
                   {(allUsers as any[])
                     .filter((u: any) => !task.watchers?.some(w => w.id === u.id))
                     .map((u: any) => (
                       <button
                         key={u.id}
                         onClick={() => { addWatcher.mutate({ taskId, userId: u.id }); setShowWatcherPicker(false); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-zinc-100 transition-colors"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-muted transition-colors"
                       >
-                        <div className="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-medium text-zinc-700 shrink-0">
-                          {u.fullName?.[0] ?? '?'}
-                        </div>
-                        <span className="text-zinc-700">{u.fullName}</span>
+                        <AvatarGradient id={u.id ?? u.fullName} name={u.fullName} size="xs" />
+                        <span className="text-foreground">{u.fullName}</span>
                       </button>
                     ))}
                   {(allUsers as any[]).filter((u: any) => !task.watchers?.some(w => w.id === u.id)).length === 0 && (
-                    <p className="text-xs text-zinc-400 text-center py-3">Tất cả đã theo dõi</p>
+                    <p className="text-xs text-muted-foreground text-center py-3">Tất cả đã theo dõi</p>
                   )}
                 </div>
               )}
@@ -349,14 +345,12 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
               {task.watchers && task.watchers.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {task.watchers.map(w => (
-                    <div key={w.id} className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-full pl-1 pr-2 py-0.5">
-                      <div className="w-5 h-5 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-bold text-zinc-700">
-                        {w.fullName?.[0] ?? '?'}
-                      </div>
-                      <span className="text-xs text-zinc-700">{w.fullName}</span>
+                    <div key={w.id} className="flex items-center gap-1.5 bg-muted border border-border rounded-full pl-1 pr-2 py-0.5">
+                      <AvatarGradient id={w.id ?? w.fullName} name={w.fullName} size="xs" />
+                      <span className="text-xs text-foreground">{w.fullName}</span>
                       <button
                         onClick={() => removeWatcher.mutate({ taskId, userId: w.id })}
-                        className="ml-0.5 text-zinc-400 hover:text-red-500"
+                        className="ml-0.5 text-muted-foreground hover:text-rose-500"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -364,7 +358,7 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-zinc-400">Chưa có người theo dõi</p>
+                <p className="text-xs text-muted-foreground">Chưa có người theo dõi</p>
               )}
             </div>
 
@@ -383,7 +377,7 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
 function TaskStatusColumn({ status, children }: { status: string; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
-    <div ref={setNodeRef} className={`flex-shrink-0 w-72 rounded-xl p-3 transition-colors ${STATUS_COLORS[status]} ${isOver ? 'ring-2 ring-zinc-400 ring-inset' : ''}`}>
+    <div ref={setNodeRef} className={`flex-shrink-0 w-72 rounded-2xl p-3 transition-colors ${STATUS_HEADER_BG[status] ?? 'bg-muted'} ${isOver ? 'ring-2 ring-aurora-violet/40 ring-inset' : ''}`}>
       {children}
     </div>
   );
@@ -422,19 +416,19 @@ function TaskCard({
   const statuses: Task['status'][] = ['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'];
 
   return (
-    <div className="group bg-white rounded-lg border border-zinc-200 p-3 shadow-sm hover:shadow-md transition-shadow relative">
+    <div className="group bg-white rounded-lg border border-border p-3 shadow-sm hover:shadow-md transition-shadow relative">
       {/* Action buttons (hover) */}
       <div className="absolute top-2 right-2 hidden group-hover:flex gap-1">
         <button
           onClick={(e) => { e.stopPropagation(); onEdit(task); }}
-          className="p-1 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900"
+          className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
           title="Chỉnh sửa"
         >
           <Pencil className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(task); }}
-          className="p-1 rounded hover:bg-red-50 text-zinc-400 hover:text-red-600"
+          className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600"
           title="Xóa"
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -446,35 +440,33 @@ function TaskCard({
         onClick={() => onDetail(task)}
       >
         <div className="flex items-start justify-between gap-2 mb-2 pr-12">
-          <p className="text-sm font-medium text-zinc-900 leading-snug hover:text-zinc-900 transition-colors">
+          <p className="text-sm font-medium text-foreground leading-snug hover:text-foreground transition-colors">
             {task.title}
           </p>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0 ${PRIORITY_BADGE[task.priority]}`}>
+          <StatusPill tone={PRIORITY_TONES[task.priority] ?? 'muted'} className="whitespace-nowrap flex-shrink-0">
             {PRIORITY_LABELS[task.priority]}
-          </span>
+          </StatusPill>
         </div>
 
         {task.project && (
-          <p className="text-xs text-zinc-900 mb-1">📁 {task.project.name}</p>
+          <p className="text-xs text-foreground mb-1">📁 {task.project.name}</p>
         )}
 
         {task.dueDate && (
-          <p className="text-xs text-zinc-400 mb-2">
+          <p className="text-xs text-muted-foreground mb-2">
             📅 {new Date(task.dueDate).toLocaleDateString('vi-VN')}
           </p>
         )}
 
         {task.assignee && (
-          <div className="flex items-center gap-1 mb-2">
-            <div className="w-5 h-5 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-medium text-zinc-700">
-              {task.assignee?.fullName?.[0] ?? '?'}
-            </div>
-            <span className="text-xs text-zinc-500">{task.assignee.fullName}</span>
+          <div className="flex items-center gap-1.5 mb-2">
+            <AvatarGradient id={task.assignee.id ?? task.assignee.fullName} name={task.assignee.fullName} size="xs" />
+            <span className="text-xs text-muted-foreground truncate">{task.assignee.fullName}</span>
           </div>
         )}
 
         {task._count && (task._count.subtasks > 0 || task._count.comments > 0) && (
-          <div className="flex gap-2 text-xs text-zinc-400 mb-2">
+          <div className="flex gap-2 text-xs text-muted-foreground mb-2">
             {task._count.subtasks > 0 && <span>◻ {task._count.subtasks} subtask</span>}
             {task._count.comments > 0 && <span>💬 {task._count.comments}</span>}
           </div>
@@ -488,7 +480,7 @@ function TaskCard({
             <button
               key={s}
               onClick={(e) => { e.stopPropagation(); onMove(task.id, s); }}
-              className="text-xs px-2 py-0.5 rounded border border-zinc-200 hover:border-zinc-400 hover:text-zinc-900 transition-colors"
+              className="text-xs px-2 py-0.5 rounded border border-border hover:border-zinc-400 hover:text-foreground transition-colors"
             >
               → {STATUS_LABELS[s]}
             </button>
@@ -534,7 +526,7 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
         <h2 className="text-lg font-semibold mb-4">Tạo nhiệm vụ mới</h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Tiêu đề *</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Tiêu đề *</label>
             <input
               className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900 focus:border-transparent"
               value={title}
@@ -545,7 +537,7 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Mức độ ưu tiên</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Mức độ ưu tiên</label>
             <select
               className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900"
               value={priority}
@@ -559,7 +551,7 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
           {projects && projects.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Dự án</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Dự án</label>
               <select
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900"
                 value={projectId}
@@ -575,7 +567,7 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
           {allUsers && allUsers.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Người theo dõi</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Người theo dõi</label>
               <div className="flex flex-wrap gap-1.5">
                 {allUsers.map((u: any) => {
                   const isSelected = watcherIds.includes(u.id);
@@ -587,7 +579,7 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
                       className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
                         isSelected
                           ? 'bg-blue-100 border-blue-400 text-blue-700'
-                          : 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                          : 'bg-muted border-border text-foreground/80 hover:border-border'
                       }`}
                     >
                       {u.fullName}
@@ -599,16 +591,12 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
           )}
 
           <div className="flex gap-2 pt-2">
-            <button
-              type="submit"
-              disabled={createTask.isPending}
-              className="flex-1 bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-50"
-            >
+            <RippleButton type="submit" variant="aurora" disabled={createTask.isPending} className="flex-1">
               {createTask.isPending ? 'Đang tạo...' : 'Tạo nhiệm vụ'}
-            </button>
-            <button type="button" onClick={onClose} className="flex-1 border border-zinc-300 rounded-lg py-2 text-sm font-medium hover:bg-zinc-50">
+            </RippleButton>
+            <RippleButton type="button" variant="outline" onClick={onClose} className="flex-1">
               Hủy
-            </button>
+            </RippleButton>
           </div>
         </form>
       </div>
@@ -658,7 +646,7 @@ export default function TasksPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-zinc-900 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-aurora-violet border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -670,24 +658,21 @@ export default function TasksPage() {
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Nhiệm vụ</h1>
-          <p className="text-zinc-500 text-sm mt-1">Quản lý nhiệm vụ theo {viewMode === 'kanban' ? 'bảng Kanban' : 'danh sách'}</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Nhiệm vụ</h1>
+          <p className="text-muted-foreground text-sm mt-1">Quản lý nhiệm vụ theo {viewMode === 'kanban' ? 'bảng Kanban' : 'danh sách'}</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex border border-zinc-200 rounded-lg overflow-hidden">
-            <button onClick={() => setViewMode('kanban')} className={`px-2.5 py-2 ${viewMode === 'kanban' ? 'bg-zinc-900/10 text-zinc-900' : 'text-zinc-400 hover:text-zinc-600'}`} title="Kanban">
+          <div className="flex bg-card border border-border rounded-lg p-0.5 shadow-soft">
+            <button onClick={() => setViewMode('kanban')} className={`px-2.5 h-8 rounded-md transition ${viewMode === 'kanban' ? 'btn-aurora text-white shadow-pop' : 'text-muted-foreground hover:text-foreground'}`} title="Kanban">
               <LayoutGrid size={15} />
             </button>
-            <button onClick={() => setViewMode('list')} className={`px-2.5 py-2 border-l border-zinc-200 ${viewMode === 'list' ? 'bg-zinc-900/10 text-zinc-900' : 'text-zinc-400 hover:text-zinc-600'}`} title="Danh sách">
+            <button onClick={() => setViewMode('list')} className={`px-2.5 h-8 rounded-md transition ${viewMode === 'list' ? 'btn-aurora text-white shadow-pop' : 'text-muted-foreground hover:text-foreground'}`} title="Danh sách">
               <List size={15} />
             </button>
           </div>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-zinc-700"
-          >
+          <RippleButton variant="aurora" onClick={() => setShowCreate(true)}>
             + Tạo nhiệm vụ
-          </button>
+          </RippleButton>
         </div>
       </div>
 
@@ -702,10 +687,11 @@ export default function TasksPage() {
           return (
             <TaskStatusColumn key={status} status={status}>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-800 text-sm">{STATUS_LABELS[status]}</h3>
-                <span className="bg-white text-zinc-600 text-xs px-2 py-0.5 rounded-full font-medium">
-                  {tasks.length}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${STATUS_DOT[status]}`} />
+                  <h3 className="font-bold text-foreground text-xs uppercase tracking-wide">{STATUS_LABELS[status]}</h3>
+                  <span className="text-[10px] font-bold opacity-70 text-foreground">{tasks.length}</span>
+                </div>
               </div>
 
               <div className="space-y-2 min-h-[100px]">
@@ -720,9 +706,9 @@ export default function TasksPage() {
                   />
                 ))}
                 {tasks.length === 0 && (
-                  <div className="flex flex-col items-center py-8 text-zinc-300">
+                  <div className="flex flex-col items-center py-8 text-muted-foreground/60">
                     <CheckSquare size={28} className="mb-2" />
-                    <p className="text-xs text-zinc-400">Chưa có nhiệm vụ</p>
+                    <p className="text-xs text-muted-foreground">Chưa có nhiệm vụ</p>
                   </div>
                 )}
               </div>
@@ -732,11 +718,11 @@ export default function TasksPage() {
       </div>
       <DragOverlay>
         {activeDragTask ? (
-          <div className="bg-white border border-zinc-400 rounded-lg p-3 shadow-lg opacity-90 w-72">
-            <p className="text-sm font-medium text-zinc-900">{activeDragTask.title}</p>
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_BADGE[activeDragTask.priority]}`}>
+          <div className="bg-card border-2 border-aurora-violet rounded-2xl p-3 shadow-pop opacity-95 w-72 rotate-2">
+            <p className="text-sm font-semibold text-foreground">{activeDragTask.title}</p>
+            <StatusPill tone={PRIORITY_TONES[activeDragTask.priority] ?? 'muted'} className="mt-1">
               {PRIORITY_LABELS[activeDragTask.priority]}
-            </span>
+            </StatusPill>
           </div>
         ) : null}
       </DragOverlay>
@@ -744,47 +730,47 @@ export default function TasksPage() {
       </>
       ) : (
       /* ─── List View ─────────────────────────────────────────────────── */
-      <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden flex-1">
+      <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden flex-1">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-100 bg-zinc-50/50">
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Nhiệm vụ</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Trạng thái</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Ưu tiên</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Người thực hiện</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Dự án</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wide">Hạn chót</th>
+            <tr className="border-b border-border bg-muted/40">
+              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Nhiệm vụ</th>
+              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Trạng thái</th>
+              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ưu tiên</th>
+              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Người thực hiện</th>
+              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Dự án</th>
+              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Hạn chót</th>
               <th className="px-4 py-3 w-24" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
             {allTasks.length === 0 && (
-              <tr><td colSpan={7} className="text-center py-12 text-zinc-400 text-sm">Chưa có nhiệm vụ nào</td></tr>
+              <tr><td colSpan={7} className="text-center py-12 text-muted-foreground text-sm">Chưa có nhiệm vụ nào</td></tr>
             )}
             {allTasks.map((task) => (
               <tr key={task.id} onClick={() => setDetailTaskId(task.id)}
-                className="hover:bg-zinc-50/50 cursor-pointer transition-colors">
-                <td className="px-4 py-3 font-medium text-zinc-900">{task.title}</td>
+                className="hover:bg-aurora-soft/30 cursor-pointer transition-colors">
+                <td className="px-4 py-3 font-medium text-foreground">{task.title}</td>
                 <td className="px-4 py-3">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                    task.status === 'DONE' ? 'bg-green-100 text-green-700' :
-                    task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
-                    task.status === 'REVIEW' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-zinc-100 text-zinc-600'
-                  }`}>{STATUS_LABELS[task.status]}</span>
+                  <StatusPill tone={
+                    task.status === 'DONE' ? 'emerald' :
+                    task.status === 'IN_PROGRESS' ? 'indigo' :
+                    task.status === 'REVIEW' ? 'amber' :
+                    'muted'
+                  }>{STATUS_LABELS[task.status]}</StatusPill>
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${PRIORITY_BADGE[task.priority]}`}>
+                  <StatusPill tone={PRIORITY_TONES[task.priority] ?? 'muted'}>
                     {PRIORITY_LABELS[task.priority]}
-                  </span>
+                  </StatusPill>
                 </td>
-                <td className="px-4 py-3 text-zinc-500 text-xs">{task.assignee?.fullName ?? '-'}</td>
-                <td className="px-4 py-3 text-zinc-900 text-xs">{task.project?.name ?? '-'}</td>
-                <td className="px-4 py-3 text-zinc-500 text-xs">{task.dueDate ? new Date(task.dueDate).toLocaleDateString('vi-VN') : '-'}</td>
+                <td className="px-4 py-3 text-muted-foreground text-xs">{task.assignee?.fullName ?? '-'}</td>
+                <td className="px-4 py-3 text-foreground text-xs">{task.project?.name ?? '-'}</td>
+                <td className="px-4 py-3 text-muted-foreground text-xs">{task.dueDate ? new Date(task.dueDate).toLocaleDateString('vi-VN') : '-'}</td>
                 <td className="px-4 py-3">
                   <div className="flex gap-1">
-                    <button onClick={e => { e.stopPropagation(); setEditTask(task); }} className="p-1 text-zinc-400 hover:text-zinc-900"><Pencil size={13} /></button>
-                    <button onClick={e => { e.stopPropagation(); setDeleteConfirm(task); }} className="p-1 text-zinc-400 hover:text-red-500"><Trash2 size={13} /></button>
+                    <button onClick={e => { e.stopPropagation(); setEditTask(task); }} className="p-1 text-muted-foreground hover:text-foreground"><Pencil size={13} /></button>
+                    <button onClick={e => { e.stopPropagation(); setDeleteConfirm(task); }} className="p-1 text-muted-foreground hover:text-red-500"><Trash2 size={13} /></button>
                   </div>
                 </td>
               </tr>
@@ -809,7 +795,7 @@ export default function TasksPage() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
             <h2 className="text-lg font-semibold mb-2">Xóa nhiệm vụ?</h2>
-            <p className="text-sm text-zinc-600 mb-4">
+            <p className="text-sm text-foreground/80 mb-4">
               Bạn có chắc muốn xóa <strong>{deleteConfirm.title}</strong>? Hành động này không thể hoàn tác.
             </p>
             <div className="flex gap-2">
@@ -822,7 +808,7 @@ export default function TasksPage() {
               </button>
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="flex-1 border border-zinc-300 rounded-lg py-2 text-sm font-medium hover:bg-zinc-50"
+                className="flex-1 border border-border rounded-lg py-2 text-sm font-medium hover:bg-aurora-soft/30"
               >
                 Hủy
               </button>
