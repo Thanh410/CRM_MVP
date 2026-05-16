@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Check, CheckCheck, X, Search } from 'lucide-react';
+import { Bell, Check, CheckCheck, X, Search, Menu } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { formatDate } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -13,7 +13,12 @@ import {
   useDeleteNotification,
 } from '@/hooks/use-notifications';
 
-export function Header({ onOpenSearch }: { onOpenSearch?: () => void }) {
+export interface HeaderProps {
+  onOpenSearch?: () => void;
+  onOpenMobileNav?: () => void;
+}
+
+export function Header({ onOpenSearch, onOpenMobileNav }: HeaderProps) {
   const user = useAuthStore((s) => s.user);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -34,7 +39,16 @@ export function Header({ onOpenSearch }: { onOpenSearch?: () => void }) {
   }, []);
 
   return (
-    <header className="h-14 bg-card border-b border-border flex items-center px-6 gap-4 shrink-0">
+    <header className="h-14 bg-card border-b border-border flex items-center px-4 sm:px-6 gap-3 sm:gap-4 shrink-0">
+      {/* Mobile hamburger */}
+      <button
+        onClick={onOpenMobileNav}
+        className="md:hidden p-2 -ml-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition shrink-0"
+        aria-label="Mở menu"
+      >
+        <Menu size={20} />
+      </button>
+
       {/* Search — opens CommandPalette */}
       <div className="flex-1 max-w-md">
         <button

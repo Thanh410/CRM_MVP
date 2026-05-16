@@ -32,47 +32,47 @@ function OrgTab() {
     onError: () => toast.error('Lưu thất bại'),
   });
 
-  if (isLoading) return <div className="text-sm text-zinc-400 py-6 text-center">Đang tải...</div>;
+  if (isLoading) return <div className="text-sm text-muted-foreground py-6 text-center">Đang tải...</div>;
   if (!org) return null;
 
   const val = (k: keyof Org) => (dirty && form[k] !== undefined ? form[k] : org[k]) ?? '';
 
-  const inputCls = 'w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900';
+  const inputCls = 'w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition';
 
   return (
     <div className="max-w-lg space-y-4">
       <div>
-        <label className="block text-xs font-medium text-zinc-600 mb-1">Tên tổ chức *</label>
+        <label className="block text-xs font-medium text-foreground/80 mb-1">Tên tổ chức *</label>
         <input className={inputCls} value={val('name') as string} onChange={set('name')} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-zinc-600 mb-1">Email</label>
+          <label className="block text-xs font-medium text-foreground/80 mb-1">Email</label>
           <input className={inputCls} type="email" value={val('email') as string} onChange={set('email')} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-zinc-600 mb-1">Điện thoại</label>
+          <label className="block text-xs font-medium text-foreground/80 mb-1">Điện thoại</label>
           <input className={inputCls} value={val('phone') as string} onChange={set('phone')} />
         </div>
       </div>
       <div>
-        <label className="block text-xs font-medium text-zinc-600 mb-1">Website</label>
+        <label className="block text-xs font-medium text-foreground/80 mb-1">Website</label>
         <input className={inputCls} value={val('website') as string} onChange={set('website')} placeholder="https://company.com" />
       </div>
       <div>
-        <label className="block text-xs font-medium text-zinc-600 mb-1">Địa chỉ</label>
+        <label className="block text-xs font-medium text-foreground/80 mb-1">Địa chỉ</label>
         <input className={inputCls} value={val('address') as string} onChange={set('address')} />
       </div>
       {dirty && (
         <div className="flex gap-2 pt-2">
           <button
             onClick={() => { setForm({}); setDirty(false); }}
-            className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50"
+            className="px-4 py-2 text-sm text-foreground/80 border border-border rounded-lg hover:bg-aurora-soft/30"
           >Hủy</button>
           <button
             onClick={() => updateMutation.mutate(form)}
             disabled={updateMutation.isPending}
-            className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60"
+            className="px-4 py-2 text-sm btn-aurora text-white rounded-lg shadow-pop hover:shadow-lift transition disabled:opacity-60"
           >{updateMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}</button>
         </div>
       )}
@@ -119,10 +119,10 @@ function DeptsTab() {
       />
       <button onClick={() => newName.trim() && createMutation.mutate({ name: newName.trim(), description: newDesc || undefined, parentId: parentId ?? undefined })}
         disabled={createMutation.isPending || !newName.trim()}
-        className="p-1.5 bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60">
+        className="p-1.5 btn-aurora text-white rounded-lg shadow-pop hover:shadow-lift transition disabled:opacity-60">
         <Check size={13} />
       </button>
-      <button onClick={() => { setAddingParentId(undefined); setNewName(''); }} className="p-1.5 text-zinc-400 hover:text-zinc-600 border border-zinc-200 rounded-lg"><X size={13} /></button>
+      <button onClick={() => { setAddingParentId(undefined); setNewName(''); }} className="p-1.5 text-muted-foreground hover:text-foreground/80 border border-border rounded-lg"><X size={13} /></button>
     </div>
   );
 
@@ -132,22 +132,22 @@ function DeptsTab() {
 
     return (
       <div>
-        <div className={`flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-zinc-50 group`} style={{ paddingLeft: `${12 + depth * 20}px` }}>
-          <ChevronRight size={13} className="text-zinc-300 shrink-0" />
+        <div className={`flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-aurora-soft/30 group`} style={{ paddingLeft: `${12 + depth * 20}px` }}>
+          <ChevronRight size={13} className="text-muted-foreground/60 shrink-0" />
           {isEditing ? (
             <>
               <input value={editName} onChange={e => setEditName(e.target.value)} className="flex-1 px-2 py-0.5 text-sm border border-indigo-300 rounded focus:outline-none"
                 onKeyDown={e => { if (e.key === 'Enter') updateMutation.mutate({ id: dept.id, name: editName }); if (e.key === 'Escape') setEditingId(null); }} autoFocus />
-              <button onClick={() => updateMutation.mutate({ id: dept.id, name: editName })} className="p-1 bg-zinc-900 text-white rounded hover:bg-indigo-700"><Check size={12} /></button>
-              <button onClick={() => setEditingId(null)} className="p-1 text-zinc-400 border border-zinc-200 rounded hover:bg-zinc-50"><X size={12} /></button>
+              <button onClick={() => updateMutation.mutate({ id: dept.id, name: editName })} className="p-1 btn-aurora text-white rounded shadow-pop transition"><Check size={12} /></button>
+              <button onClick={() => setEditingId(null)} className="p-1 text-muted-foreground border border-border rounded hover:bg-aurora-soft/30"><X size={12} /></button>
             </>
           ) : (
             <>
               <span className="flex-1 text-sm text-gray-800">{dept.name}</span>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => { setAddingParentId(dept.id); setNewName(''); }} className="p-1 text-zinc-400 hover:text-zinc-900 rounded" title="Thêm phòng ban con"><Plus size={13} /></button>
-                <button onClick={() => { setEditingId(dept.id); setEditName(dept.name); }} className="p-1 text-zinc-400 hover:text-zinc-900 rounded"><Pencil size={12} /></button>
-                <button onClick={() => window.confirm(`Xóa "${dept.name}"?`) && deleteMutation.mutate(dept.id)} className="p-1 text-zinc-400 hover:text-red-500 rounded"><Trash2 size={12} /></button>
+                <button onClick={() => { setAddingParentId(dept.id); setNewName(''); }} className="p-1 text-muted-foreground hover:text-foreground rounded" title="Thêm phòng ban con"><Plus size={13} /></button>
+                <button onClick={() => { setEditingId(dept.id); setEditName(dept.name); }} className="p-1 text-muted-foreground hover:text-foreground rounded"><Pencil size={12} /></button>
+                <button onClick={() => window.confirm(`Xóa "${dept.name}"?`) && deleteMutation.mutate(dept.id)} className="p-1 text-muted-foreground hover:text-red-500 rounded"><Trash2 size={12} /></button>
               </div>
             </>
           )}
@@ -161,19 +161,19 @@ function DeptsTab() {
   return (
     <div className="max-w-lg">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-zinc-500">{depts.length} phòng ban</p>
+        <p className="text-sm text-muted-foreground">{depts.length} phòng ban</p>
         <button onClick={() => { setAddingParentId(null); setNewName(''); }}
-          className="flex items-center gap-1 px-3 py-1.5 text-xs bg-zinc-900 text-white rounded-lg hover:bg-zinc-700">
+          className="flex items-center gap-1 px-3 py-1.5 text-xs btn-aurora text-white rounded-lg shadow-pop hover:shadow-lift transition">
           <Plus size={13} />Thêm phòng ban
         </button>
       </div>
       {addingParentId === null && <div className="mb-2"><AddInlineForm parentId={null} /></div>}
       {isLoading ? (
-        <div className="text-sm text-zinc-400 py-6 text-center">Đang tải...</div>
+        <div className="text-sm text-muted-foreground py-6 text-center">Đang tải...</div>
       ) : depts.length === 0 ? (
-        <div className="text-sm text-zinc-400 py-8 text-center">Chưa có phòng ban nào</div>
+        <div className="text-sm text-muted-foreground py-8 text-center">Chưa có phòng ban nào</div>
       ) : (
-        <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
+        <div className="bg-white border border-border rounded-xl overflow-hidden">
           {depts.map(d => <DeptRow key={d.id} dept={d} />)}
         </div>
       )}
@@ -207,20 +207,20 @@ function TeamsTab() {
     onError: () => toast.error('Xóa thất bại'),
   });
 
-  const inputCls = 'px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900';
+  const inputCls = 'px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900';
 
   return (
     <div className="max-w-lg">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-zinc-500">{teams.length} nhóm</p>
+        <p className="text-sm text-muted-foreground">{teams.length} nhóm</p>
         <button onClick={() => setAdding(a => !a)}
-          className="flex items-center gap-1 px-3 py-1.5 text-xs bg-zinc-900 text-white rounded-lg hover:bg-zinc-700">
+          className="flex items-center gap-1 px-3 py-1.5 text-xs btn-aurora text-white rounded-lg shadow-pop hover:shadow-lift transition">
           <Plus size={13} />Thêm nhóm
         </button>
       </div>
 
       {adding && (
-        <div className="bg-zinc-50/40 border border-indigo-200 rounded-xl p-4 mb-4 space-y-3">
+        <div className="bg-muted/40 border border-indigo-200 rounded-xl p-4 mb-4 space-y-3">
           <p className="text-xs font-semibold text-indigo-700">Nhóm mới</p>
           <div className="grid grid-cols-2 gap-3">
             <input value={newForm.name} onChange={e => setNewForm(p => ({ ...p, name: e.target.value }))}
@@ -233,37 +233,37 @@ function TeamsTab() {
               placeholder="Mô tả" className={inputCls} />
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setAdding(false)} className="px-3 py-1.5 text-xs text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Hủy</button>
+            <button onClick={() => setAdding(false)} className="px-3 py-1.5 text-xs text-foreground/80 border border-border rounded-lg hover:bg-aurora-soft/30">Hủy</button>
             <button
               onClick={() => newForm.name.trim() && createMutation.mutate({ name: newForm.name.trim(), description: newForm.description || undefined, deptId: newForm.deptId || undefined })}
               disabled={createMutation.isPending || !newForm.name.trim()}
-              className="px-3 py-1.5 text-xs bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60"
+              className="px-3 py-1.5 text-xs btn-aurora text-white rounded-lg shadow-pop hover:shadow-lift transition disabled:opacity-60"
             >{createMutation.isPending ? 'Đang tạo...' : 'Tạo nhóm'}</button>
           </div>
         </div>
       )}
 
       {isLoading ? (
-        <div className="text-sm text-zinc-400 py-6 text-center">Đang tải...</div>
+        <div className="text-sm text-muted-foreground py-6 text-center">Đang tải...</div>
       ) : teams.length === 0 ? (
-        <div className="text-sm text-zinc-400 py-8 text-center">Chưa có nhóm nào</div>
+        <div className="text-sm text-muted-foreground py-8 text-center">Chưa có nhóm nào</div>
       ) : (
-        <div className="bg-white border border-zinc-200 rounded-xl divide-y divide-gray-100">
+        <div className="bg-white border border-border rounded-xl divide-y divide-gray-100">
           {teams.map(team => (
-            <div key={team.id} className="flex items-center gap-3 px-4 py-3 group hover:bg-zinc-50/50">
+            <div key={team.id} className="flex items-center gap-3 px-4 py-3 group hover:bg-aurora-soft/30/50">
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
                 <Users size={14} className="text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800">{team.name}</p>
                 {(team.dept || team.description) && (
-                  <p className="text-xs text-zinc-400 truncate">
+                  <p className="text-xs text-muted-foreground truncate">
                     {team.dept?.name}{team.dept && team.description ? ' · ' : ''}{team.description}
                   </p>
                 )}
               </div>
               <button onClick={() => window.confirm(`Xóa nhóm "${team.name}"?`) && deleteMutation.mutate(team.id)}
-                className="opacity-0 group-hover:opacity-100 p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                className="opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition">
                 <Trash2 size={14} />
               </button>
             </div>
@@ -407,23 +407,35 @@ function RbacTab() {
 
   // Tristate checkbox icon
   const TriCheck = ({ selected, total }: { selected: number; total: number }) => {
-    if (selected === 0) return <Square size={14} className="text-zinc-300" />;
-    if (selected === total) return <CheckSquare size={14} className="text-zinc-900" />;
-    return <MinusSquare size={14} className="text-indigo-500" />;
+    if (selected === 0) return <Square size={14} className="text-muted-foreground/60" />;
+    if (selected === total) return <CheckSquare size={14} className="text-emerald-600" />;
+    return <MinusSquare size={14} className="text-aurora-violet" />;
+  };
+
+  /** Map action → header tint */
+  const ACTION_TINT: Record<string, string> = {
+    create: 'text-aurora-violet',
+    read: 'text-emerald-600',
+    update: 'text-amber-600',
+    delete: 'text-rose-600',
+    assign: 'text-aurora-cyan',
+    export: 'text-aurora-indigo',
+    reply: 'text-aurora-pink',
+    manage: 'text-foreground',
   };
 
   return (
     <div className="flex gap-6 min-h-[400px]">
       {/* ── Role list ─────────────────────────────────────── */}
       <div className="w-56 shrink-0">
-        <div className="border border-zinc-200 rounded-xl overflow-hidden">
-          <div className="px-3 py-2.5 border-b border-zinc-100 bg-zinc-50/70">
-            <p className="text-xs font-semibold text-zinc-600 uppercase tracking-wide">Vai trò</p>
+        <div className="border border-border rounded-2xl overflow-hidden bg-card shadow-soft">
+          <div className="px-3 py-2.5 border-b border-border bg-muted/40">
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Vai trò</p>
           </div>
           {rolesLoading ? (
-            <div className="p-4 text-sm text-zinc-400">Đang tải...</div>
+            <div className="p-4 text-sm text-muted-foreground">Đang tải...</div>
           ) : (
-            <div className="divide-y divide-zinc-100">
+            <div className="divide-y divide-border/60">
               {roles.map(role => {
                 const isActive = selectedRoleId === role.id;
                 const permCount = (role.permissions ?? []).length;
@@ -431,15 +443,20 @@ function RbacTab() {
                   <button
                     key={role.id}
                     onClick={() => handleSelectRole(role)}
-                    className={`w-full text-left px-3 py-2.5 text-sm transition-colors ${
-                      isActive ? 'bg-zinc-900 text-white' : 'text-zinc-700 hover:bg-zinc-50'
+                    className={`w-full text-left px-3 py-2.5 text-sm transition-colors flex items-stretch gap-2 ${
+                      isActive ? 'bg-aurora-soft/40 text-foreground' : 'text-foreground hover:bg-aurora-soft/20'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium truncate">{role.displayName ?? role.name}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${
-                        isActive ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-500'
-                      }`}>{permCount}</span>
+                    {/* Color cap */}
+                    <div className={`w-1 self-stretch rounded-full ${isActive ? 'bg-aurora' : 'bg-transparent'}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`truncate ${isActive ? 'font-bold text-aurora-violet' : 'font-semibold'}`}>{role.displayName ?? role.name}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold shrink-0 ${
+                          isActive ? 'bg-aurora-violet/15 text-aurora-violet' : 'bg-muted text-muted-foreground'
+                        }`}>{permCount}</span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">{permCount}/{allPermissions.length} quyền</div>
                     </div>
                   </button>
                 );
@@ -452,24 +469,27 @@ function RbacTab() {
       {/* ── Permissions matrix ────────────────────────────── */}
       <div className="flex-1 min-w-0">
         {!selectedRole ? (
-          <div className="flex flex-col items-center justify-center h-full text-zinc-400 py-12 border border-dashed border-zinc-200 rounded-xl">
-            <ShieldCheck size={36} className="mb-3 opacity-30" />
-            <p className="text-sm">Chọn một vai trò bên trái để xem và chỉnh sửa quyền</p>
+          <div className="flex flex-col items-center justify-center h-full py-16 border border-dashed border-border rounded-2xl bg-aurora-soft/10">
+            <div className="w-14 h-14 rounded-2xl bg-aurora grid place-items-center shadow-pop mb-3">
+              <ShieldCheck size={28} className="text-white" />
+            </div>
+            <p className="font-display font-bold text-foreground">Chọn một vai trò</p>
+            <p className="text-sm text-muted-foreground mt-1">để xem và chỉnh sửa ma trận quyền hệ thống</p>
           </div>
         ) : (
           <div className="space-y-4">
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-semibold text-zinc-900">{selectedRole.displayName ?? selectedRole.name}</p>
-                <p className="text-xs text-zinc-500 mt-0.5">
-                  <span className="font-medium text-zinc-700">{pendingPerms.size}</span> / {allPermissions.length} quyền được cấp
+                <p className="font-semibold text-foreground">{selectedRole.displayName ?? selectedRole.name}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  <span className="font-medium text-foreground">{pendingPerms.size}</span> / {allPermissions.length} quyền được cấp
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => toggleBulk(allPermissions)}
-                  className="px-3 py-1.5 text-xs text-zinc-700 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition flex items-center gap-1.5"
+                  className="px-3 py-1.5 text-xs text-foreground border border-border rounded-lg hover:bg-aurora-soft/30 transition flex items-center gap-1.5"
                   title="Chọn / bỏ chọn tất cả"
                 >
                   {pendingPerms.size === allPermissions.length ? (
@@ -482,12 +502,12 @@ function RbacTab() {
                   <>
                     <button
                       onClick={() => handleSelectRole(selectedRole)}
-                      className="px-3 py-1.5 text-xs text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50"
+                      className="px-3 py-1.5 text-xs text-foreground/80 border border-border rounded-lg hover:bg-aurora-soft/30"
                     >Hủy</button>
                     <button
                       onClick={handleSave}
                       disabled={updatePermsMutation.isPending}
-                      className="px-3 py-1.5 text-xs bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60 flex items-center gap-1.5"
+                      className="px-3 py-1.5 text-xs btn-aurora text-white rounded-lg shadow-pop hover:shadow-lift transition disabled:opacity-60 flex items-center gap-1.5"
                     >
                       <Check size={12} />
                       {updatePermsMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
@@ -499,40 +519,41 @@ function RbacTab() {
 
             {/* Search */}
             <div className="relative max-w-xs">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Tìm tài nguyên..."
-                className="w-full pl-8 pr-3 py-1.5 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                placeholder="🔍 Tìm tài nguyên..."
+                className="w-full pl-8 pr-3 py-1.5 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
               />
             </div>
 
             {/* Matrix */}
             {permsLoading ? (
-              <div className="text-sm text-zinc-400">Đang tải quyền...</div>
+              <div className="text-sm text-muted-foreground">Đang tải quyền...</div>
             ) : (
-              <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white">
+              <div className="border border-border rounded-2xl overflow-hidden bg-card shadow-soft">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm border-collapse">
                     <thead>
-                      <tr className="bg-zinc-50/70 border-b border-zinc-200">
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-600 uppercase tracking-wide sticky left-0 bg-zinc-50/70 z-10 min-w-[180px]">
+                      <tr className="bg-muted/40 border-b border-border">
+                        <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider sticky left-0 bg-muted/40 z-10 min-w-[180px]">
                           Tài nguyên
                         </th>
                         {matrix.actions.map(action => {
                           const stats = colStats(action);
+                          const tint = ACTION_TINT[action] ?? 'text-foreground';
                           return (
                             <th key={action} className="px-2 py-3 text-center min-w-[80px]">
                               <button
                                 onClick={() => toggleBulk(stats.perms)}
-                                className="flex flex-col items-center gap-1 mx-auto text-zinc-700 hover:text-zinc-900 group"
+                                className="flex flex-col items-center gap-1 mx-auto group"
                                 title={`Chọn/bỏ tất cả "${ACTION_LABELS[action] ?? action}"`}
                               >
-                                <span className="text-xs font-semibold uppercase tracking-wide">
+                                <span className={`text-[11px] font-bold uppercase tracking-wider ${tint}`}>
                                   {ACTION_LABELS[action] ?? action}
                                 </span>
-                                <span className="flex items-center gap-1 text-[10px] text-zinc-400 group-hover:text-zinc-600">
+                                <span className="flex items-center gap-1 text-[10px] text-muted-foreground group-hover:text-foreground">
                                   <TriCheck selected={stats.selected} total={stats.total} />
                                   <span>{stats.selected}/{stats.total}</span>
                                 </span>
@@ -541,28 +562,28 @@ function RbacTab() {
                           );
                         })}
                         <th className="px-3 py-3 text-center min-w-[60px]">
-                          <span className="text-xs font-semibold text-zinc-600 uppercase tracking-wide">Tổng</span>
+                          <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Tổng</span>
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-100">
-                      {matrix.resources.map((resource, idx) => {
+                    <tbody className="divide-y divide-border/60">
+                      {matrix.resources.map((resource) => {
                         const stats = rowStats(resource);
                         return (
-                          <tr key={resource} className={idx % 2 === 0 ? 'bg-white' : 'bg-zinc-50/30'}>
+                          <tr key={resource} className="hover:bg-aurora-soft/20 transition-colors">
                             {/* Resource name + bulk toggle */}
-                            <td className="px-4 py-2.5 sticky left-0 bg-inherit z-10">
+                            <td className="px-4 py-2.5 sticky left-0 bg-card z-10">
                               <button
                                 onClick={() => toggleBulk(stats.perms)}
-                                className="flex items-center gap-2.5 text-left hover:bg-zinc-100 -mx-2 px-2 py-1 rounded transition w-full"
+                                className="flex items-center gap-2.5 text-left hover:bg-aurora-soft/40 -mx-2 px-2 py-1 rounded-md transition w-full"
                                 title="Chọn/bỏ tất cả quyền của tài nguyên này"
                               >
                                 <TriCheck selected={stats.selected} total={stats.total} />
                                 <div className="min-w-0">
-                                  <p className="text-sm font-medium text-zinc-900 truncate">
+                                  <p className="text-sm font-semibold text-foreground truncate">
                                     {RESOURCE_LABELS[resource] ?? resource}
                                   </p>
-                                  <p className="text-[10px] text-zinc-400 font-mono">{resource}</p>
+                                  <p className="text-[10px] text-muted-foreground font-mono">{resource}</p>
                                 </div>
                               </button>
                             </td>
@@ -573,30 +594,37 @@ function RbacTab() {
                               if (!perm) {
                                 return (
                                   <td key={action} className="px-2 py-2.5 text-center">
-                                    <span className="text-zinc-200 select-none">—</span>
+                                    <span
+                                      className="inline-grid place-items-center w-7 h-7 rounded-md bg-muted/50 text-muted-foreground/40 select-none mx-auto"
+                                      title="Không áp dụng"
+                                    >—</span>
                                   </td>
                                 );
                               }
                               const checked = pendingPerms.has(perm.id);
                               return (
                                 <td key={action} className="px-2 py-2.5 text-center">
-                                  <label className="inline-flex items-center justify-center cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={checked}
-                                      onChange={() => togglePerm(perm.id)}
-                                      className="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-1 focus:ring-zinc-900 cursor-pointer accent-zinc-900"
-                                    />
-                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => togglePerm(perm.id)}
+                                    className={`inline-grid place-items-center w-7 h-7 rounded-md transition mx-auto ${
+                                      checked
+                                        ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400'
+                                        : 'bg-muted text-muted-foreground/60 hover:bg-aurora-violet/10 hover:text-aurora-violet'
+                                    }`}
+                                    aria-label={checked ? `Bỏ ${ACTION_LABELS[action] ?? action} ${RESOURCE_LABELS[resource] ?? resource}` : `Cấp ${ACTION_LABELS[action] ?? action} ${RESOURCE_LABELS[resource] ?? resource}`}
+                                  >
+                                    {checked ? <Check size={13} /> : <span className="text-xs">○</span>}
+                                  </button>
                                 </td>
                               );
                             })}
 
                             {/* Row total */}
                             <td className="px-3 py-2.5 text-center">
-                              <span className={`text-xs font-medium ${
-                                stats.selected === 0 ? 'text-zinc-300' :
-                                stats.selected === stats.total ? 'text-emerald-600' : 'text-indigo-600'
+                              <span className={`text-xs font-bold ${
+                                stats.selected === 0 ? 'text-muted-foreground/60' :
+                                stats.selected === stats.total ? 'text-emerald-600' : 'text-amber-600'
                               }`}>
                                 {stats.selected}/{stats.total}
                               </span>
@@ -606,7 +634,7 @@ function RbacTab() {
                       })}
                       {matrix.resources.length === 0 && (
                         <tr>
-                          <td colSpan={matrix.actions.length + 2} className="text-center py-12 text-sm text-zinc-400">
+                          <td colSpan={matrix.actions.length + 2} className="text-center py-12 text-sm text-muted-foreground">
                             Không tìm thấy tài nguyên nào khớp "{search}"
                           </td>
                         </tr>
@@ -614,11 +642,23 @@ function RbacTab() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Legend + dirty hint */}
+                <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-4">
+                    <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-100 dark:bg-emerald-950/40" />Có quyền</span>
+                    <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-muted" />Không có</span>
+                    <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-muted/50" />Không áp dụng</span>
+                  </div>
+                  {dirty && (
+                    <span className="text-aurora-violet font-semibold">● Có thay đổi chưa lưu</span>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Hint */}
-            <div className="text-xs text-zinc-400 flex items-center gap-1.5 px-1">
+            <div className="text-xs text-muted-foreground flex items-center gap-1.5 px-1">
               <ShieldCheck size={12} />
               <span>Click vào tên tài nguyên hoặc tên action để chọn/bỏ tất cả trong hàng/cột đó.</span>
             </div>
@@ -656,8 +696,8 @@ function TagsTab() {
   return (
     <div className="max-w-lg space-y-5">
       {/* Create */}
-      <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200">
-        <p className="text-xs font-semibold text-zinc-600 mb-3">Tạo tag mới</p>
+      <div className="p-4 bg-muted rounded-xl border border-border">
+        <p className="text-xs font-semibold text-foreground/80 mb-3">Tạo tag mới</p>
         <div className="flex items-center gap-2 mb-3">
           {PRESET_COLORS.map(c => (
             <button key={c} onClick={() => setNewColor(c)}
@@ -670,12 +710,12 @@ function TagsTab() {
             value={newName} onChange={e => setNewName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && newName.trim()) createMutation.mutate({ name: newName.trim(), color: newColor }); }}
             placeholder="Tên tag..." maxLength={30}
-            className="flex-1 px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="flex-1 px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
           <button
             onClick={() => { if (newName.trim()) createMutation.mutate({ name: newName.trim(), color: newColor }); }}
             disabled={!newName.trim() || createMutation.isPending}
-            className="px-3 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-50"
+            className="px-3 py-2 text-sm btn-aurora text-white rounded-lg shadow-pop hover:shadow-lift transition disabled:opacity-50"
           >
             <Plus size={14} />
           </button>
@@ -684,13 +724,13 @@ function TagsTab() {
 
       {/* List */}
       <div>
-        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Tags của tổ chức ({tags.length})
         </p>
         {isLoading ? (
-          <p className="text-sm text-zinc-400">Đang tải...</p>
+          <p className="text-sm text-muted-foreground">Đang tải...</p>
         ) : tags.length === 0 ? (
-          <p className="text-sm text-zinc-400 text-center py-6">Chưa có tag nào</p>
+          <p className="text-sm text-muted-foreground text-center py-6">Chưa có tag nào</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {tags.map(tag => {
@@ -726,7 +766,7 @@ function IntegrationsTab() {
   const [fbVerifyToken, setFbVerifyToken] = useState('');
   const [saved, setSaved] = useState<string | null>(null);
 
-  const inputCls = 'w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white font-mono';
+  const inputCls = 'w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition bg-white font-mono';
 
   function handleSaveZalo(e: React.FormEvent) {
     e.preventDefault();
@@ -743,34 +783,34 @@ function IntegrationsTab() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-muted-foreground">
         Cấu hình kênh tích hợp để nhận tin nhắn từ Zalo OA và Facebook Messenger vào Inbox.
-        Sau khi điền, sao chép giá trị vào file <code className="bg-zinc-100 px-1 rounded text-xs">.env</code> và khởi động lại server.
+        Sau khi điền, sao chép giá trị vào file <code className="bg-muted px-1 rounded text-xs">.env</code> và khởi động lại server.
       </p>
 
       {/* Zalo OA */}
-      <div className="p-5 bg-white border border-zinc-200 rounded-xl space-y-4">
+      <div className="p-5 bg-white border border-border rounded-xl space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
             <span className="text-xs font-bold text-blue-600">ZA</span>
           </div>
           <div>
-            <p className="text-sm font-semibold text-zinc-900">Zalo Official Account</p>
-            <p className="text-xs text-zinc-400">Nhận tin nhắn từ Zalo OA</p>
+            <p className="text-sm font-semibold text-foreground">Zalo Official Account</p>
+            <p className="text-xs text-muted-foreground">Nhận tin nhắn từ Zalo OA</p>
           </div>
         </div>
         <form onSubmit={handleSaveZalo} className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">OA ID</label>
+            <label className="block text-xs font-medium text-foreground/80 mb-1">OA ID</label>
             <input className={inputCls} value={zaloOaId} onChange={e => setZaloOaId(e.target.value)} placeholder="ZALO_OA_ID=..." />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1">App ID</label>
+              <label className="block text-xs font-medium text-foreground/80 mb-1">App ID</label>
               <input className={inputCls} value={zaloAppId} onChange={e => setZaloAppId(e.target.value)} placeholder="ZALO_APP_ID=..." />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1">App Secret</label>
+              <label className="block text-xs font-medium text-foreground/80 mb-1">App Secret</label>
               <input className={inputCls} type="password" value={zaloAppSecret} onChange={e => setZaloAppSecret(e.target.value)} placeholder="ZALO_APP_SECRET=..." />
             </div>
           </div>
@@ -783,40 +823,40 @@ function IntegrationsTab() {
             <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
               {saved === 'zalo' ? '✓ Đã sao chép' : 'Lưu cấu hình'}
             </button>
-            {saved === 'zalo' && <span className="text-xs text-zinc-400">Dán vào .env và restart server</span>}
+            {saved === 'zalo' && <span className="text-xs text-muted-foreground">Dán vào .env và restart server</span>}
           </div>
         </form>
       </div>
 
       {/* Facebook Messenger */}
-      <div className="p-5 bg-white border border-zinc-200 rounded-xl space-y-4">
+      <div className="p-5 bg-white border border-border rounded-xl space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-zinc-50 flex items-center justify-center">
-            <span className="text-xs font-bold text-zinc-900">FB</span>
+          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+            <span className="text-xs font-bold text-foreground">FB</span>
           </div>
           <div>
-            <p className="text-sm font-semibold text-zinc-900">Facebook Messenger</p>
-            <p className="text-xs text-zinc-400">Nhận tin nhắn từ Facebook Page</p>
+            <p className="text-sm font-semibold text-foreground">Facebook Messenger</p>
+            <p className="text-xs text-muted-foreground">Nhận tin nhắn từ Facebook Page</p>
           </div>
         </div>
         <form onSubmit={handleSaveFB} className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Page Access Token</label>
+            <label className="block text-xs font-medium text-foreground/80 mb-1">Page Access Token</label>
             <input className={inputCls} type="password" value={fbPageToken} onChange={e => setFbPageToken(e.target.value)} placeholder="META_PAGE_ACCESS_TOKEN=..." />
           </div>
           <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Verify Token (tự đặt)</label>
+            <label className="block text-xs font-medium text-foreground/80 mb-1">Verify Token (tự đặt)</label>
             <input className={inputCls} value={fbVerifyToken} onChange={e => setFbVerifyToken(e.target.value)} placeholder="META_VERIFY_TOKEN=..." />
           </div>
-          <div className="p-3 bg-zinc-50 rounded-lg text-xs text-indigo-700 space-y-1">
+          <div className="p-3 bg-muted rounded-lg text-xs text-indigo-700 space-y-1">
             <p className="font-medium">Webhook URL (cấu hình trong Meta Developer Console):</p>
             <code className="block break-all">{typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3000/api/integrations/messenger/webhook` : 'http://your-domain/api/integrations/messenger/webhook'}</code>
           </div>
           <div className="flex items-center gap-2">
-            <button type="submit" className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition">
+            <button type="submit" className="px-4 py-2 text-sm btn-aurora text-white rounded-lg shadow-pop hover:shadow-lift transition transition">
               {saved === 'fb' ? '✓ Đã sao chép' : 'Lưu cấu hình'}
             </button>
-            {saved === 'fb' && <span className="text-xs text-zinc-400">Dán vào .env và restart server</span>}
+            {saved === 'fb' && <span className="text-xs text-muted-foreground">Dán vào .env và restart server</span>}
           </div>
         </form>
       </div>
@@ -840,26 +880,27 @@ export default function SettingsPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">Cài đặt</h1>
-        <p className="text-sm text-zinc-500 mt-0.5">Quản lý thông tin tổ chức, phòng ban và nhóm</p>
+        <h1 className="font-display text-2xl font-bold tracking-tight">Cài đặt hệ thống</h1>
+        <p className="text-sm text-muted-foreground mt-1">Quản lý tổ chức, phòng ban, nhóm, phân quyền &amp; tích hợp</p>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-zinc-200">
-        <nav className="flex gap-1">
+      <div className="border-b border-border">
+        <nav className="flex gap-1 -mb-px">
           {TABS.map(t => {
             const Icon = t.icon;
+            const active = tab === t.key;
             return (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                  tab === t.key
-                    ? 'border-indigo-600 text-zinc-900'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-gray-300'
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
+                  active
+                    ? 'border-aurora-violet text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                 }`}
               >
-                <Icon size={15} />
+                <Icon size={15} className={active ? 'text-aurora-violet' : ''} />
                 {t.label}
               </button>
             );

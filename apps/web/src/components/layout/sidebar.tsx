@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Users, Building2, Briefcase, CheckSquare,
   Megaphone, MessageSquare, Settings, LogOut,
-  UserCircle, FolderOpen, UserCog, Shield, ChevronRight,
+  UserCircle, FolderOpen, UserCog, Shield, ChevronRight, X,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
@@ -141,10 +141,22 @@ function NavGroup({ group, pathname }: { group: NavGroupDef; pathname: string })
   );
 }
 
-export function Sidebar() {
+export interface SidebarProps {
+  /** Mobile drawer open state. Ignored on desktop (md+). */
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
   const { user, clearAuth, refreshToken } = useAuthStore();
   const router = useRouter();
+
+  // Auto-close mobile drawer khi navigate
+  useEffect(() => {
+    if (mobileOpen) onMobileClose?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   const handleLogout = async () => {
     try {
@@ -159,15 +171,41 @@ export function Sidebar() {
     pathname === href || pathname.startsWith(href + '/');
 
   return (
-    <aside className="aurora-glow w-56 bg-sidebar text-sidebar-fg flex flex-col h-full shrink-0">
-      {/* Logo */}
-      <div className="h-14 flex items-center px-4 shrink-0">
+    <>
+      {/* Mobile overlay backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+          onClick={onMobileClose}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={cn(
+          'aurora-glow w-56 bg-sidebar text-sidebar-fg flex flex-col h-full shrink-0',
+          // Mobile: fixed slide-in drawer
+          'fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-spring',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full',
+          // Desktop: static
+          'md:relative md:translate-x-0 md:transition-none',
+        )}
+      >
+      {/* Logo + mobile close */}
+      <div className="h-14 flex items-center px-4 shrink-0 justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-aurora rounded-xl flex items-center justify-center shadow-pop">
             <span className="text-white font-bold text-sm font-display">A</span>
           </div>
           <span className="font-semibold text-white text-sm tracking-tight font-display">Aurora CRM</span>
         </div>
+        <button
+          onClick={onMobileClose}
+          className="md:hidden p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-md transition"
+          aria-label="Đóng menu"
+        >
+          <X size={18} />
+        </button>
       </div>
 
       {/* Nav */}
@@ -232,5 +270,6 @@ export function Sidebar() {
         )}
       </div>
     </aside>
+    </>
   );
 }

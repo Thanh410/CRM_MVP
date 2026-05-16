@@ -13,6 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [mounted, setMounted] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -25,7 +26,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       e.preventDefault();
       setCmdOpen(o => !o);
     }
-    if (e.key === 'Escape') setCmdOpen(false);
+    if (e.key === 'Escape') {
+      setCmdOpen(false);
+      setMobileNavOpen(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -33,15 +37,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  if (!mounted) return <div className="flex h-screen bg-white" />;
+  if (!mounted) return <div className="flex h-screen bg-background" />;
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex h-screen bg-white dark:bg-zinc-950 overflow-hidden">
-      <Sidebar />
+    <div className="flex h-screen bg-background overflow-hidden">
+      {/* Sidebar — desktop sticky, mobile drawer */}
+      <Sidebar mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)} />
+
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Header onOpenSearch={() => setCmdOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-6 bg-zinc-50/50 dark:bg-zinc-900">
+        <Header
+          onOpenSearch={() => setCmdOpen(true)}
+          onOpenMobileNav={() => setMobileNavOpen(true)}
+        />
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-muted/40">
           {children}
         </main>
       </div>
