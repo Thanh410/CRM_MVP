@@ -36,7 +36,8 @@ export function formatDate(date: string | Date, format = 'DD/MM/YYYY'): string {
   return format.replace('DD', day).replace('MM', month).replace('YYYY', String(year));
 }
 
-export function getInitials(name: string): string {
+export function getInitials(name?: string | null): string {
+  if (!name) return '';
   return name
     .split(' ')
     .filter((n) => n.length > 0)

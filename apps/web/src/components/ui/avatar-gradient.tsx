@@ -12,8 +12,8 @@ const sizeMap: Record<Size, string> = {
 };
 
 export interface AvatarGradientProps {
-  id: string;
-  name: string;
+  id?: string | null;
+  name?: string | null;
   size?: Size;
   online?: boolean;
   className?: string;
@@ -61,7 +61,7 @@ export function AvatarStack({
   max = 3,
   size = 'sm',
 }: {
-  items: { id: string; name: string }[];
+  items: { id?: string | null; name?: string | null }[];
   max?: number;
   size?: Size;
 }) {
