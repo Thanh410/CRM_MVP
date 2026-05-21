@@ -37,6 +37,7 @@ import { ProjectsModule } from './modules/projects/projects.module';
 import { MarketingModule } from './modules/marketing/marketing.module';
 // Phase 5 – Omnichannel Chat
 import { ConversationsModule } from './modules/conversations/conversations.module';
+import { ChatModule } from './modules/chat/chat.module';
 import { ZaloModule } from './modules/integrations/zalo/zalo.module';
 import { MessengerModule } from './modules/integrations/messenger/messenger.module';
 // Reporting
@@ -110,6 +111,7 @@ import { HealthController } from './health.controller';
 
     // Phase 5 – Omnichannel Chat
     ConversationsModule,
+    ChatModule,
     ZaloModule,
     MessengerModule,
 
