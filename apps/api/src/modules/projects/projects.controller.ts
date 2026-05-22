@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { OrgId } from '../../common/decorators/org-id.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { BulkDeleteDto } from '../../common/dto/bulk-delete.dto';
+import { QueryProjectDto } from './dto/query-project.dto';
 
 @ApiTags('projects')
 @ApiBearerAuth()
@@ -12,8 +14,13 @@ export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Get()
-  findAll(@OrgId() orgId: string) {
-    return this.projectsService.findAll(orgId);
+  findAll(@OrgId() orgId: string, @Query() query: QueryProjectDto) {
+    return this.projectsService.findAll(orgId, query);
+  }
+
+  @Post('bulk-delete')
+  bulkDelete(@OrgId() orgId: string, @Body() dto: BulkDeleteDto) {
+    return this.projectsService.bulkRemove(orgId, dto.ids);
   }
 
   @Get(':id')

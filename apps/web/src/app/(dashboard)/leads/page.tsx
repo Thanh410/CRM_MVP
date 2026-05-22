@@ -14,8 +14,14 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { AvatarGradient } from '@/components/ui/avatar-gradient';
 import { StatusPill } from '@/components/ui/status-pill';
 import { RippleButton } from '@/components/ui/ripple-button';
+import {
+  DataTablePagination,
+  getDataTableQueryParams,
+  parseDataTablePageSize,
+  type DataTablePageSize,
+} from '@/components/ui/data-table-controls';
 import { Drawer } from 'vaul';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const STATUSES = ['NEW', 'CONTACTED', 'QUALIFIED', 'UNQUALIFIED', 'CONVERTED'];
 const SOURCES = ['facebook', 'zalo', 'website', 'referral', 'cold_call'];
@@ -190,10 +196,12 @@ function useUsers() {
 }
 
 export default function LeadsPage() {
+  const qc = useQueryClient();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<DataTablePageSize>(50);
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -212,12 +220,42 @@ export default function LeadsPage() {
     return () => document.removeEventListener('crm:create-shortcut', handler);
   }, []);
 
-  const { data, isLoading, refetch } = useLeads({ search: search || undefined, status: status || undefined, page, limit: 20, sortBy: sortBy.field, sortDir: sortBy.dir });
+  const { data, isLoading, refetch } = useLeads({
+    search: search || undefined,
+    status: status || undefined,
+    ...getDataTableQueryParams(page, pageSize),
+    sortBy: sortBy.field,
+    sortDir: sortBy.dir,
+  });
   const deleteLead = useDeleteLead();
   const convertLead = useConvertLead();
   const assignLead = useAssignLead();
   const importLeads = useImportLeads();
   const { data: users } = useUsers();
+
+  const bulkDeleteLeads = useMutation({
+    mutationFn: (ids: string[]) => api.post('/leads/bulk-delete', { ids }).then((res) => res.data as { deletedIds: string[]; failedIds: string[]; count: number }),
+    onSuccess: ({ deletedIds, failedIds }) => {
+      qc.invalidateQueries({ queryKey: ['leads'] });
+      if (selectedLead && deletedIds.includes(selectedLead.id)) setSelectedLead(null);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        deletedIds.forEach((id) => next.delete(id));
+        return next;
+      });
+      if (deletedIds.length > 0) toast.success(`Đã xóa ${deletedIds.length} lead`);
+      if (failedIds.length > 0) toast.error(`${failedIds.length} lead chưa xóa được`);
+    },
+    onError: () => toast.error('Xóa lead đã chọn thất bại'),
+  });
+
+  const changePageSize = (value: string) => {
+    const next = parseDataTablePageSize(value);
+    if (next === 'all' && (data?.meta?.total ?? 0) > 500 && !window.confirm(`Tải tất cả ${data?.meta?.total ?? 0} lead?`)) return;
+    setPageSize(next);
+    setPage(1);
+    setSelectedIds(new Set());
+  };
 
   const handleExport = async () => {
     try {
@@ -420,9 +458,7 @@ export default function LeadsPage() {
                   onClear={() => setSelectedIds(new Set())}
                   onDelete={async () => {
                     if (!window.confirm(`Xóa ${selectedIds.size} lead?`)) return;
-                    await Promise.all(Array.from(selectedIds).map(id => deleteLead.mutateAsync(id)));
-                    setSelectedIds(new Set());
-                    toast.success(`Đã xóa ${selectedIds.size} lead`);
+                    bulkDeleteLeads.mutate(Array.from(selectedIds));
                   }}
                 />
               )}
@@ -617,6 +653,18 @@ export default function LeadsPage() {
           </div>
         )}
       </div>
+
+      {data?.meta && (
+        <DataTablePagination
+          page={pageSize === 'all' ? 1 : page}
+          totalPages={data.meta.totalPages ?? 1}
+          total={data.meta.total ?? 0}
+          pageSize={pageSize}
+          itemLabel="lead"
+          onPageChange={setPage}
+          onPageSizeChange={changePageSize}
+        />
+      )}
 
       {/* Mobile drawer cho lead detail */}
       <Drawer.Root open={!!selectedLead} onOpenChange={(o) => !o && setSelectedLead(null)}>

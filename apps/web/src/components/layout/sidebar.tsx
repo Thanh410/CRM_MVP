@@ -143,9 +143,7 @@ function NavGroup({ group, pathname }: { group: NavGroupDef; pathname: string })
                   href={item.href}
                   className={cn(
                     'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs transition-colors',
-                    active
-                      ? 'nav-item-active shimmer font-medium text-white'
-                      : 'text-sidebar-muted hover:bg-white/[0.06] hover:text-white',
+                    active ? 'nav-item-active shimmer font-medium text-white' : 'text-sidebar-muted hover:bg-white/[0.06] hover:text-white',
                   )}
                 >
                   <Icon size={13} className={cn(active ? 'text-white' : 'text-white/40')} />
@@ -201,10 +199,10 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
 
       <aside
         className={cn(
-          'aurora-glow flex h-full w-56 shrink-0 flex-col bg-sidebar text-sidebar-fg',
+          ' flex h-full w-64 max-w-[85vw] shrink-0 flex-col bg-sidebar text-sidebar-fg lg:w-56',
           'fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-spring',
           mobileOpen ? 'translate-x-0' : '-translate-x-full',
-          'lg:relative lg:translate-x-0 lg:transition-none',
+          'lg:relative lg:inset-auto lg:translate-x-0 lg:transition-none',
         )}
       >
         <div className="flex h-14 shrink-0 items-center justify-between px-4">
@@ -228,9 +226,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             href="/dashboard"
             className={cn(
               'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
-              isActive('/dashboard')
-                ? 'nav-item-active shimmer text-white'
-                : 'text-sidebar-muted hover:bg-white/[0.06] hover:text-white',
+              isActive('/dashboard') ? 'nav-item-active shimmer text-white' : 'text-sidebar-muted hover:bg-white/[0.06] hover:text-white',
             )}
           >
             <LayoutDashboard size={15} className={cn(isActive('/dashboard') ? 'text-white' : 'text-white/40')} />
@@ -247,9 +243,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             href="/settings"
             className={cn(
               'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
-              isActive('/settings')
-                ? 'nav-item-active shimmer text-white'
-                : 'text-sidebar-muted hover:bg-white/[0.06] hover:text-white',
+              isActive('/settings') ? 'nav-item-active shimmer text-white' : 'text-sidebar-muted hover:bg-white/[0.06] hover:text-white',
             )}
           >
             <Settings size={15} className={cn(isActive('/settings') ? 'text-white' : 'text-white/40')} />

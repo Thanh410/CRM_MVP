@@ -20,17 +20,14 @@ export class ZaloService {
     return token === this.config.get('zalo.webhookSecret') || token === this.config.get('ZALO_VERIFY_TOKEN');
   }
 
-  /**
-   * Verify Zalo webhook HMAC-SHA256 signature.
-   * Uses timing-safe comparison to prevent timing attacks.
-   */
   verifySignature(rawBody: string, signature: string | undefined): boolean {
-    if (!signature) return false;
     const secret = this.config.get<string>('zalo.appSecret') ?? this.config.get<string>('ZALO_APP_SECRET') ?? '';
     if (!secret) {
-      this.logger.error('ZALO_APP_SECRET not configured — cannot verify webhook');
+      if (this.config.get<string>('nodeEnv') !== 'production') return true;
+      this.logger.error('ZALO_APP_SECRET not configured - cannot verify webhook');
       return false;
     }
+    if (!signature) return false;
     const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
     try {
       return crypto.timingSafeEqual(Buffer.from(signature, 'utf8'), Buffer.from(expected, 'utf8'));
@@ -40,28 +37,33 @@ export class ZaloService {
   }
 
   async handleInbound(body: any) {
-    const channelAccount = await this.prisma.channelAccount.findFirst({
-      where: { channel: 'ZALO', isActive: true },
-    });
+    const accountExternalId = body.recipient?.id ?? body.oa_id ?? this.config.get<string>('zalo.oaId');
+    const channelAccount = accountExternalId
+      ? await this.prisma.channelAccount.findFirst({
+          where: { channel: 'ZALO', externalId: accountExternalId, isActive: true },
+        })
+      : null;
 
     if (!channelAccount) {
-      this.logger.warn('No active Zalo channel account found');
+      this.logger.warn(`No active Zalo channel account found for externalId=${accountExternalId ?? 'unknown'}`);
       return { received: true };
     }
 
     await this.prisma.channelWebhook.create({
       data: {
         channelAccountId: channelAccount.id,
-        eventType: body.event_name ?? 'unknown',
+        eventType: body.event_name ?? body.event ?? 'unknown',
         payload: body,
         processed: false,
       },
     });
 
-    if (body.event_name === 'user_send_text' && body.message) {
-      const senderId = body.sender?.id ?? body.user_id_by_app;
-      const msgId = body.message?.msg_id ?? `zalo_${Date.now()}`;
-      const content = body.message?.text ?? '';
+    const eventName = body.event_name ?? body.event;
+    const message = body.message ?? (body.content ? { text: body.content } : undefined);
+    if (eventName === 'user_send_text' && message) {
+      const senderId = body.sender?.id ?? body.user_id_by_app ?? body.from;
+      const msgId = message?.msg_id ?? `zalo_${senderId}_${Date.now()}`;
+      const content = message?.text ?? body.content ?? '';
 
       await this.conversationsService.receiveMessage({
         orgId: channelAccount.orgId,
@@ -83,10 +85,11 @@ export class ZaloService {
   }
 
   async sendReply(channelAccountId: string, recipientId: string, text: string) {
-    const account = await this.prisma.channelAccount.findUnique({ where: { id: channelAccountId } });
+    const account = await this.prisma.channelAccount.findFirst({
+      where: { id: channelAccountId, channel: 'ZALO', isActive: true },
+    });
     if (!account) return;
 
-    // Decrypt credentials (supports plaintext fallback for legacy data)
     const creds = this.encryption.decryptOrPassthrough<{ accessToken?: string }>(account.credentialsEnc);
     const accessToken = creds?.accessToken;
     if (!accessToken) {
@@ -98,7 +101,7 @@ export class ZaloService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'access_token': accessToken,
+        access_token: accessToken,
       },
       body: JSON.stringify({
         recipient: { user_id: recipientId },

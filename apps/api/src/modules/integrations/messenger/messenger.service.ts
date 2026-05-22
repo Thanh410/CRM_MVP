@@ -20,18 +20,14 @@ export class MessengerService {
     return token === this.config.get('meta.verifyToken') || token === this.config.get('META_VERIFY_TOKEN');
   }
 
-  /**
-   * Verify Meta webhook X-Hub-Signature-256 (HMAC-SHA256 of raw body).
-   * Header format: "sha256=<hex>"
-   * Uses timing-safe comparison to prevent timing attacks.
-   */
   verifySignature(rawBody: string, signature: string | undefined): boolean {
-    if (!signature || !signature.startsWith('sha256=')) return false;
     const secret = this.config.get<string>('meta.appSecret') ?? this.config.get<string>('META_APP_SECRET') ?? '';
     if (!secret) {
-      this.logger.error('META_APP_SECRET not configured — cannot verify webhook');
+      if (this.config.get<string>('nodeEnv') !== 'production') return true;
+      this.logger.error('META_APP_SECRET not configured - cannot verify webhook');
       return false;
     }
+    if (!signature || !signature.startsWith('sha256=')) return false;
     const provided = signature.slice('sha256='.length);
     const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
     try {
@@ -44,22 +40,25 @@ export class MessengerService {
   async handleInbound(body: any) {
     if (body.object !== 'page') return { received: true };
 
-    const channelAccount = await this.prisma.channelAccount.findFirst({
-      where: { channel: 'MESSENGER', isActive: true },
-    });
-
-    if (!channelAccount) {
-      this.logger.warn('No active Messenger channel account found');
-      return { received: true };
-    }
-
     for (const entry of body.entry ?? []) {
+      const accountExternalId = entry.id;
+      const channelAccount = accountExternalId
+        ? await this.prisma.channelAccount.findFirst({
+            where: { channel: 'MESSENGER', externalId: accountExternalId, isActive: true },
+          })
+        : null;
+
+      if (!channelAccount) {
+        this.logger.warn(`No active Messenger channel account found for externalId=${accountExternalId ?? 'unknown'}`);
+        continue;
+      }
+
       for (const messaging of entry.messaging ?? []) {
         const senderId: string = messaging.sender?.id;
-        const msgId: string = messaging.message?.mid;
+        const msgId: string = messaging.message?.mid ?? `messenger_${senderId}_${Date.now()}`;
         const text: string = messaging.message?.text ?? '';
 
-        if (!messaging.message || !msgId) continue;
+        if (!messaging.message || !senderId) continue;
 
         await this.prisma.channelWebhook.create({
           data: {
@@ -91,10 +90,11 @@ export class MessengerService {
   }
 
   async sendReply(channelAccountId: string, recipientId: string, text: string) {
-    const account = await this.prisma.channelAccount.findUnique({ where: { id: channelAccountId } });
+    const account = await this.prisma.channelAccount.findFirst({
+      where: { id: channelAccountId, channel: 'MESSENGER', isActive: true },
+    });
     if (!account) return;
 
-    // Decrypt credentials (supports plaintext fallback for legacy data)
     const creds = this.encryption.decryptOrPassthrough<{ pageAccessToken?: string }>(account.credentialsEnc);
     const pageAccessToken = creds?.pageAccessToken;
     if (!pageAccessToken) {

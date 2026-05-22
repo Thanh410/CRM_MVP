@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Briefcase, CheckSquare, MoreHorizontal, MessageSquare } from 'lucide-react';
+import { Briefcase, CheckSquare, LayoutDashboard, MoreHorizontal, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNotifications } from '@/hooks/use-notifications';
 
@@ -20,65 +20,57 @@ interface BottomNavProps {
 export function BottomNav({ onOpenMore }: BottomNavProps) {
   const pathname = usePathname();
   const { data: notifications = [] } = useNotifications();
-  const unread = notifications.filter((n: { read: boolean }) => !n.read).length;
+  const unread = notifications.filter((notification: { read: boolean }) => !notification.read).length;
 
   const isMoreActive = [
-    '/contacts', '/companies', '/projects', '/marketing',
-    '/inbox', '/users', '/audit', '/settings',
-  ].some((p) => pathname === p || pathname.startsWith(p + '/'));
+    '/contacts',
+    '/companies',
+    '/projects',
+    '/marketing',
+    '/inbox',
+    '/chat',
+    '/users',
+    '/audit',
+    '/settings',
+  ].some((path) => pathname === path || pathname.startsWith(`${path}/`));
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 h-16 bg-card/95 backdrop-blur-xl border-t border-border flex items-end pb-2 px-1 safe-area-bottom">
+    <nav className="safe-area-bottom fixed inset-x-0 bottom-0 z-40 flex h-16 items-end border-t border-border bg-card/95 px-1 pb-2 backdrop-blur-xl lg:hidden">
       {PRIMARY_TABS.map(({ label, href, icon: Icon }) => {
-        const active = pathname === href || pathname.startsWith(href + '/');
+        const active = pathname === href || pathname.startsWith(`${href}/`);
         return (
           <Link
             key={href}
             href={href}
             className={cn(
-              'flex-1 flex flex-col items-center justify-center gap-0.5 pt-1.5 pb-1 rounded-xl transition-colors min-h-[52px]',
+              'flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl pb-1 pt-1.5 transition-colors',
               active ? 'text-aurora-violet' : 'text-muted-foreground hover:text-foreground',
             )}
           >
-            <div
-              className={cn(
-                'px-3 py-1 rounded-xl transition-all duration-200',
-                active && 'bg-aurora-violet/15',
-              )}
-            >
+            <div className={cn('rounded-xl px-3 py-1 transition-all duration-200', active && 'bg-aurora-violet/15')}>
               <Icon size={20} strokeWidth={active ? 2.5 : 2} />
             </div>
-            <span className={cn('text-[10px] font-medium transition-colors', active && 'text-aurora-violet')}>
-              {label}
-            </span>
+            <span className={cn('text-[10px] font-medium transition-colors', active && 'text-aurora-violet')}>{label}</span>
           </Link>
         );
       })}
 
-      {/* More tab */}
       <button
         onClick={onOpenMore}
         className={cn(
-          'flex-1 flex flex-col items-center justify-center gap-0.5 pt-1.5 pb-1 rounded-xl transition-colors min-h-[52px] relative',
+          'relative flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl pb-1 pt-1.5 transition-colors',
           isMoreActive ? 'text-aurora-violet' : 'text-muted-foreground hover:text-foreground',
         )}
       >
-        <div
-          className={cn(
-            'px-3 py-1 rounded-xl transition-all duration-200 relative',
-            isMoreActive && 'bg-aurora-violet/15',
-          )}
-        >
+        <div className={cn('relative rounded-xl px-3 py-1 transition-all duration-200', isMoreActive && 'bg-aurora-violet/15')}>
           <MoreHorizontal size={20} strokeWidth={isMoreActive ? 2.5 : 2} />
           {unread > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-aurora-rose rounded-full flex items-center justify-center text-[8px] text-white font-bold border border-card">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-card bg-aurora-rose text-[8px] font-bold text-white">
               {unread > 9 ? '9+' : unread}
             </span>
           )}
         </div>
-        <span className={cn('text-[10px] font-medium', isMoreActive && 'text-aurora-violet')}>
-          Thêm
-        </span>
+        <span className={cn('text-[10px] font-medium', isMoreActive && 'text-aurora-violet')}>Thêm</span>
       </button>
     </nav>
   );

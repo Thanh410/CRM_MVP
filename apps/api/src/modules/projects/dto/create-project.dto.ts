@@ -1,6 +1,7 @@
 import { IsString, IsOptional, IsEnum, IsDateString, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProjectStatus } from '@prisma/client';
+import { Transform } from 'class-transformer';
 
 export class CreateProjectDto {
   @ApiProperty()
@@ -13,6 +14,7 @@ export class CreateProjectDto {
   description?: string;
 
   @ApiPropertyOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsOptional()
   @IsUUID()
   deptId?: string;
@@ -23,11 +25,13 @@ export class CreateProjectDto {
   status?: ProjectStatus;
 
   @ApiPropertyOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsOptional()
   @IsDateString()
   startDate?: string;
 
   @ApiPropertyOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsOptional()
   @IsDateString()
   dueDate?: string;

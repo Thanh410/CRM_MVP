@@ -3,6 +3,8 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DealsService } from './deals.service';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { TenantScopeService } from '../../../common/services/tenant-scope.service';
+import { PlanLimitsService } from '../../../common/services/plan-limits.service';
 
 // ── Mock data ─────────────────────────────────────────────
 const orgId = 'org-1';
@@ -57,6 +59,8 @@ const mockPrisma = {
     findMany: jest.fn(),
     findFirst: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
+    findFirstOrThrow: jest.fn(),
     count: jest.fn(),
   },
   pipeline: {
@@ -71,6 +75,16 @@ const mockPrisma = {
 };
 
 const mockEventEmitter = { emit: jest.fn() };
+const mockTenantScope = {
+  ensureStage: jest.fn().mockResolvedValue(undefined),
+  ensurePipeline: jest.fn().mockResolvedValue(undefined),
+  ensureContact: jest.fn().mockResolvedValue(undefined),
+  ensureCompany: jest.fn().mockResolvedValue(undefined),
+  ensureUser: jest.fn().mockResolvedValue(undefined),
+};
+const mockPlanLimits = {
+  assertCanCreate: jest.fn().mockResolvedValue(undefined),
+};
 
 // ── Test Suite ────────────────────────────────────────────
 describe('DealsService', () => {
@@ -84,6 +98,8 @@ describe('DealsService', () => {
         DealsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EventEmitter2, useValue: mockEventEmitter },
+        { provide: TenantScopeService, useValue: mockTenantScope },
+        { provide: PlanLimitsService, useValue: mockPlanLimits },
       ],
     }).compile();
 
@@ -163,13 +179,15 @@ describe('DealsService', () => {
     it('updates a deal', async () => {
       // findOneSimple
       mockPrisma.deal.findFirst.mockResolvedValue(mockDeal);
-      mockPrisma.deal.update.mockResolvedValue({ ...mockDeal, title: 'Updated' });
+      mockPrisma.deal.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.deal.findFirstOrThrow.mockResolvedValue({ ...mockDeal, title: 'Updated' });
 
       const result = await service.update(orgId, 'deal-1', { title: 'Updated' }, userId);
 
       expect(result.title).toBe('Updated');
-      expect(mockPrisma.deal.update).toHaveBeenCalledWith(
+      expect(mockPrisma.deal.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
+          where: expect.objectContaining({ id: 'deal-1', orgId, deletedAt: null }),
           data: expect.objectContaining({ title: 'Updated', updatedBy: userId }),
         }),
       );
@@ -188,7 +206,8 @@ describe('DealsService', () => {
     it('moves deal to a new stage and updates probability', async () => {
       mockPrisma.deal.findFirst.mockResolvedValue(mockDeal);
       mockPrisma.dealStage.findFirst.mockResolvedValue(mockStage);
-      mockPrisma.deal.update.mockResolvedValue({
+      mockPrisma.deal.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.deal.findFirstOrThrow.mockResolvedValue({
         ...mockDeal,
         stageId: 'stage-2',
         probability: 60,
@@ -197,8 +216,9 @@ describe('DealsService', () => {
       const result = await service.moveStage(orgId, 'deal-1', 'stage-2', userId);
 
       expect(result.stageId).toBe('stage-2');
-      expect(mockPrisma.deal.update).toHaveBeenCalledWith(
+      expect(mockPrisma.deal.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
+          where: expect.objectContaining({ id: 'deal-1', orgId, deletedAt: null }),
           data: expect.objectContaining({
             stageId: 'stage-2',
             probability: 60,
@@ -226,7 +246,8 @@ describe('DealsService', () => {
   describe('markWon', () => {
     it('sets status WON and probability 100', async () => {
       mockPrisma.deal.findFirst.mockResolvedValue(mockDeal);
-      mockPrisma.deal.update.mockResolvedValue({
+      mockPrisma.deal.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.deal.findFirstOrThrow.mockResolvedValue({
         ...mockDeal,
         status: 'WON',
         probability: 100,
@@ -242,7 +263,8 @@ describe('DealsService', () => {
   describe('markLost', () => {
     it('sets status LOST, probability 0, and stores reason', async () => {
       mockPrisma.deal.findFirst.mockResolvedValue(mockDeal);
-      mockPrisma.deal.update.mockResolvedValue({
+      mockPrisma.deal.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.deal.findFirstOrThrow.mockResolvedValue({
         ...mockDeal,
         status: 'LOST',
         probability: 0,
@@ -253,8 +275,9 @@ describe('DealsService', () => {
 
       expect(result.status).toBe('LOST');
       expect(result.probability).toBe(0);
-      expect(mockPrisma.deal.update).toHaveBeenCalledWith(
+      expect(mockPrisma.deal.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
+          where: expect.objectContaining({ id: 'deal-1', orgId, deletedAt: null }),
           data: expect.objectContaining({
             status: 'LOST',
             probability: 0,
@@ -270,12 +293,12 @@ describe('DealsService', () => {
   describe('remove', () => {
     it('soft-deletes a deal by setting deletedAt', async () => {
       mockPrisma.deal.findFirst.mockResolvedValue(mockDeal);
-      mockPrisma.deal.update.mockResolvedValue({});
+      mockPrisma.deal.updateMany.mockResolvedValue({ count: 1 });
 
       await service.remove(orgId, 'deal-1', userId);
 
-      expect(mockPrisma.deal.update).toHaveBeenCalledWith({
-        where: { id: 'deal-1' },
+      expect(mockPrisma.deal.updateMany).toHaveBeenCalledWith({
+        where: { id: 'deal-1', orgId, deletedAt: null },
         data: { deletedAt: expect.any(Date) },
       });
     });

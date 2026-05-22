@@ -72,8 +72,10 @@ services:
       <<: *common-env
       DATABASE_URL: postgresql://${POSTGRES_USER:-crm}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-crm_prod}?connection_limit=20&pool_timeout=20&statement_cache_size=100
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      FRONTEND_URL: ${FRONTEND_URL}
       PORT: 3000
     networks:
       - crm_network

@@ -4,6 +4,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as bcrypt from 'bcryptjs';
 import { UsersService } from './users.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TenantScopeService } from '../../common/services/tenant-scope.service';
+import { PlanLimitsService } from '../../common/services/plan-limits.service';
 
 const orgId = 'org-1';
 const actorId = 'admin-1';
@@ -30,6 +32,8 @@ describe('UsersService', () => {
   let service: UsersService;
   let prisma: any;
   let emitter: any;
+  let tenantScope: any;
+  let planLimits: any;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -40,18 +44,27 @@ describe('UsersService', () => {
         findMany: jest.fn(),
         findFirst: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn(),
         count: jest.fn(),
       },
       userRole: { create: jest.fn() },
       $transaction: jest.fn(),
     };
     emitter = { emit: jest.fn() };
+    tenantScope = {
+      ensureDepartment: jest.fn().mockResolvedValue(undefined),
+      ensureTeam: jest.fn().mockResolvedValue(undefined),
+      ensureRole: jest.fn().mockResolvedValue(undefined),
+    };
+    planLimits = { assertCanCreate: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
         { provide: PrismaService, useValue: prisma },
         { provide: EventEmitter2, useValue: emitter },
+        { provide: TenantScopeService, useValue: tenantScope },
+        { provide: PlanLimitsService, useValue: planLimits },
       ],
     }).compile();
 
@@ -77,7 +90,9 @@ describe('UsersService', () => {
     });
 
     it('throw ConflictException nếu email đã tồn tại trong org', async () => {
-      prisma.user.findFirst.mockResolvedValue(mockUser);
+      prisma.user.findFirst
+        .mockResolvedValueOnce(mockUser)
+        .mockResolvedValueOnce({ ...mockUser, fullName: 'TÃªn má»›i' });
 
       await expect(
         service.create(orgId, { email: 'nv.a@x.vn', password: 'x', fullName: 'A' } as any),
@@ -146,7 +161,7 @@ describe('UsersService', () => {
   });
 
   describe('findOne', () => {
-    it('trả về user theo id trong org', async () => {
+    it('returns a user scoped to org', async () => {
       prisma.user.findFirst.mockResolvedValue(mockUser);
 
       const result = await service.findOne(orgId, 'user-1');
@@ -159,13 +174,13 @@ describe('UsersService', () => {
       });
     });
 
-    it('throw NotFoundException nếu user không tồn tại', async () => {
+    it('throws NotFoundException when missing', async () => {
       prisma.user.findFirst.mockResolvedValue(null);
 
       await expect(service.findOne(orgId, 'missing')).rejects.toThrow(NotFoundException);
     });
 
-    it('không trả về user ở org khác (multi-tenancy)', async () => {
+    it('does not return a user from another org', async () => {
       prisma.user.findFirst.mockResolvedValue(null);
 
       await expect(service.findOne('other-org', 'user-1')).rejects.toThrow(NotFoundException);
@@ -173,20 +188,26 @@ describe('UsersService', () => {
   });
 
   describe('update', () => {
-    it('update user và emit audit', async () => {
-      prisma.user.findFirst.mockResolvedValue(mockUser);
-      prisma.user.update.mockResolvedValue({ ...mockUser, fullName: 'Tên mới' });
+    it('updates user and emits audit', async () => {
+      prisma.user.findFirst
+        .mockResolvedValueOnce(mockUser)
+        .mockResolvedValueOnce({ ...mockUser, fullName: 'Ten moi' });
+      prisma.user.updateMany.mockResolvedValue({ count: 1 });
 
-      const result = await service.update(orgId, 'user-1', { fullName: 'Tên mới' } as any, actorId);
+      const result = await service.update(orgId, 'user-1', { fullName: 'Ten moi' } as any, actorId);
 
-      expect(result.fullName).toBe('Tên mới');
+      expect(result.fullName).toBe('Ten moi');
+      expect(prisma.user.updateMany).toHaveBeenCalledWith({
+        where: { id: 'user-1', orgId, deletedAt: null },
+        data: expect.objectContaining({ fullName: 'Ten moi' }),
+      });
       expect(emitter.emit).toHaveBeenCalledWith(
         'audit.create',
         expect.objectContaining({ action: 'UPDATE', resource: 'users' }),
       );
     });
 
-    it('throw NotFoundException khi user không có', async () => {
+    it('throws NotFoundException when missing', async () => {
       prisma.user.findFirst.mockResolvedValue(null);
 
       await expect(service.update(orgId, 'x', {} as any)).rejects.toThrow(NotFoundException);
@@ -194,27 +215,28 @@ describe('UsersService', () => {
   });
 
   describe('deactivate', () => {
-    it('set status=INACTIVE thay vì xóa', async () => {
+    it('sets status=INACTIVE using org scope', async () => {
       prisma.user.findFirst.mockResolvedValue(mockUser);
-      prisma.user.update.mockResolvedValue({ ...mockUser, status: 'INACTIVE' });
+      prisma.user.updateMany.mockResolvedValue({ count: 1 });
 
       await service.deactivate(orgId, 'user-1', actorId);
 
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
+      expect(prisma.user.updateMany).toHaveBeenCalledWith({
+        where: { id: 'user-1', orgId, deletedAt: null },
         data: { status: 'INACTIVE' },
       });
     });
   });
 
   describe('remove (soft delete)', () => {
-    it('set deletedAt, KHÔNG xóa thật', async () => {
+    it('sets deletedAt using org scope', async () => {
       prisma.user.findFirst.mockResolvedValue(mockUser);
-      prisma.user.update.mockResolvedValue({ ...mockUser, deletedAt: new Date() });
+      prisma.user.updateMany.mockResolvedValue({ count: 1 });
 
       await service.remove(orgId, 'user-1', actorId);
 
-      const updateCall = prisma.user.update.mock.calls[0][0];
+      const updateCall = prisma.user.updateMany.mock.calls[0][0];
+      expect(updateCall.where).toMatchObject({ id: 'user-1', orgId, deletedAt: null });
       expect(updateCall.data.deletedAt).toBeInstanceOf(Date);
       expect(emitter.emit).toHaveBeenCalledWith(
         'audit.create',

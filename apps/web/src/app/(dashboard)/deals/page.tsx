@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { useDealsKanban, useMoveDealStage, useMarkDealWon, useMarkDealLost, useUpdateDeal, useDeleteDeal, usePipelines } from '@/hooks/use-deals';
+import { useDeals, useDealsKanban, useMoveDealStage, useMarkDealWon, useMarkDealLost, useUpdateDeal, useDeleteDeal, usePipelines } from '@/hooks/use-deals';
 import { formatCurrency, formatDate, formatCompactVND } from '@/lib/utils';
 import { KanbanSkeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -15,6 +15,15 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { AvatarGradient } from '@/components/ui/avatar-gradient';
 import { RippleButton } from '@/components/ui/ripple-button';
 import { StatusPill } from '@/components/ui/status-pill';
+import {
+  BulkActionBar,
+  DataTablePagination,
+  SelectableHeaderCheckbox,
+  type DataTablePageSize,
+  getDataTableQueryParams,
+  parseDataTablePageSize,
+  toggleVisibleSelection,
+} from '@/components/ui/data-table-controls';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -99,14 +108,32 @@ function DealEditModal({ deal, onClose }: { deal: any; onClose: () => void }) {
 }
 
 // ─── Mark Lost Modal ──────────────────────────────────────────────────────────
-function MarkLostModal({ dealId, dealTitle, onClose }: { dealId: string; dealTitle: string; onClose: () => void }) {
+function MarkLostModal({
+  dealId,
+  dealTitle,
+  onClose,
+  onMarkedLost,
+}: {
+  dealId: string;
+  dealTitle: string;
+  onClose: () => void;
+  onMarkedLost?: () => void;
+}) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const markLost = useMarkDealLost();
   const [reason, setReason] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    markLost.mutate({ id: dealId, lostReason: reason || undefined }, { onSuccess: onClose });
+    markLost.mutate(
+      { id: dealId, lostReason: reason || undefined },
+      {
+        onSuccess: () => {
+          onMarkedLost?.();
+          onClose();
+        },
+      },
+    );
   };
 
   return (
@@ -141,12 +168,12 @@ function MarkLostModal({ dealId, dealTitle, onClose }: { dealId: string; dealTit
 }
 
 // ─── Create Deal Modal ────────────────────────────────────────────────────────
-function CreateDealModal({ onClose, stages }: { onClose: () => void; stages: any[] }) {
+function CreateDealModal({ onClose, stages, pipelineId }: { onClose: () => void; stages: any[]; pipelineId?: string }) {
   const qc = useQueryClient();
   const overlayRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({
     title: '', value: '', currency: 'VND',
-    stageId: stages[0]?.id ?? '', probability: '50',
+    stageId: stages[0]?.id ?? '', pipelineId: pipelineId ?? stages[0]?.pipelineId ?? '', probability: '50',
     contactId: '', companyId: '',
   });
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -171,6 +198,7 @@ function CreateDealModal({ onClose, stages }: { onClose: () => void; stages: any
     e.preventDefault();
     mutation.mutate({
       ...form,
+      pipelineId: form.pipelineId || stages.find((stage) => stage.id === form.stageId)?.pipelineId || undefined,
       value: form.value ? Number(form.value) : 0,
       probability: Number(form.probability),
       contactId: form.contactId || undefined,
@@ -239,13 +267,48 @@ function CreateDealModal({ onClose, stages }: { onClose: () => void; stages: any
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function DealsPage() {
+  const qc = useQueryClient();
   const { data: pipelines } = usePipelines();
   const [pipelineId, setPipelineId] = useState<string | undefined>(undefined);
+  const [listStatus, setListStatus] = useState<'OPEN' | 'WON' | 'LOST' | 'all'>('OPEN');
+  const [listPage, setListPage] = useState(1);
+  const [listPageSize, setListPageSize] = useState<DataTablePageSize>(50);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filterAssignee, setFilterAssignee] = useState<string>('');
   const [filterTimeRange, setFilterTimeRange] = useState<'all' | 'overdue' | 'this-week' | 'this-month'>('all');
   const { data, isLoading } = useDealsKanban(pipelineId);
+  const listDateParams = useMemo(() => {
+    const now = Date.now();
+    if (filterTimeRange === 'overdue') return { closeDateTo: new Date(now).toISOString() };
+    if (filterTimeRange === 'this-week') return { closeDateFrom: new Date(now).toISOString(), closeDateTo: new Date(now + 7 * 24 * 3600 * 1000).toISOString() };
+    if (filterTimeRange === 'this-month') return { closeDateFrom: new Date(now).toISOString(), closeDateTo: new Date(now + 30 * 24 * 3600 * 1000).toISOString() };
+    return {};
+  }, [filterTimeRange]);
+  const { data: listData, isLoading: isListLoading } = useDeals({
+    ...getDataTableQueryParams(listPage, listPageSize),
+    pipelineId: pipelineId || undefined,
+    status: listStatus === 'all' ? undefined : listStatus,
+    ownerId: filterAssignee || undefined,
+    ...listDateParams,
+  });
   const moveDealStage = useMoveDealStage();
+  const markDealWon = useMarkDealWon();
   const deleteDeal = useDeleteDeal();
+  const bulkDeleteDeals = useMutation({
+    mutationFn: (ids: string[]) => api.post('/deals/bulk-delete', { ids }).then((res) => res.data as { deletedIds: string[]; failedIds: string[]; count: number }),
+    onSuccess: ({ deletedIds, failedIds }) => {
+      qc.invalidateQueries({ queryKey: ['deals'] });
+      if (selectedDeal && deletedIds.includes(selectedDeal.id)) setSelectedDeal(null);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        deletedIds.forEach((id) => next.delete(id));
+        return next;
+      });
+      if (deletedIds.length > 0) toast.success(`Đã xóa ${deletedIds.length} deal`);
+      if (failedIds.length > 0) toast.error(`${failedIds.length} deal chưa xóa được`);
+    },
+    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Xóa deal đã chọn thất bại'),
+  });
   const [selectedDeal, setSelectedDeal] = useState<any>(null);
   const [editingDeal, setEditingDeal] = useState<any>(null);
   const [lostDeal, setLostDeal] = useState<any>(null);
@@ -280,7 +343,7 @@ export default function DealsPage() {
 
   // Apply filters (assignee + time range)
   const dealMatchesFilters = (deal: any): boolean => {
-    if (filterAssignee && deal.assignee?.id !== filterAssignee) return false;
+    if (filterAssignee && deal.owner?.id !== filterAssignee) return false;
     if (filterTimeRange !== 'all' && deal.closeDate) {
       const close = new Date(deal.closeDate).getTime();
       const now = Date.now();
@@ -301,23 +364,82 @@ export default function DealsPage() {
 
   const totalValue = stages.reduce((sum: number, s: any) => sum + (s.totalValue ?? 0), 0);
   const totalDeals = stages.reduce((acc: number, s: any) => acc + (s.deals?.length ?? 0), 0);
-  const allDeals = stages.flatMap((s: any) => s.deals ?? []);
+  const allDeals = (listData?.data ?? []) as any[];
+  const listMeta = listData?.meta ?? { total: allDeals.length, totalPages: 1 };
 
   // Collect unique assignees
   const allAssignees = Array.from(
-    new Map(rawStages.flatMap((s: any) => s.deals ?? []).filter((d: any) => d.assignee).map((d: any) => [d.assignee.id, d.assignee])).values(),
+    new Map(rawStages.flatMap((s: any) => s.deals ?? []).filter((d: any) => d.owner).map((d: any) => [d.owner.id, d.owner])).values(),
   ) as any[];
 
   const hasFilters = filterAssignee || filterTimeRange !== 'all';
+  const listStatusOptions = [
+    { value: 'OPEN', label: 'Đang mở' },
+    { value: 'WON', label: 'Đã thắng' },
+    { value: 'LOST', label: 'Đã thua' },
+    { value: 'all', label: 'Tất cả' },
+  ] as const;
 
   const handleDelete = () => {
     if (!deleteConfirm) return;
     deleteDeal.mutate(deleteConfirm.id, {
       onSuccess: () => {
         if (selectedDeal?.id === deleteConfirm.id) setSelectedDeal(null);
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(deleteConfirm.id);
+          return next;
+        });
         setDeleteConfirm(null);
       },
     });
+  };
+
+  const resetListAfterFilterChange = () => {
+    setListPage(1);
+    setSelectedIds(new Set());
+  };
+
+  const handleMarkWon = (deal: any) => {
+    markDealWon.mutate(deal.id, {
+      onSuccess: () => {
+        setSelectedDeal(null);
+        setViewMode('list');
+        setListStatus('WON');
+        toast.success('Deal đã thắng', {
+          description: 'Kanban chỉ hiển thị deal đang mở. Deal thắng đã được chuyển sang danh sách Đã thắng.',
+          action: {
+            label: 'Xem',
+            onClick: () => {
+              setViewMode('list');
+              setListStatus('WON');
+            },
+          },
+        });
+      },
+    });
+  };
+
+  const handleListStatusChange = (status: typeof listStatus) => {
+    setListStatus(status);
+    resetListAfterFilterChange();
+  };
+
+  const handleListPageSizeChange = (value: string) => {
+    const next = parseDataTablePageSize(value);
+    const total = listMeta.total ?? 0;
+    if (next === 'all' && total > 500 && !window.confirm(`Bạn sắp tải ${total} deal. Tiếp tục xem tất cả?`)) {
+      return;
+    }
+    setListPageSize(next);
+    resetListAfterFilterChange();
+  };
+
+  const handleBulkDelete = () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (!window.confirm(`Xóa ${ids.length} deal đã chọn?`)) return;
+    bulkDeleteDeals.mutate(ids);
   };
 
   return (
@@ -342,7 +464,10 @@ export default function DealsPage() {
           {pipelines && pipelines.length > 1 && (
             <select
               value={pipelineId ?? ''}
-              onChange={e => setPipelineId(e.target.value || undefined)}
+              onChange={e => {
+                setPipelineId(e.target.value || undefined);
+                resetListAfterFilterChange();
+              }}
               className="px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
             >
               <option value="">Tất cả pipeline</option>
@@ -374,7 +499,10 @@ export default function DealsPage() {
         ] as const).map(([k, label, tone]) => (
           <button
             key={k}
-            onClick={() => setFilterTimeRange(k)}
+            onClick={() => {
+              setFilterTimeRange(k);
+              resetListAfterFilterChange();
+            }}
             className={`chip-switch px-3 h-8 rounded-full text-xs font-semibold transition ${
               filterTimeRange === k
                 ? 'btn-aurora text-white shadow-pop'
@@ -395,7 +523,10 @@ export default function DealsPage() {
         {allAssignees.length > 0 && (
           <select
             value={filterAssignee}
-            onChange={(e) => setFilterAssignee(e.target.value)}
+            onChange={(e) => {
+              setFilterAssignee(e.target.value);
+              resetListAfterFilterChange();
+            }}
             className="px-2.5 h-8 text-xs border border-border rounded-full bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
           >
             <option value="">👤 Tất cả phụ trách</option>
@@ -407,7 +538,7 @@ export default function DealsPage() {
 
         {hasFilters && (
           <button
-            onClick={() => { setFilterAssignee(''); setFilterTimeRange('all'); }}
+            onClick={() => { setFilterAssignee(''); setFilterTimeRange('all'); resetListAfterFilterChange(); }}
             className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-foreground/80 hover:text-foreground hover:bg-muted rounded-md transition"
           >
             <X size={12} /> Xóa lọc
@@ -463,6 +594,7 @@ export default function DealsPage() {
                     isWonStage={isWonStage}
                     onSelect={() => setSelectedDeal(selectedDeal?.id === deal.id ? null : deal)}
                     onEdit={() => setEditingDeal(deal)}
+                    onMarkWon={() => handleMarkWon(deal)}
                     onMarkLost={() => setLostDeal(deal)}
                     onMoveStage={(stageId) => moveDealStage.mutate({ id: deal.id, stageId })}
                     onDelete={() => setDeleteConfirm(deal)}
@@ -537,10 +669,46 @@ export default function DealsPage() {
       </div>
       ) : (
       /* ─── List View ─────────────────────────────────────────────────── */
-      <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden flex-1">
-        <table className="w-full text-sm">
+      <div className="flex flex-col gap-3 flex-1 min-h-0">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+            {listStatusOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => handleListStatusChange(option.value)}
+                className={`h-9 px-3 rounded-full text-xs font-semibold whitespace-nowrap transition ${
+                  listStatus === option.value
+                    ? 'btn-aurora text-white shadow-pop'
+                    : 'bg-card border border-border text-foreground/80 hover:border-aurora-violet/40'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {isListLoading ? 'Đang tải...' : `${listMeta.total ?? allDeals.length} deal`}
+          </span>
+        </div>
+
+      <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden flex-1 min-h-0 flex flex-col">
+        <BulkActionBar
+          count={selectedIds.size}
+          entityLabel="deal"
+          onClear={() => setSelectedIds(new Set())}
+          onDelete={handleBulkDelete}
+        />
+        <div className="flex-1 min-h-0 overflow-auto">
+        <table className="w-full min-w-[860px] text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/40">
+              <th className="px-4 py-3 w-10">
+                <SelectableHeaderCheckbox
+                  rows={allDeals}
+                  selectedIds={selectedIds}
+                  onToggle={() => setSelectedIds((prev) => toggleVisibleSelection(allDeals, prev))}
+                />
+              </th>
               <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Deal</th>
               <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Giá trị</th>
               <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Giai đoạn</th>
@@ -551,14 +719,33 @@ export default function DealsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border/60">
-            {allDeals.length === 0 && (
-              <tr><td colSpan={7} className="text-center py-12 text-muted-foreground text-sm">Chưa có deal nào</td></tr>
+            {isListLoading && (
+              <tr><td colSpan={8} className="text-center py-12 text-muted-foreground text-sm">Đang tải deal...</td></tr>
             )}
-            {allDeals.map((deal: any) => {
-              const stage = stages.find((s: any) => s.deals?.some((d: any) => d.id === deal.id));
+            {!isListLoading && allDeals.length === 0 && (
+              <tr><td colSpan={8} className="text-center py-12 text-muted-foreground text-sm">Chưa có deal nào</td></tr>
+            )}
+            {!isListLoading && allDeals.map((deal: any) => {
+              const stage = deal.stage;
               return (
                 <tr key={deal.id} onClick={() => setSelectedDeal(selectedDeal?.id === deal.id ? null : deal)}
                   className={`hover:bg-aurora-soft/30 cursor-pointer transition-colors ${selectedDeal?.id === deal.id ? 'bg-aurora-soft/30' : ''}`}>
+                  <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(deal.id)}
+                      onChange={() => {
+                        setSelectedIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(deal.id)) next.delete(deal.id);
+                          else next.add(deal.id);
+                          return next;
+                        });
+                      }}
+                      aria-label={`Chọn deal ${deal.title}`}
+                      className="h-4 w-4 rounded border-border accent-[hsl(var(--aurora-violet))]"
+                    />
+                  </td>
                   <td className="px-4 py-3 font-medium text-foreground">{deal.title}</td>
                   <td className="px-4 py-3 text-foreground font-semibold">{formatCurrency(Number(deal.value))}</td>
                   <td className="px-4 py-3">
@@ -587,13 +774,48 @@ export default function DealsPage() {
             })}
           </tbody>
         </table>
+        </div>
+        <DataTablePagination
+          page={listPageSize === 'all' ? 1 : listPage}
+          totalPages={listMeta.totalPages ?? 1}
+          total={listMeta.total ?? allDeals.length}
+          pageSize={listPageSize}
+          itemLabel="deal"
+          onPageChange={(page) => {
+            setListPage(page);
+            setSelectedIds(new Set());
+          }}
+          onPageSizeChange={handleListPageSizeChange}
+        />
+      </div>
       </div>
       )}
 
       {/* Modals */}
-      {createOpen && <CreateDealModal onClose={() => setCreateOpen(false)} stages={stages} />}
+      {createOpen && <CreateDealModal onClose={() => setCreateOpen(false)} stages={stages} pipelineId={data?.pipeline?.id ?? pipelineId} />}
       {editingDeal && <DealEditModal deal={editingDeal} onClose={() => setEditingDeal(null)} />}
-      {lostDeal && <MarkLostModal dealId={lostDeal.id} dealTitle={lostDeal.title} onClose={() => setLostDeal(null)} />}
+      {lostDeal && (
+        <MarkLostModal
+          dealId={lostDeal.id}
+          dealTitle={lostDeal.title}
+          onClose={() => setLostDeal(null)}
+          onMarkedLost={() => {
+            setSelectedDeal(null);
+            setViewMode('list');
+            setListStatus('LOST');
+            toast.success('Deal đã thua', {
+              description: 'Kanban chỉ hiển thị deal đang mở. Deal thua đã được chuyển sang danh sách Đã thua.',
+              action: {
+                label: 'Xem',
+                onClick: () => {
+                  setViewMode('list');
+                  setListStatus('LOST');
+                },
+              },
+            });
+          }}
+        />
+      )}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-card text-card-foreground rounded-2xl shadow-lift border border-border w-full max-w-sm">
@@ -630,7 +852,7 @@ function StageColumn({ stageId, children, className }: { stageId: string; childr
 interface DealCardProps {
   deal: any; stages: any[]; currentStageId: string; isSelected: boolean;
   isWonStage?: boolean;
-  onSelect: () => void; onEdit: () => void; onMarkLost: () => void;
+  onSelect: () => void; onEdit: () => void; onMarkWon: () => void; onMarkLost: () => void;
   onMoveStage: (stageId: string) => void; onDelete: () => void;
   dragListeners?: Record<string, any>;
 }
@@ -649,9 +871,7 @@ function DraggableDealCard(props: Omit<DealCardProps, 'dragListeners'>) {
   );
 }
 
-function DealCard({ deal, stages, currentStageId, isSelected, isWonStage, onSelect, onEdit, onMarkLost, onMoveStage, onDelete }: Omit<DealCardProps, 'dragListeners'>) {
-  const markWon = useMarkDealWon();
-
+function DealCard({ deal, stages, currentStageId, isSelected, isWonStage, onSelect, onEdit, onMarkWon, onMarkLost, onMoveStage, onDelete }: Omit<DealCardProps, 'dragListeners'>) {
   const isWon = deal.status === 'WON';
   const statusOverlay = deal.status !== 'OPEN' ? (
     <div className="absolute inset-0 rounded-2xl flex items-center justify-center bg-card/80 backdrop-blur-[1px] z-10">
@@ -678,7 +898,7 @@ function DealCard({ deal, stages, currentStageId, isSelected, isWonStage, onSele
         <div className="flex shrink-0 opacity-0 group-hover:opacity-100 transition">
           <button onClick={e => { e.stopPropagation(); onEdit(); }} title="Chỉnh sửa"
             className="p-1 text-muted-foreground/60 hover:text-aurora-violet transition"><Pencil size={12} /></button>
-          <button onClick={e => { e.stopPropagation(); markWon.mutate(deal.id); }} title="Đánh dấu thắng"
+          <button onClick={e => { e.stopPropagation(); onMarkWon(); }} title="Đánh dấu thắng"
             className="p-1 text-muted-foreground/60 hover:text-amber-500 transition"><Trophy size={13} /></button>
           <button onClick={e => { e.stopPropagation(); onMarkLost(); }} title="Đánh dấu thua"
             className="p-1 text-muted-foreground/60 hover:text-rose-500 transition"><ThumbsDown size={12} /></button>
@@ -731,5 +951,3 @@ function DealCard({ deal, stages, currentStageId, isSelected, isWonStage, onSele
     </div>
   );
 }
-
-

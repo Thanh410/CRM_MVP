@@ -10,6 +10,7 @@ import { PaginationDto } from '../../common/dto/pagination.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { OrgId } from '../../common/decorators/org-id.decorator';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
+import { BulkDeleteDto } from '../../common/dto/bulk-delete.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
@@ -40,6 +41,17 @@ export class UsersController {
   @ApiOperation({ summary: 'Get user by ID' })
   findOne(@OrgId() orgId: string, @Param('id') id: string) {
     return this.usersService.findOne(orgId, id);
+  }
+
+  @Post('bulk-delete')
+  @RequirePermissions('users:delete')
+  @ApiOperation({ summary: 'Soft-delete multiple users' })
+  bulkDelete(
+    @OrgId() orgId: string,
+    @Body() dto: BulkDeleteDto,
+    @CurrentUser('id') actorId: string,
+  ) {
+    return this.usersService.bulkRemove(orgId, dto.ids, actorId);
   }
 
   @Patch(':id')

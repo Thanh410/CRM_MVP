@@ -20,8 +20,8 @@ export class NotificationsController {
   }
 
   @Patch(':id/read')
-  markRead(@OrgId() orgId: string, @Param('id') id: string) {
-    return this.notificationsService.markRead(orgId, id);
+  markRead(@OrgId() orgId: string, @CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.notificationsService.markRead(orgId, userId, id);
   }
 
   @Patch('read-all')
@@ -30,7 +30,7 @@ export class NotificationsController {
   }
 
   @Delete(':id')
-  remove(@OrgId() orgId: string, @Param('id') id: string) {
-    return this.notificationsService.remove(orgId, id);
+  remove(@OrgId() orgId: string, @CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.notificationsService.remove(orgId, userId, id);
   }
 }

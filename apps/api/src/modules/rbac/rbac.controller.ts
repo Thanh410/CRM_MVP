@@ -37,10 +37,11 @@ export class RbacController {
   @RequirePermissions('users:update')
   @ApiOperation({ summary: 'Remove role from user' })
   removeRole(
+    @OrgId() orgId: string,
     @Param('userId') userId: string,
     @Param('roleId') roleId: string,
   ) {
-    return this.rbacService.removeRoleFromUser(userId, roleId);
+    return this.rbacService.removeRoleFromUser(orgId, userId, roleId);
   }
 
   @Put('roles/:roleId/permissions')

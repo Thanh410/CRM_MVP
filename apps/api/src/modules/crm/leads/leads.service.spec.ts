@@ -4,6 +4,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { LeadsService } from './leads.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { NotificationsService } from '../../notifications/notifications.service';
+import { TenantScopeService } from '../../../common/services/tenant-scope.service';
+import { PlanLimitsService } from '../../../common/services/plan-limits.service';
 
 // ── Mock data ─────────────────────────────────────────────
 const orgId = 'org-1';
@@ -38,6 +40,8 @@ const mockPrisma = {
     findMany: jest.fn(),
     findFirst: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
+    findFirstOrThrow: jest.fn(),
     count: jest.fn(),
   },
   contact: {
@@ -56,6 +60,12 @@ const mockNotifications = {
   notifyMany: jest.fn(),
   create: jest.fn(),
 };
+const mockTenantScope = {
+  ensureUser: jest.fn().mockResolvedValue(undefined),
+};
+const mockPlanLimits = {
+  assertCanCreate: jest.fn().mockResolvedValue(undefined),
+};
 
 // ── Test Suite ────────────────────────────────────────────
 describe('LeadsService', () => {
@@ -70,6 +80,8 @@ describe('LeadsService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EventEmitter2, useValue: mockEventEmitter },
         { provide: NotificationsService, useValue: mockNotifications },
+        { provide: TenantScopeService, useValue: mockTenantScope },
+        { provide: PlanLimitsService, useValue: mockPlanLimits },
       ],
     }).compile();
 
@@ -137,7 +149,8 @@ describe('LeadsService', () => {
   describe('update', () => {
     it('updates lead and emits audit', async () => {
       mockPrisma.lead.findFirst.mockResolvedValue(mockLead);
-      mockPrisma.lead.update.mockResolvedValue({ ...mockLead, status: 'CONTACTED' });
+      mockPrisma.lead.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.lead.findFirstOrThrow.mockResolvedValue({ ...mockLead, status: 'CONTACTED' });
 
       const result = await service.update(orgId, 'lead-1', { status: 'CONTACTED' } as any, userId);
 
@@ -160,7 +173,8 @@ describe('LeadsService', () => {
     it('assigns a lead to a user in the same org', async () => {
       mockPrisma.lead.findFirst.mockResolvedValue(mockLead);
       mockPrisma.user.findFirst.mockResolvedValue({ id: 'user-2', orgId });
-      mockPrisma.lead.update.mockResolvedValue({ ...mockLead, assignedTo: 'user-2' });
+      mockPrisma.lead.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.lead.findFirstOrThrow.mockResolvedValue({ ...mockLead, assignedTo: 'user-2' });
 
       const result = await service.assign(orgId, 'lead-1', 'user-2', userId);
 
@@ -183,7 +197,7 @@ describe('LeadsService', () => {
     it('converts lead to contact', async () => {
       mockPrisma.lead.findFirst.mockResolvedValue(mockLead);
       mockPrisma.contact.create.mockResolvedValue({ id: 'contact-new' });
-      mockPrisma.lead.update.mockResolvedValue({});
+      mockPrisma.lead.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.convert(orgId, 'lead-1', userId);
 
@@ -230,8 +244,8 @@ describe('LeadsService', () => {
 
       await service.remove(orgId, 'lead-1', userId);
 
-      expect(mockPrisma.lead.update).toHaveBeenCalledWith({
-        where: { id: 'lead-1' },
+      expect(mockPrisma.lead.updateMany).toHaveBeenCalledWith({
+        where: { id: 'lead-1', orgId, deletedAt: null },
         data: { deletedAt: expect.any(Date), updatedBy: userId },
       });
       expect(mockEventEmitter.emit).toHaveBeenCalledWith('audit.create', expect.objectContaining({

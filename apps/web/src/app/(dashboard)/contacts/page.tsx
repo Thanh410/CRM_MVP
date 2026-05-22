@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { TagSelector } from '@/components/tag-selector';
 import { TableSkeleton } from '@/components/ui/skeleton';
@@ -8,6 +9,15 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { AvatarGradient } from '@/components/ui/avatar-gradient';
 import { StatusPill, type StatusTone } from '@/components/ui/status-pill';
 import { RippleButton } from '@/components/ui/ripple-button';
+import {
+  BulkActionBar,
+  DataTablePagination,
+  SelectableHeaderCheckbox,
+  getDataTableQueryParams,
+  parseDataTablePageSize,
+  toggleVisibleSelection,
+  type DataTablePageSize,
+} from '@/components/ui/data-table-controls';
 import { api } from '@/lib/api';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -556,8 +566,11 @@ function ContactSlideOver({
 
 export default function ContactsPage() {
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState('');
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<DataTablePageSize>(50);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Modals / slide-over state
   const [modalOpen, setModalOpen] = useState(false);
@@ -565,10 +578,10 @@ export default function ContactsPage() {
   const [slideOverId, setSlideOverId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['contacts', { search, page }],
+    queryKey: ['contacts', { search, page, pageSize }],
     queryFn: async () => {
       const { data } = await api.get('/contacts', {
-        params: { search: search || undefined, page, limit: 20 },
+        params: { search: search || undefined, ...getDataTableQueryParams(page, pageSize) },
       });
       return data;
     },
@@ -583,6 +596,22 @@ export default function ContactsPage() {
       toast.success('Đã xóa liên hệ');
     },
     onError: () => toast.error('Xóa thất bại'),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => api.post('/contacts/bulk-delete', { ids }).then((res) => res.data as { deletedIds: string[]; failedIds: string[]; count: number }),
+    onSuccess: ({ deletedIds, failedIds }) => {
+      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        deletedIds.forEach((id) => next.delete(id));
+        return next;
+      });
+      if (slideOverId && deletedIds.includes(slideOverId)) setSlideOverId(null);
+      if (deletedIds.length > 0) toast.success(`Đã xóa ${deletedIds.length} liên hệ`);
+      if (failedIds.length > 0) toast.error(`${failedIds.length} liên hệ chưa xóa được`);
+    },
+    onError: () => toast.error('Xóa liên hệ đã chọn thất bại'),
   });
 
   function openCreate() {
@@ -602,6 +631,14 @@ export default function ContactsPage() {
       deleteMutation.mutate(contact.id);
       if (slideOverId === contact.id) setSlideOverId(null);
     }
+  }
+
+  function changePageSize(value: string) {
+    const next = parseDataTablePageSize(value);
+    if (next === 'all' && (meta?.total ?? 0) > 500 && !window.confirm(`Tải tất cả ${meta?.total ?? 0} liên hệ?`)) return;
+    setPageSize(next);
+    setPage(1);
+    setSelectedIds(new Set());
   }
 
   const contacts: Contact[] = data?.data ?? [];
@@ -632,6 +669,18 @@ export default function ContactsPage() {
             className="w-full pl-8 pr-3 py-2.5 text-sm border border-border rounded-xl bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition" />
         </div>
       </div>
+
+      <BulkActionBar
+        count={selectedIds.size}
+        entityLabel="liên hệ"
+        onClear={() => setSelectedIds(new Set())}
+        onDelete={() => {
+          const ids = Array.from(selectedIds);
+          if (ids.length === 0) return;
+          if (!window.confirm(`Xóa ${ids.length} liên hệ đã chọn?`)) return;
+          bulkDeleteMutation.mutate(ids);
+        }}
+      />
 
       {/* Mobile card list (lg:hidden) */}
       <div className="lg:hidden space-y-3">
@@ -713,6 +762,13 @@ export default function ContactsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
+                  <th className="px-3 py-3 w-10">
+                    <SelectableHeaderCheckbox
+                      rows={contacts}
+                      selectedIds={selectedIds}
+                      onToggle={() => setSelectedIds((prev) => toggleVisibleSelection(contacts, prev))}
+                    />
+                  </th>
                   <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Họ tên
                   </th>
@@ -741,6 +797,21 @@ export default function ContactsPage() {
                     onClick={() => setSlideOverId(contact.id)}
                     className="hover:bg-aurora-soft/30 transition-colors cursor-pointer"
                   >
+                    <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(contact.id)}
+                        onChange={(e) => {
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (e.target.checked) next.add(contact.id);
+                            else next.delete(contact.id);
+                            return next;
+                          });
+                        }}
+                        className="h-4 w-4 rounded border-border accent-[hsl(var(--aurora-violet))]"
+                      />
+                    </td>
                     {/* Name + avatar */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
@@ -843,6 +914,18 @@ export default function ContactsPage() {
           </>
         )}
       </div>
+
+      {meta && (
+        <DataTablePagination
+          page={pageSize === 'all' ? 1 : page}
+          totalPages={totalPages}
+          total={meta.total ?? 0}
+          pageSize={pageSize}
+          itemLabel="liên hệ"
+          onPageChange={setPage}
+          onPageSizeChange={changePageSize}
+        />
+      )}
 
       {/* Create / Edit Modal */}
       {modalOpen && (

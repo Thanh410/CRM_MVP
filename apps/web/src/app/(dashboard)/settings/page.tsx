@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Building2, GitBranch, Users, Plus, Pencil, Trash2, Check, X, ChevronRight, ShieldCheck, Tag, Plug, CheckSquare, Square, MinusSquare, Search } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -274,7 +275,7 @@ function TeamsTab() {
   );
 }
 
-// ─── Tab: Phân quyền (RBAC) ───────────────────────────────────────────────────
+//  Tab: Phân quyền (RBAC)
 interface Permission { id: string; resource: string; action: string; description?: string; }
 interface RbacRole { id: string; name: string; displayName: string; permissions?: { permission: Permission }[]; }
 
@@ -817,7 +818,7 @@ function IntegrationsTab() {
           <div className="p-3 bg-blue-50 rounded-lg text-xs text-blue-700 space-y-1">
             <p className="font-medium">Webhook URL:</p>
             <code className="block break-all">{typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3000/api/integrations/zalo/webhook` : 'http://your-domain/api/integrations/zalo/webhook'}</code>
-            <p className="mt-1 font-medium">Để xác minh (GET) + nhận sự kiện (POST)</p>
+            <p className="mt-1 font-medium">Để xác minh (GET) và nhận sự kiện (POST)</p>
           </div>
           <div className="flex items-center gap-2">
             <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
@@ -866,89 +867,104 @@ function IntegrationsTab() {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const TABS = [
-  { key: 'org', label: 'Tổ chức', icon: Building2 },
-  { key: 'depts', label: 'Phòng ban', icon: GitBranch },
-  { key: 'teams', label: 'Nhóm', icon: Users },
-  { key: 'rbac', label: 'Phân quyền', icon: ShieldCheck },
-  { key: 'tags', label: 'Tags', icon: Tag },
-  { key: 'integrations', label: 'Tích hợp', icon: Plug },
+  { key: 'org', label: 'Tổ chức', description: 'Thông tin công ty, liên hệ và website', icon: Building2 },
+  { key: 'depts', label: 'Phòng ban', description: 'Cơ cấu phòng ban và đơn vị con', icon: GitBranch },
+  { key: 'teams', label: 'Nhóm', description: 'Nhóm làm việc theo phòng ban', icon: Users },
+  { key: 'rbac', label: 'Phân quyền', description: 'Vai trò và quyền truy cập', icon: ShieldCheck },
+  { key: 'tags', label: 'Tags', description: 'Nhãn dùng chung cho CRM', icon: Tag },
+  { key: 'integrations', label: 'Tích hợp', description: 'Kết nối Zalo, Messenger và webhook', icon: Plug },
 ];
 
 export default function SettingsPage() {
-  const [tab, setTab] = useState('org');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const section = searchParams.get('section') ?? 'org';
+  const [tab, setTab] = useState(section);
+  const activeTab = TABS.find((item) => item.key === tab) ?? TABS[0];
+
+  const selectTab = (nextTab: string) => {
+    setTab(nextTab);
+    router.replace('/settings?section=' + nextTab, { scroll: false });
+  };
+
+  const renderTab = () => (
+    <>
+      {tab === 'org' && <OrgTab />}
+      {tab === 'depts' && <DeptsTab />}
+      {tab === 'teams' && <TeamsTab />}
+      {tab === 'rbac' && <RbacTab />}
+      {tab === 'tags' && <TagsTab />}
+      {tab === 'integrations' && <IntegrationsTab />}
+    </>
+  );
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight">Cài đặt hệ thống</h1>
-        <p className="text-sm text-muted-foreground mt-1">Quản lý tổ chức, phòng ban, nhóm, phân quyền &amp; tích hợp</p>
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
+      <div className="flex flex-col gap-1">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Cài đặt hệ thống</h1>
+        <p className="text-sm text-muted-foreground">Quản lý tổ chức, phòng ban, nhóm, phân quyền và tích hợp.</p>
       </div>
 
-      {/* Mobile: iOS-style grouped list nav */}
-      <div className="lg:hidden space-y-1">
+      <div className="space-y-2 lg:hidden">
         {TABS.map(t => {
           const Icon = t.icon;
           const active = tab === t.key;
           return active ? (
-            <div key={t.key} className="bg-aurora-violet/10 border border-aurora-violet/30 rounded-2xl p-4 space-y-4">
-              <button onClick={() => setTab('')} className="flex items-center gap-3 text-aurora-violet font-semibold text-sm">
-                <Icon size={16} /> {t.label}
-                <span className="ml-auto text-xs opacity-60">Thu gọn ↑</span>
+            <div key={t.key} className="rounded-2xl border border-aurora-violet/30 bg-card p-4 shadow-soft">
+              <button onClick={() => selectTab('org')} className="mb-4 flex w-full items-center gap-3 text-left text-sm font-semibold text-aurora-violet">
+                <Icon size={16} />
+                <span className="flex-1">{t.label}</span>
+                <span className="text-xs opacity-70">Thu gọn</span>
               </button>
-              <div>
-                {tab === 'org' && <OrgTab />}
-                {tab === 'depts' && <DeptsTab />}
-                {tab === 'teams' && <TeamsTab />}
-                {tab === 'rbac' && <RbacTab />}
-                {tab === 'tags' && <TagsTab />}
-                {tab === 'integrations' && <IntegrationsTab />}
-              </div>
+              {renderTab()}
             </div>
           ) : (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 bg-card border border-border rounded-2xl text-sm font-medium hover:border-aurora-violet/30 transition-colors">
-              <div className="w-8 h-8 rounded-xl bg-aurora-violet/10 flex items-center justify-center flex-shrink-0">
+            <button key={t.key} onClick={() => selectTab(t.key)}
+              className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-sm font-medium shadow-soft transition-colors hover:border-aurora-violet/30">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-aurora-violet/10">
                 <Icon size={15} className="text-aurora-violet" />
               </div>
-              <span className="flex-1 text-left">{t.label}</span>
+              <span className="flex-1 text-left">
+                <span className="block font-semibold">{t.label}</span>
+                <span className="block text-xs font-normal text-muted-foreground">{t.description}</span>
+              </span>
               <ChevronRight size={14} className="text-muted-foreground" />
             </button>
           );
         })}
       </div>
 
-      {/* Desktop: Tabs */}
-      <div className="hidden lg:block border-b border-border">
-        <nav className="flex gap-1 -mb-px">
+      <div className="hidden min-h-[560px] grid-cols-[260px_minmax(0,1fr)] gap-5 lg:grid">
+        <aside className="sticky top-6 h-fit rounded-2xl border border-border bg-card p-2 shadow-soft">
           {TABS.map(t => {
             const Icon = t.icon;
             const active = tab === t.key;
             return (
               <button
                 key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
-                  active
-                    ? 'border-aurora-violet text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                }`}
+                onClick={() => selectTab(t.key)}
+                className={
+                  'flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors ' +
+                  (active ? 'bg-aurora-violet/10 text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground')
+                }
               >
-                <Icon size={15} className={active ? 'text-aurora-violet' : ''} />
-                {t.label}
+                <Icon size={16} className={active ? 'mt-0.5 text-aurora-violet' : 'mt-0.5'} />
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold">{t.label}</span>
+                  <span className="block text-xs font-normal leading-5 text-muted-foreground">{t.description}</span>
+                </span>
               </button>
             );
           })}
-        </nav>
-      </div>
+        </aside>
 
-      {/* Desktop Tab content */}
-      <div className="hidden lg:block">
-        {tab === 'org' && <OrgTab />}
-        {tab === 'depts' && <DeptsTab />}
-        {tab === 'teams' && <TeamsTab />}
-        {tab === 'rbac' && <RbacTab />}
-        {tab === 'tags' && <TagsTab />}
-        {tab === 'integrations' && <IntegrationsTab />}
+        <section className="min-w-0 rounded-2xl border border-border bg-card p-5 shadow-soft">
+          <div className="mb-5 border-b border-border pb-4">
+            <p className="text-lg font-semibold text-foreground">{activeTab.label}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{activeTab.description}</p>
+          </div>
+          {renderTab()}
+        </section>
       </div>
     </div>
   );

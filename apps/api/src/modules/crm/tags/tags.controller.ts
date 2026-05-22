@@ -37,11 +37,12 @@ export class TagsController {
 
   @Delete(':id/entities/:entityType/:entityId')
   removeFromEntity(
+    @OrgId() orgId: string,
     @Param('id') tagId: string,
     @Param('entityType') entityType: EntityType,
     @Param('entityId') entityId: string,
   ) {
-    return this.tagsService.removeFromEntity(tagId, entityType, entityId);
+    return this.tagsService.removeFromEntity(orgId, tagId, entityType, entityId);
   }
 
   @Get('entity/:entityType/:entityId')

@@ -35,6 +35,9 @@ jobs:
       - name: Lint
         run: pnpm turbo run lint
 
+      - name: Tenant scope static check
+        run: pnpm check:tenant-scope
+
       - name: Build
         run: pnpm turbo run build
 

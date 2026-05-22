@@ -6,9 +6,12 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TenantScopeService } from '../../common/services/tenant-scope.service';
+import { PlanLimitsService } from '../../common/services/plan-limits.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PaginationDto, paginate } from '../../common/dto/pagination.dto';
+import type { BulkDeleteResult } from '../../common/dto/bulk-delete.dto';
 
 const USER_SELECT = {
   id: true,
@@ -35,9 +38,16 @@ export class UsersService {
   constructor(
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
+    private tenantScope: TenantScopeService,
+    private planLimits: PlanLimitsService,
   ) {}
 
   async create(orgId: string, dto: CreateUserDto, createdBy?: string) {
+    await this.tenantScope.ensureDepartment(orgId, dto.deptId);
+    await this.tenantScope.ensureTeam(orgId, dto.teamId);
+    await this.tenantScope.ensureRole(orgId, dto.roleId);
+    await this.planLimits.assertCanCreate(orgId, 'users');
+
     const existing = await this.prisma.user.findFirst({
       where: { orgId, email: dto.email, deletedAt: null },
     });
@@ -101,8 +111,7 @@ export class UsersService {
         where,
         select: USER_SELECT,
         orderBy: { createdAt: 'desc' },
-        skip: query.skip,
-        take: query.limit,
+        ...(query.all ? {} : { skip: query.skip, take: query.limit }),
       }),
       this.prisma.user.count({ where }),
     ]);
@@ -123,9 +132,12 @@ export class UsersService {
 
   async update(orgId: string, id: string, dto: UpdateUserDto, updatedBy?: string) {
     await this.findOne(orgId, id);
+    await this.tenantScope.ensureDepartment(orgId, dto.deptId);
+    await this.tenantScope.ensureTeam(orgId, dto.teamId);
+    await this.tenantScope.ensureRole(orgId, dto.roleId);
 
-    const user = await this.prisma.user.update({
-      where: { id },
+    await this.prisma.user.updateMany({
+      where: { id, orgId, deletedAt: null },
       data: {
         ...(dto.fullName && { fullName: dto.fullName }),
         ...(dto.phone !== undefined && { phone: dto.phone }),
@@ -134,8 +146,8 @@ export class UsersService {
         ...(dto.deptId !== undefined && { deptId: dto.deptId }),
         ...(dto.teamId !== undefined && { teamId: dto.teamId }),
       },
-      select: USER_SELECT,
     });
+    const user = await this.findOne(orgId, id);
 
     this.eventEmitter.emit('audit.create', {
       orgId,
@@ -151,8 +163,8 @@ export class UsersService {
   async deactivate(orgId: string, id: string, actorId?: string) {
     await this.findOne(orgId, id);
 
-    await this.prisma.user.update({
-      where: { id },
+    await this.prisma.user.updateMany({
+      where: { id, orgId, deletedAt: null },
       data: { status: 'INACTIVE' },
     });
 
@@ -168,8 +180,8 @@ export class UsersService {
   async remove(orgId: string, id: string, actorId?: string) {
     await this.findOne(orgId, id);
 
-    await this.prisma.user.update({
-      where: { id },
+    await this.prisma.user.updateMany({
+      where: { id, orgId, deletedAt: null },
       data: { deletedAt: new Date() },
     });
 
@@ -180,5 +192,36 @@ export class UsersService {
       resource: 'users',
       resourceId: id,
     });
+  }
+
+  async bulkRemove(orgId: string, ids: string[], actorId?: string): Promise<BulkDeleteResult> {
+    const uniqueIds = [...new Set(ids)];
+    const existing = await this.prisma.user.findMany({
+      where: { id: { in: uniqueIds }, orgId, deletedAt: null },
+      select: { id: true },
+    });
+    const deletedIds = existing.map((user) => user.id);
+
+    if (deletedIds.length > 0) {
+      await this.prisma.user.updateMany({
+        where: { id: { in: deletedIds }, orgId, deletedAt: null },
+        data: { deletedAt: new Date() },
+      });
+      for (const id of deletedIds) {
+        this.eventEmitter.emit('audit.create', {
+          orgId,
+          userId: actorId,
+          action: 'DELETE',
+          resource: 'users',
+          resourceId: id,
+        });
+      }
+    }
+
+    return {
+      deletedIds,
+      failedIds: uniqueIds.filter((id) => !deletedIds.includes(id)),
+      count: deletedIds.length,
+    };
   }
 }

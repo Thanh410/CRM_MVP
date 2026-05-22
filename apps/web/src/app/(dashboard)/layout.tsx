@@ -38,20 +38,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  if (!mounted) return <div className="flex h-screen bg-background" />;
+  if (!mounted) return <div className="flex h-dvh bg-background" />;
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-dvh w-full overflow-hidden bg-background">
       {/* Sidebar — desktop sticky, mobile drawer */}
       <Sidebar mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)} />
 
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header
           onOpenSearch={() => setCmdOpen(true)}
           onOpenMobileNav={() => setMobileNavOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 lg:pb-6 bg-muted/40">
+        <main className="min-w-0 flex-1 overflow-y-auto bg-muted/40 px-3 py-4 pb-20 sm:px-6 sm:py-6 lg:pb-6">
           {children}
         </main>
       </div>

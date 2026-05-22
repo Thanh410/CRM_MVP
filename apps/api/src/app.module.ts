@@ -43,6 +43,7 @@ import { MessengerModule } from './modules/integrations/messenger/messenger.modu
 // Reporting
 import { ReportingModule } from './modules/reporting/reporting.module';
 import { HealthController } from './health.controller';
+import { SearchModule } from './modules/search/search.module';
 
 @Module({
   imports: [
@@ -117,6 +118,7 @@ import { HealthController } from './health.controller';
 
     // Reporting
     ReportingModule,
+    SearchModule,
   ],
 
   controllers: [HealthController],

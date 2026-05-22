@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { formatDate, formatCurrency } from '@/lib/utils';
@@ -9,6 +10,13 @@ import { TagSelector } from '@/components/tag-selector';
 import { EntityTimeline } from '@/components/entity-timeline';
 import { AvatarGradient } from '@/components/ui/avatar-gradient';
 import { RippleButton } from '@/components/ui/ripple-button';
+import {
+  BulkActionBar,
+  DataTablePagination,
+  getDataTableQueryParams,
+  parseDataTablePageSize,
+  type DataTablePageSize,
+} from '@/components/ui/data-table-controls';
 import {
   Plus,
   Search,
@@ -576,8 +584,11 @@ function CompanySlideOver({
 
 export default function CompaniesPage() {
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState('');
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<DataTablePageSize>(50);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Modal / slide-over state
   const [modalOpen, setModalOpen] = useState(false);
@@ -585,10 +596,10 @@ export default function CompaniesPage() {
   const [slideOverId, setSlideOverId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['companies', { search, page }],
+    queryKey: ['companies', { search, page, pageSize }],
     queryFn: async () => {
       const { data } = await api.get('/companies', {
-        params: { search: search || undefined, page, limit: 20 },
+        params: { search: search || undefined, ...getDataTableQueryParams(page, pageSize) },
       });
       return data;
     },
@@ -603,6 +614,22 @@ export default function CompaniesPage() {
       toast.success('Đã xóa công ty');
     },
     onError: () => toast.error('Xóa thất bại'),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => api.post('/companies/bulk-delete', { ids }).then((res) => res.data as { deletedIds: string[]; failedIds: string[]; count: number }),
+    onSuccess: ({ deletedIds, failedIds }) => {
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        deletedIds.forEach((id) => next.delete(id));
+        return next;
+      });
+      if (slideOverId && deletedIds.includes(slideOverId)) setSlideOverId(null);
+      if (deletedIds.length > 0) toast.success(`Đã xóa ${deletedIds.length} công ty`);
+      if (failedIds.length > 0) toast.error(`${failedIds.length} công ty chưa xóa được`);
+    },
+    onError: () => toast.error('Xóa công ty đã chọn thất bại'),
   });
 
   function openCreate() {
@@ -624,6 +651,14 @@ export default function CompaniesPage() {
       deleteMutation.mutate(company.id);
       if (slideOverId === company.id) setSlideOverId(null);
     }
+  }
+
+  function changePageSize(value: string) {
+    const next = parseDataTablePageSize(value);
+    if (next === 'all' && (meta?.total ?? 0) > 500 && !window.confirm(`Tải tất cả ${meta?.total ?? 0} công ty?`)) return;
+    setPageSize(next);
+    setPage(1);
+    setSelectedIds(new Set());
   }
 
   const companies: Company[] = data?.data ?? [];
@@ -667,6 +702,37 @@ export default function CompaniesPage() {
         </div>
       </div>
 
+      <BulkActionBar
+        count={selectedIds.size}
+        entityLabel="công ty"
+        onClear={() => setSelectedIds(new Set())}
+        onDelete={() => {
+          const ids = Array.from(selectedIds);
+          if (ids.length === 0) return;
+          if (!window.confirm(`Xóa ${ids.length} công ty đã chọn?`)) return;
+          bulkDeleteMutation.mutate(ids);
+        }}
+      />
+      {companies.length > 0 && (
+        <button
+          type="button"
+          onClick={() => {
+            const allVisibleSelected = companies.every((company) => selectedIds.has(company.id));
+            setSelectedIds((prev) => {
+              const next = new Set(prev);
+              companies.forEach((company) => {
+                if (allVisibleSelected) next.delete(company.id);
+                else next.add(company.id);
+              });
+              return next;
+            });
+          }}
+          className="text-xs font-semibold text-aurora-violet hover:underline"
+        >
+          Chọn tất cả dòng đang hiển thị
+        </button>
+      )}
+
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading && (
@@ -686,6 +752,21 @@ export default function CompaniesPage() {
             onClick={() => setSlideOverId(company.id)}
             className="group relative bg-card border border-border rounded-xl p-4 hover:shadow-md hover:border-aurora-violet/30 transition-all cursor-pointer active:scale-[0.99]"
           >
+            <input
+              type="checkbox"
+              checked={selectedIds.has(company.id)}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                setSelectedIds((prev) => {
+                  const next = new Set(prev);
+                  if (e.target.checked) next.add(company.id);
+                  else next.delete(company.id);
+                  return next;
+                });
+              }}
+              className="absolute left-3 top-3 h-4 w-4 rounded border-border accent-[hsl(var(--aurora-violet))]"
+              aria-label={`Chọn ${company.name}`}
+            />
             {/* Action buttons — visible on hover */}
             <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
@@ -705,7 +786,7 @@ export default function CompaniesPage() {
             </div>
 
             {/* Card content */}
-            <div className="flex items-start gap-3 mb-3 pr-12">
+            <div className="flex items-start gap-3 mb-3 pl-6 pr-12">
               <AvatarGradient id={company.id ?? company.name} name={company.name} size="md" className="rounded-xl" />
               <div className="min-w-0">
                 <h3 className="font-display font-bold text-foreground truncate">{company.name}</h3>
@@ -785,6 +866,18 @@ export default function CompaniesPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {meta && (
+        <DataTablePagination
+          page={pageSize === 'all' ? 1 : page}
+          totalPages={totalPages}
+          total={meta.total ?? 0}
+          pageSize={pageSize}
+          itemLabel="công ty"
+          onPageChange={setPage}
+          onPageSizeChange={changePageSize}
+        />
       )}
 
       {/* Create / Edit Modal */}

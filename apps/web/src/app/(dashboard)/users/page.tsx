@@ -1,24 +1,64 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, MoreHorizontal, Pencil, Trash2, UserX, UserCheck, Shield, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Search,
+  Shield,
+  Trash2,
+  UserCheck,
+  UserX,
+  X,
+} from 'lucide-react';
+import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import { AvatarGradient } from '@/components/ui/avatar-gradient';
 import { RippleButton } from '@/components/ui/ripple-button';
 import { StatusPill, type StatusTone } from '@/components/ui/status-pill';
-import { toast } from 'sonner';
+import {
+  BulkActionBar,
+  DataTablePagination,
+  SelectableHeaderCheckbox,
+  getDataTableQueryParams,
+  parseDataTablePageSize,
+  toggleVisibleSelection,
+  type DataTablePageSize,
+} from '@/components/ui/data-table-controls';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface Role { id: string; name: string; displayName: string; }
-interface Dept { id: string; name: string; }
-interface Team { id: string; name: string; deptId: string | null; }
+interface Role {
+  id: string;
+  name: string;
+  displayName: string;
+}
+interface Dept {
+  id: string;
+  name: string;
+}
+
+interface Team {
+  id: string;
+  name: string;
+  deptId: string | null;
+}
+
 interface User {
-  id: string; email: string; fullName: string; phone?: string; avatar?: string;
-  jobTitle?: string; status: 'ACTIVE' | 'INACTIVE' | 'INVITED';
-  deptId?: string; teamId?: string; lastLoginAt?: string;
-  dept?: Dept; team?: Team;
+  id: string;
+  email: string;
+  fullName: string;
+  phone?: string;
+  avatar?: string;
+  jobTitle?: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'INVITED';
+  deptId?: string;
+  teamId?: string;
+  lastLoginAt?: string;
+  dept?: Dept;
+  team?: Team;
   userRoles: { role: Role }[];
 }
 
@@ -27,120 +67,193 @@ const STATUS_TONES: Record<string, StatusTone> = {
   INACTIVE: 'muted',
   INVITED: 'amber',
 };
+
 const STATUS_LABELS: Record<string, string> = {
-  ACTIVE: 'Hoạt động', INACTIVE: 'Vô hiệu', INVITED: 'Đã mời',
+  ACTIVE: 'Hoáº¡t Ä‘á»™ng',
+  INACTIVE: 'VÃ´ hiá»‡u',
+  INVITED: 'ÄÃ£ má»i',
 };
 
-// ─── User Modal ───────────────────────────────────────────────────────────────
-const EMPTY_FORM = { fullName: '', email: '', phone: '', jobTitle: '', deptId: '', teamId: '', roleId: '', password: '' };
+const EMPTY_FORM = {
+  fullName: '',
+  email: '',
+  phone: '',
+  jobTitle: '',
+  deptId: '',
+  teamId: '',
+  roleId: '',
+  password: '',
+};
 
 function UserModal({ user, onClose }: { user: User | null; onClose: () => void }) {
   const qc = useQueryClient();
   const overlayRef = useRef<HTMLDivElement>(null);
   const isEdit = !!user;
-  const [form, setForm] = useState(() => user
-    ? { fullName: user.fullName, email: user.email, phone: user.phone ?? '', jobTitle: user.jobTitle ?? '',
-        deptId: user.deptId ?? '', teamId: user.teamId ?? '',
-        roleId: user.userRoles?.[0]?.role?.id ?? '', password: '' }
-    : EMPTY_FORM
+  const [form, setForm] = useState(() =>
+    user
+      ? {
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone ?? '',
+          jobTitle: user.jobTitle ?? '',
+          deptId: user.deptId ?? '',
+          teamId: user.teamId ?? '',
+          roleId: user.userRoles?.[0]?.role?.id ?? '',
+          password: '',
+        }
+      : EMPTY_FORM,
   );
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm(p => ({ ...p, [k]: e.target.value }));
 
-  const { data: roles = [] } = useQuery<Role[]>({ queryKey: ['rbac-roles'], queryFn: () => api.get('/rbac/roles').then(r => r.data) });
-  const { data: depts = [] } = useQuery<Dept[]>({ queryKey: ['depts'], queryFn: () => api.get('/organizations/departments').then(r => r.data) });
-  const { data: teams = [] } = useQuery<Team[]>({ queryKey: ['teams'], queryFn: () => api.get('/organizations/teams').then(r => r.data) });
+  const set = (key: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm((prev) => ({ ...prev, [key]: event.target.value }));
 
-  const filteredTeams = form.deptId ? teams.filter(t => t.deptId === form.deptId) : teams;
+  const { data: roles = [] } = useQuery<Role[]>({
+    queryKey: ['rbac-roles'],
+    queryFn: () => api.get('/rbac/roles').then((res) => res.data),
+  });
+  const { data: depts = [] } = useQuery<Dept[]>({
+    queryKey: ['depts'],
+    queryFn: () => api.get('/organizations/departments').then((res) => res.data),
+  });
+  const { data: teams = [] } = useQuery<Team[]>({
+    queryKey: ['teams'],
+    queryFn: () => api.get('/organizations/teams').then((res) => res.data),
+  });
+
+  const filteredTeams = form.deptId ? teams.filter((team) => team.deptId === form.deptId) : teams;
 
   const createMutation = useMutation({
-    mutationFn: (payload: typeof form) => api.post('/users', payload).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Tạo người dùng thành công'); onClose(); },
-    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Tạo thất bại'),
-  });
-  const updateMutation = useMutation({
-    mutationFn: (payload: Partial<typeof form>) => api.patch(`/users/${user!.id}`, payload).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Cập nhật thành công'); onClose(); },
-    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Cập nhật thất bại'),
+    mutationFn: (payload: typeof form) => api.post('/users', payload).then((res) => res.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Táº¡o ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng');
+      onClose();
+    },
+    onError: (error: any) => toast.error(error.response?.data?.message ?? 'Táº¡o ngÆ°á»i dÃ¹ng tháº¥t báº¡i'),
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const updateMutation = useMutation({
+    mutationFn: (payload: Partial<typeof form>) => api.patch(`/users/${user!.id}`, payload).then((res) => res.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Cáº­p nháº­t thÃ nh cÃ´ng');
+      onClose();
+    },
+    onError: (error: any) => toast.error(error.response?.data?.message ?? 'Cáº­p nháº­t tháº¥t báº¡i'),
+  });
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     if (isEdit) {
       const { password, email, roleId, ...rest } = form;
       updateMutation.mutate(rest);
-    } else {
-      createMutation.mutate(form);
+      return;
     }
+    createMutation.mutate(form);
   };
-  const isPending = createMutation.isPending || updateMutation.isPending;
 
-  const inputCls = 'w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition';
-  const labelCls = 'block text-xs font-medium text-zinc-600 mb-1';
+  const isPending = createMutation.isPending || updateMutation.isPending;
+  const inputCls =
+    'w-full rounded-lg border border-border bg-card px-3 py-2 text-sm transition focus:border-aurora-violet focus:outline-none focus:ring-4 focus:ring-aurora-violet/15';
+  const labelCls = 'mb-1 block text-xs font-medium text-muted-foreground';
 
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-      onMouseDown={e => { if (e.target === overlayRef.current) onClose(); }}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 backdrop-blur-sm sm:items-center sm:p-4"
+      onMouseDown={(event) => {
+        if (event.target === overlayRef.current) onClose();
+      }}
     >
-      <div className="bg-card text-card-foreground rounded-2xl shadow-lift border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-base font-semibold text-zinc-900">{isEdit ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}</h2>
-          <button onClick={onClose} className="p-1 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-muted"><X size={16} /></button>
+      <div className="max-h-[92dvh] w-full overflow-y-auto rounded-2xl border border-border bg-card text-card-foreground shadow-lift sm:max-w-lg">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6 sm:py-4">
+          <h2 className="text-base font-semibold text-foreground">
+            {isEdit ? 'Chá»‰nh sá»­a ngÆ°á»i dÃ¹ng' : 'ThÃªm ngÆ°á»i dÃ¹ng má»›i'}
+          </h2>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+            <X size={16} />
+          </button>
         </div>
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
-              <label className={labelCls}>Họ tên *</label>
-              <input className={inputCls} value={form.fullName} onChange={set('fullName')} placeholder="Nguyễn Văn A" required />
+
+        <form onSubmit={handleSubmit} className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className={labelCls}>Há» tÃªn *</label>
+              <input className={inputCls} value={form.fullName} onChange={set('fullName')} placeholder="Nguyá»…n VÄƒn A" required />
             </div>
             <div>
               <label className={labelCls}>Email *</label>
-              <input className={inputCls} type="email" value={form.email} onChange={set('email')} placeholder="email@company.com" required disabled={isEdit} />
+              <input
+                className={inputCls}
+                type="email"
+                value={form.email}
+                onChange={set('email')}
+                placeholder="email@company.com"
+                required
+                disabled={isEdit}
+              />
             </div>
             <div>
-              <label className={labelCls}>Số điện thoại</label>
+              <label className={labelCls}>Sá»‘ Ä‘iá»‡n thoáº¡i</label>
               <input className={inputCls} value={form.phone} onChange={set('phone')} placeholder="0901234567" />
             </div>
-            <div className="col-span-2">
-              <label className={labelCls}>Chức danh</label>
-              <input className={inputCls} value={form.jobTitle} onChange={set('jobTitle')} placeholder="Trưởng phòng kinh doanh" />
+            <div className="sm:col-span-2">
+              <label className={labelCls}>Chá»©c danh</label>
+              <input className={inputCls} value={form.jobTitle} onChange={set('jobTitle')} placeholder="TrÆ°á»Ÿng phÃ²ng kinh doanh" />
             </div>
             <div>
-              <label className={labelCls}>Phòng ban</label>
-              <select className={inputCls} value={form.deptId} onChange={e => { set('deptId')(e); setForm(p => ({ ...p, deptId: e.target.value, teamId: '' })); }}>
-                <option value="">-- Chọn phòng ban --</option>
-                {depts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              <label className={labelCls}>PhÃ²ng ban</label>
+              <select
+                className={inputCls}
+                value={form.deptId}
+                onChange={(event) => setForm((prev) => ({ ...prev, deptId: event.target.value, teamId: '' }))}
+              >
+                <option value="">Chá»n phÃ²ng ban</option>
+                {depts.map((dept) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <label className={labelCls}>Nhóm</label>
+              <label className={labelCls}>NhÃ³m</label>
               <select className={inputCls} value={form.teamId} onChange={set('teamId')}>
-                <option value="">-- Chọn nhóm --</option>
-                {filteredTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                <option value="">Chá»n nhÃ³m</option>
+                {filteredTeams.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
               </select>
             </div>
             {!isEdit && (
               <div>
-                <label className={labelCls}>Vai trò</label>
+                <label className={labelCls}>Vai trÃ²</label>
                 <select className={inputCls} value={form.roleId} onChange={set('roleId')}>
-                  <option value="">-- Chọn vai trò --</option>
-                  {roles.map(r => <option key={r.id} value={r.id}>{r.displayName}</option>)}
+                  <option value="">Chá»n vai trÃ²</option>
+                  {roles.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.displayName}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
             {!isEdit && (
               <div>
-                <label className={labelCls}>Mật khẩu *</label>
-                <input className={inputCls} type="password" value={form.password} onChange={set('password')} placeholder="••••••••" required={!isEdit} minLength={6} />
+                <label className={labelCls}>Máº­t kháº©u *</label>
+                <input className={inputCls} type="password" value={form.password} onChange={set('password')} required minLength={6} />
               </div>
             )}
           </div>
-          <div className="flex justify-end gap-2 pt-3 border-t border-border">
-            <RippleButton type="button" variant="outline" onClick={onClose}>Hủy</RippleButton>
-            <RippleButton type="submit" variant="aurora" disabled={isPending}>
-              {isPending ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo người dùng'}
+
+          <div className="flex flex-col-reverse gap-2 border-t border-border pt-3 sm:flex-row sm:justify-end">
+            <RippleButton type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
+              Há»§y
+            </RippleButton>
+            <RippleButton type="submit" variant="aurora" disabled={isPending} className="w-full sm:w-auto">
+              {isPending ? 'Äang lÆ°u...' : isEdit ? 'LÆ°u thay Ä‘á»•i' : 'Táº¡o ngÆ°á»i dÃ¹ng'}
             </RippleButton>
           </div>
         </form>
@@ -148,146 +261,161 @@ function UserModal({ user, onClose }: { user: User | null; onClose: () => void }
     </div>
   );
 }
-
-// ─── Slide-over Detail ────────────────────────────────────────────────────────
-function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: () => void; onEdit: (u: User) => void }) {
+function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: () => void; onEdit: (user: User) => void }) {
   const qc = useQueryClient();
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ['user', userId],
-    queryFn: () => api.get(`/users/${userId}`).then(r => r.data),
+    queryFn: () => api.get(`/users/${userId}`).then((res) => res.data),
   });
   const { data: allRoles = [] } = useQuery<Role[]>({
     queryKey: ['rbac-roles'],
-    queryFn: () => api.get('/rbac/roles').then(r => r.data),
+    queryFn: () => api.get('/rbac/roles').then((res) => res.data),
   });
 
   const deactivateMutation = useMutation({
     mutationFn: () => api.patch(`/users/${userId}/deactivate`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); qc.invalidateQueries({ queryKey: ['user', userId] }); toast.success('Đã cập nhật trạng thái'); },
-    onError: () => toast.error('Thao tác thất bại'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      qc.invalidateQueries({ queryKey: ['user', userId] });
+      toast.success('ÄÃ£ cáº­p nháº­t tráº¡ng thÃ¡i');
+    },
+    onError: () => toast.error('Thao tÃ¡c tháº¥t báº¡i'),
   });
 
   const assignRoleMutation = useMutation({
-    mutationFn: (roleId: string) => api.post(`/rbac/users/${userId}/roles/${roleId}`).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['user', userId] }); qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Đã gán vai trò'); },
-    onError: () => toast.error('Gán vai trò thất bại'),
+    mutationFn: (roleId: string) => api.post(`/rbac/users/${userId}/roles/${roleId}`).then((res) => res.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['user', userId] });
+      qc.invalidateQueries({ queryKey: ['users'] });
+      toast.success('ÄÃ£ gÃ¡n vai trÃ²');
+    },
+    onError: () => toast.error('GÃ¡n vai trÃ² tháº¥t báº¡i'),
   });
 
   const removeRoleMutation = useMutation({
-    mutationFn: (roleId: string) => api.delete(`/rbac/users/${userId}/roles/${roleId}`).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['user', userId] }); qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Đã xóa vai trò'); },
-    onError: () => toast.error('Xóa vai trò thất bại'),
+    mutationFn: (roleId: string) => api.delete(`/rbac/users/${userId}/roles/${roleId}`).then((res) => res.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['user', userId] });
+      qc.invalidateQueries({ queryKey: ['users'] });
+      toast.success('ÄÃ£ xÃ³a vai trÃ²');
+    },
+    onError: () => toast.error('XÃ³a vai trÃ² tháº¥t báº¡i'),
   });
 
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-card text-card-foreground border-l border-border shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
-          <h3 className="font-display text-sm font-bold">Chi tiết người dùng</h3>
-          <button onClick={onClose} className="p-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted"><X size={16} /></button>
+      <div className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-border bg-card text-card-foreground shadow-2xl sm:max-w-md">
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-4 sm:px-5">
+          <h3 className="font-display text-sm font-bold">Chi tiáº¿t ngÆ°á»i dÃ¹ng</h3>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+            <X size={16} />
+          </button>
         </div>
+
         {isLoading ? (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">Đang tải...</div>
+          <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">Äang táº£i...</div>
         ) : user ? (
           <div className="flex-1 overflow-y-auto">
-            {/* Header */}
-            <div className="px-5 py-5 border-b border-border bg-aurora-soft/30 flex items-start gap-4">
+            <div className="flex items-start gap-4 border-b border-border bg-aurora-soft/30 px-4 py-5 sm:px-5">
               {user.avatar ? (
-                <img src={user.avatar} alt={user.fullName} className="w-12 h-12 rounded-full object-cover" />
+                <img src={user.avatar} alt={user.fullName} className="h-12 w-12 rounded-full object-cover" />
               ) : (
                 <AvatarGradient id={user.id ?? user.fullName} name={user.fullName} size="lg" />
               )}
-              <div className="flex-1 min-w-0">
-                <p className="font-display font-bold text-foreground">{user.fullName}</p>
-                {user.jobTitle && <p className="text-sm text-muted-foreground mt-0.5">{user.jobTitle}</p>}
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <StatusPill tone={STATUS_TONES[user.status] ?? 'muted'}>
-                    {STATUS_LABELS[user.status]}
-                  </StatusPill>
-                  {user.userRoles?.[0]?.role && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-aurora-violet/10 text-aurora-violet rounded-full text-xs font-semibold">
-                      <Shield size={10} />{user.userRoles[0].role.displayName}
-                    </span>
-                  )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-display font-bold text-foreground">{user.fullName}</p>
+                {user.jobTitle && <p className="mt-0.5 text-sm text-muted-foreground">{user.jobTitle}</p>}
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <StatusPill tone={STATUS_TONES[user.status] ?? 'muted'}>{STATUS_LABELS[user.status]}</StatusPill>
+                  {user.userRoles?.[0]?.role && <RoleBadge role={user.userRoles[0].role} />}
                 </div>
               </div>
             </div>
 
-            {/* Info */}
-            <div className="px-5 py-4 space-y-3 border-b border-gray-50">
-              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Thông tin liên hệ</p>
+            <InfoSection title="ThÃ´ng tin liÃªn há»‡">
               <InfoRow label="Email" value={user.email} />
-              <InfoRow label="Điện thoại" value={user.phone} />
-            </div>
+              <InfoRow label="Äiá»‡n thoáº¡i" value={user.phone} />
+            </InfoSection>
 
-            <div className="px-5 py-4 space-y-3 border-b border-gray-50">
-              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Tổ chức</p>
-              <InfoRow label="Phòng ban" value={user.dept?.name} />
-              <InfoRow label="Nhóm" value={user.team?.name} />
-            </div>
+            <InfoSection title="Tá»• chá»©c">
+              <InfoRow label="PhÃ²ng ban" value={user.dept?.name} />
+              <InfoRow label="NhÃ³m" value={user.team?.name} />
+            </InfoSection>
 
             {user.lastLoginAt && (
-              <div className="px-5 py-4 border-b border-gray-50">
-                <InfoRow label="Đăng nhập lần cuối" value={formatDate(user.lastLoginAt)} />
-              </div>
+              <InfoSection title="Hoáº¡t Ä‘á»™ng">
+                <InfoRow label="ÄÄƒng nháº­p cuá»‘i" value={formatDate(user.lastLoginAt)} />
+              </InfoSection>
             )}
 
-            {/* Roles */}
-            <div className="px-5 py-4 space-y-3 border-b border-gray-50">
-              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Vai trò</p>
+            <div className="space-y-3 border-b border-border px-4 py-4 sm:px-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Vai trÃ²</p>
               <div className="flex flex-wrap gap-2">
                 {user.userRoles?.map(({ role }) => (
-                  <div key={role.id} className="flex items-center gap-1 bg-muted text-indigo-700 px-2 py-1 rounded-lg text-xs font-medium">
+                  <div key={role.id} className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-xs font-medium text-aurora-violet">
                     <Shield size={11} />
                     {role.displayName}
                     <button
                       onClick={() => removeRoleMutation.mutate(role.id)}
                       disabled={removeRoleMutation.isPending}
-                      className="ml-0.5 hover:text-red-500"
-                      title="Xóa vai trò"
+                      className="ml-0.5 rounded hover:text-red-500 disabled:opacity-60"
+                      title="XÃ³a vai trÃ²"
                     >
                       <X size={11} />
                     </button>
                   </div>
                 ))}
-                {(!user.userRoles || user.userRoles.length === 0) && (
-                  <p className="text-xs text-zinc-400">Chưa có vai trò</p>
-                )}
+                {(!user.userRoles || user.userRoles.length === 0) && <p className="text-xs text-muted-foreground">ChÆ°a cÃ³ vai trÃ²</p>}
               </div>
-              {/* Add role */}
-              {allRoles.filter(r => !user.userRoles?.some(ur => ur.role.id === r.id)).length > 0 && (
+              {allRoles.filter((role) => !user.userRoles?.some((userRole) => userRole.role.id === role.id)).length > 0 && (
                 <select
                   value=""
-                  onChange={e => { if (e.target.value) assignRoleMutation.mutate(e.target.value); }}
-                  className="w-full px-2 py-1.5 text-xs border border-border rounded-lg focus:ring-1 focus:ring-indigo-500 bg-white text-zinc-600"
+                  onChange={(event) => {
+                    if (event.target.value) assignRoleMutation.mutate(event.target.value);
+                  }}
+                  className="w-full rounded-lg border border-border bg-card px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-aurora-violet/20"
                 >
-                  <option value="">+ Thêm vai trò...</option>
+                  <option value="">+ ThÃªm vai trÃ²...</option>
                   {allRoles
-                    .filter(r => !user.userRoles?.some(ur => ur.role.id === r.id))
-                    .map(r => <option key={r.id} value={r.id}>{r.displayName}</option>)}
+                    .filter((role) => !user.userRoles?.some((userRole) => userRole.role.id === role.id))
+                    .map((role) => (
+                      <option key={role.id} value={role.id}>
+                        {role.displayName}
+                      </option>
+                    ))}
                 </select>
               )}
             </div>
 
-            {/* Actions */}
-            <div className="px-5 py-4 flex gap-2">
+            <div className="grid grid-cols-1 gap-2 px-4 py-4 sm:grid-cols-2 sm:px-5">
               <button
                 onClick={() => onEdit(user)}
-                className="flex-1 px-3 py-2 text-sm text-zinc-900 border border-indigo-200 rounded-lg hover:bg-aurora-soft/30 flex items-center justify-center gap-1.5"
+                className="flex items-center justify-center gap-1.5 rounded-lg border border-aurora-violet/25 px-3 py-2 text-sm text-foreground hover:bg-aurora-soft/30"
               >
-                <Pencil size={14} />Chỉnh sửa
+                <Pencil size={14} />
+                Chá»‰nh sá»­a
               </button>
               <button
                 onClick={() => deactivateMutation.mutate()}
                 disabled={deactivateMutation.isPending}
-                className={`flex-1 px-3 py-2 text-sm rounded-lg flex items-center justify-center gap-1.5 border disabled:opacity-60 ${
+                className={`flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm disabled:opacity-60 ${
                   user.status === 'ACTIVE'
-                    ? 'text-red-600 border-red-200 hover:bg-red-50'
-                    : 'text-green-600 border-green-200 hover:bg-green-50'
+                    ? 'border-red-200 text-red-600 hover:bg-red-50'
+                    : 'border-green-200 text-green-600 hover:bg-green-50'
                 }`}
               >
-                {user.status === 'ACTIVE' ? <><UserX size={14} />Vô hiệu hóa</> : <><UserCheck size={14} />Kích hoạt</>}
+                {user.status === 'ACTIVE' ? (
+                  <>
+                    <UserX size={14} />
+                    VÃ´ hiá»‡u hÃ³a
+                  </>
+                ) : (
+                  <>
+                    <UserCheck size={14} />
+                    KÃ­ch hoáº¡t
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -297,161 +425,310 @@ function UserSlideOver({ userId, onClose, onEdit }: { userId: string; onClose: (
   );
 }
 
-function InfoRow({ label, value }: { label: string; value?: string | null }) {
-  if (!value) return null;
+function InfoSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-2">
-      <span className="text-xs text-zinc-400 w-28 shrink-0 pt-0.5">{label}</span>
-      <span className="text-sm text-gray-800 flex-1 break-words">{value}</span>
+    <div className="space-y-3 border-b border-border px-4 py-4 sm:px-5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
+      {children}
     </div>
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+function InfoRow({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-start gap-2">
+      <span className="w-28 shrink-0 pt-0.5 text-xs text-muted-foreground">{label}</span>
+      <span className="min-w-0 flex-1 break-words text-sm text-foreground">{value}</span>
+    </div>
+  );
+}
+
+function RoleBadge({ role }: { role: Role }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-aurora-violet/10 px-2 py-0.5 text-xs font-semibold text-aurora-violet">
+      <Shield size={10} />
+      {role.displayName}
+    </span>
+  );
+}
+
+function UserCard({ user, onOpen, onEdit, onDelete }: { user: User; onOpen: () => void; onEdit: () => void; onDelete: () => void }) {
+  return (
+    <article className="rounded-xl border border-border bg-card p-3 shadow-soft">
+      <button onClick={onOpen} className="flex w-full items-start gap-3 text-left">
+        {user.avatar ? (
+          <img src={user.avatar} alt={user.fullName} className="h-10 w-10 shrink-0 rounded-full object-cover" />
+        ) : (
+          <AvatarGradient id={user.id ?? user.fullName} name={user.fullName} size="md" />
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-foreground">{user.fullName}</p>
+              <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+            </div>
+            <StatusPill tone={STATUS_TONES[user.status] ?? 'muted'}>{STATUS_LABELS[user.status]}</StatusPill>
+          </div>
+          {user.jobTitle && <p className="mt-2 line-clamp-1 text-sm text-muted-foreground">{user.jobTitle}</p>}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {user.userRoles?.[0]?.role && <RoleBadge role={user.userRoles[0].role} />}
+            {user.dept?.name && <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{user.dept.name}</span>}
+          </div>
+        </div>
+      </button>
+      <div className="mt-3 flex gap-2 border-t border-border pt-3">
+        <button onClick={onEdit} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:bg-muted">
+          <Pencil size={13} />
+          Sá»­a
+        </button>
+        <button onClick={onDelete} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">
+          <Trash2 size={13} />
+          XÃ³a
+        </button>
+      </div>
+    </article>
+  );
+}
+
 export default function UsersPage() {
   const qc = useQueryClient();
-  const [search, setSearch] = useState('');
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [page, setPage] = useState(1);
   const [q, setQ] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [slideOverId, setSlideOverId] = useState<string | null>(null);
+  const [pageSize, setPageSize] = useState<DataTablePageSize>(50);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // debounce
-  useEffect(() => { const t = setTimeout(() => { setQ(search); setPage(1); }, 350); return () => clearTimeout(t); }, [search]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setQ(search);
+      setPage(1);
+      setSelectedIds(new Set());
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [search]);
 
   const { data, isLoading } = useQuery<{ data: User[]; meta: any }>({
-    queryKey: ['users', { search: q, page }],
-    queryFn: () => api.get('/users', { params: { search: q || undefined, page, limit: 15 } }).then(r => r.data),
+    queryKey: ['users', { search: q, page, pageSize }],
+    queryFn: () => api.get('/users', { params: { search: q || undefined, ...getDataTableQueryParams(page, pageSize) } }).then((res) => res.data),
   });
+
   const users = data?.data ?? [];
   const meta = data?.meta;
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/users/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Đã xóa người dùng'); if (slideOverId) setSlideOverId(null); },
-    onError: () => toast.error('Xóa thất bại'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      toast.success('ÄÃ£ xÃ³a ngÆ°á»i dÃ¹ng');
+      if (slideOverId) setSlideOverId(null);
+    },
+    onError: () => toast.error('XÃ³a ngÆ°á»i dÃ¹ng tháº¥t báº¡i'),
   });
 
-  const handleDelete = (u: User) => {
-    if (!window.confirm(`Xóa người dùng "${u.fullName}"?`)) return;
-    deleteMutation.mutate(u.id);
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => api.post('/users/bulk-delete', { ids }).then((res) => res.data as { deletedIds: string[]; failedIds: string[]; count: number }),
+    onSuccess: ({ deletedIds, failedIds }) => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        deletedIds.forEach((id) => next.delete(id));
+        return next;
+      });
+      if (slideOverId && deletedIds.includes(slideOverId)) setSlideOverId(null);
+      if (deletedIds.length > 0) toast.success(`ÄÃ£ xÃ³a ${deletedIds.length} ngÆ°á»i dÃ¹ng`);
+      if (failedIds.length > 0) toast.error(`${failedIds.length} ngÆ°á»i dÃ¹ng chÆ°a xÃ³a Ä‘Æ°á»£c`);
+    },
+    onError: () => toast.error('XÃ³a ngÆ°á»i dÃ¹ng Ä‘Ã£ chá»n tháº¥t báº¡i'),
+  });
+
+  const handleDelete = (user: User) => {
+    if (!window.confirm(`XÃ³a ngÆ°á»i dÃ¹ng "${user.fullName}"?`)) return;
+    deleteMutation.mutate(user.id);
   };
 
-  const openCreate = () => { setEditingUser(null); setModalOpen(true); };
-  const openEdit = (u: User) => { setEditingUser(u); setModalOpen(true); setSlideOverId(null); };
+  const toggleRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const changePageSize = (value: string) => {
+    const next = parseDataTablePageSize(value);
+    if (next === 'all' && (meta?.total ?? 0) > 500 && !window.confirm(`Táº£i táº¥t cáº£ ${meta?.total ?? 0} ngÆ°á»i dÃ¹ng?`)) return;
+    setPageSize(next);
+    setPage(1);
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkDelete = () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (!window.confirm(`XÃ³a ${ids.length} ngÆ°á»i dÃ¹ng Ä‘Ã£ chá»n?`)) return;
+    bulkDeleteMutation.mutate(ids);
+  };
+
+  const openCreate = () => {
+    setEditingUser(null);
+    setModalOpen(true);
+  };
+
+  const openEdit = (user: User) => {
+    setEditingUser(user);
+    setModalOpen(true);
+    setSlideOverId(null);
+  };
 
   return (
-    <div className="p-6 space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Người dùng</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            <span className="font-semibold text-foreground">{meta?.total ?? 0}</span> người dùng trong hệ thống
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">NgÆ°á»i dÃ¹ng</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{meta?.total ?? 0}</span> ngÆ°á»i dÃ¹ng trong há»‡ thá»‘ng
           </p>
         </div>
-        <RippleButton variant="aurora" onClick={openCreate}>
-          <Plus size={16} />Thêm người dùng
+        <RippleButton variant="aurora" onClick={openCreate} className="w-full sm:w-auto">
+          <Plus size={16} />
+          ThÃªm ngÆ°á»i dÃ¹ng
         </RippleButton>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-xs">
+      <div className="relative w-full sm:max-w-sm">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm theo tên, email..."
-          className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition" />
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="TÃ¬m theo tÃªn, email..."
+          className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm transition focus:border-aurora-violet focus:outline-none focus:ring-4 focus:ring-aurora-violet/15"
+        />
       </div>
 
-      {/* Table */}
-      <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
-        <table className="w-full text-sm">
+      <BulkActionBar
+        count={selectedIds.size}
+        entityLabel="ngÆ°á»i dÃ¹ng"
+        onClear={() => setSelectedIds(new Set())}
+        onDelete={handleBulkDelete}
+      />
+
+      <div className="grid gap-3 lg:hidden">
+        {isLoading ? (
+          Array.from({ length: 5 }).map((_, index) => <div key={index} className="h-32 animate-pulse rounded-xl border border-border bg-card" />)
+        ) : users.length === 0 ? (
+          <div className="rounded-xl border border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">
+            KhÃ´ng cÃ³ ngÆ°á»i dÃ¹ng nÃ o
+          </div>
+        ) : (
+          users.map((user) => (
+            <UserCard
+              key={user.id}
+              user={user}
+              onOpen={() => setSlideOverId(user.id)}
+              onEdit={() => openEdit(user)}
+              onDelete={() => handleDelete(user)}
+            />
+          ))
+        )}
+      </div>
+
+      <div className="hidden overflow-hidden rounded-2xl border border-border bg-card shadow-soft lg:block">
+        <table className="w-full table-fixed text-sm">
           <thead>
-            <tr className="bg-muted border-b border-border">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Người dùng</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide hidden md:table-cell">Vai trò</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide hidden lg:table-cell">Phòng ban</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide hidden xl:table-cell">Đăng nhập cuối</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Trạng thái</th>
-              <th className="px-4 py-3 w-10"></th>
+            <tr className="border-b border-border bg-muted">
+              <th className="w-10 px-4 py-3">
+                <SelectableHeaderCheckbox
+                  rows={users}
+                  selectedIds={selectedIds}
+                  onToggle={() => setSelectedIds((prev) => toggleVisibleSelection(users, prev))}
+                />
+              </th>
+              <th className="w-[32%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">NgÆ°á»i dÃ¹ng</th>
+              <th className="w-[18%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Vai trÃ²</th>
+              <th className="w-[18%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">PhÃ²ng ban</th>
+              <th className="w-[18%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">ÄÄƒng nháº­p cuá»‘i</th>
+              <th className="w-[10%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tráº¡ng thÃ¡i</th>
+              <th className="w-12 px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-border">
             {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i}>
-                  {Array.from({ length: 6 }).map((_, j) => (
-                    <td key={j} className="px-4 py-3"><div className="h-4 bg-muted rounded animate-pulse" /></td>
+              Array.from({ length: 5 }).map((_, rowIndex) => (
+                <tr key={rowIndex}>
+                  {Array.from({ length: 7 }).map((_, colIndex) => (
+                    <td key={colIndex} className="px-4 py-3">
+                      <div className="h-4 animate-pulse rounded bg-muted" />
+                    </td>
                   ))}
                 </tr>
               ))
             ) : users.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-12 text-center text-zinc-400 text-sm">Không có người dùng nào</td></tr>
+              <tr>
+                <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                  KhÃ´ng cÃ³ ngÆ°á»i dÃ¹ng nÃ o
+                </td>
+              </tr>
             ) : (
-              users.map(u => (
-                <tr key={u.id} onClick={() => setSlideOverId(u.id)}
-                  className="hover:bg-aurora-soft/30 transition-colors cursor-pointer group">
+              users.map((user) => (
+                <tr key={user.id} onClick={() => setSlideOverId(user.id)} className="group cursor-pointer transition-colors hover:bg-aurora-soft/30">
+                  <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(user.id)}
+                      onChange={() => toggleRow(user.id)}
+                      className="h-4 w-4 rounded border-border accent-[hsl(var(--aurora-violet))]"
+                      aria-label={`Chá»n ${user.fullName}`}
+                    />
+                  </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {u.avatar ? (
-                        <img src={u.avatar} alt={u.fullName} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                    <div className="flex min-w-0 items-center gap-3">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={user.fullName} className="h-8 w-8 shrink-0 rounded-full object-cover" />
                       ) : (
-                        <AvatarGradient id={u.id ?? u.fullName} name={u.fullName} size="sm" />
+                        <AvatarGradient id={user.id ?? user.fullName} name={user.fullName} size="sm" />
                       )}
-                      <div>
-                        <p className="font-semibold text-foreground">{u.fullName}</p>
-                        <p className="text-xs text-muted-foreground">{u.email}</p>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-foreground">{user.fullName}</p>
+                        <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
-                    {u.userRoles?.[0]?.role
-                      ? <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-aurora-violet/10 text-aurora-violet rounded-full text-xs font-semibold">
-                          <Shield size={10} />{u.userRoles[0].role.displayName}
-                        </span>
-                      : <span className="text-muted-foreground/60 text-xs">—</span>}
-                  </td>
-                  <td className="px-4 py-3 text-foreground/80 hidden lg:table-cell">{u.dept?.name ?? '—'}</td>
-                  <td className="px-4 py-3 text-muted-foreground hidden xl:table-cell">{u.lastLoginAt ? formatDate(u.lastLoginAt) : '—'}</td>
+                  <td className="px-4 py-3">{user.userRoles?.[0]?.role ? <RoleBadge role={user.userRoles[0].role} /> : <span className="text-xs text-muted-foreground">-</span>}</td>
+                  <td className="truncate px-4 py-3 text-foreground/80">{user.dept?.name ?? '-'}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{user.lastLoginAt ? formatDate(user.lastLoginAt) : '-'}</td>
                   <td className="px-4 py-3">
-                    <StatusPill tone={STATUS_TONES[u.status] ?? 'muted'}>
-                      {STATUS_LABELS[u.status]}
-                    </StatusPill>
+                    <StatusPill tone={STATUS_TONES[user.status] ?? 'muted'}>{STATUS_LABELS[user.status]}</StatusPill>
                   </td>
-                  <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                    <UserRowMenu user={u} onEdit={() => openEdit(u)} onDelete={() => handleDelete(u)} />
+                  <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
+                    <UserRowMenu user={user} onEdit={() => openEdit(user)} onDelete={() => handleDelete(user)} />
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
-
-        {/* Pagination */}
-        {meta && meta.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted">
-            <p className="text-xs text-zinc-500">Trang {page}/{meta.totalPages} · {meta.total} người dùng</p>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setPage(p => p - 1)} disabled={page <= 1}
-                className="p-1.5 rounded text-zinc-500 hover:bg-gray-200 disabled:opacity-40"><ChevronLeft size={14} /></button>
-              <button onClick={() => setPage(p => p + 1)} disabled={page >= meta.totalPages}
-                className="p-1.5 rounded text-zinc-500 hover:bg-gray-200 disabled:opacity-40"><ChevronRight size={14} /></button>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Modal */}
-      {modalOpen && <UserModal user={editingUser} onClose={() => setModalOpen(false)} />}
-
-      {/* Slide-over */}
-      {slideOverId && (
-        <UserSlideOver
-          userId={slideOverId}
-          onClose={() => setSlideOverId(null)}
-          onEdit={openEdit}
+      {meta && (
+        <DataTablePagination
+          page={pageSize === 'all' ? 1 : page}
+          totalPages={meta.totalPages ?? 1}
+          total={meta.total ?? 0}
+          pageSize={pageSize}
+          itemLabel="người dùng"
+          onPageChange={setPage}
+          onPageSizeChange={changePageSize}
         />
       )}
+
+      {modalOpen && <UserModal user={editingUser} onClose={() => setModalOpen(false)} />}
+      {slideOverId && <UserSlideOver userId={slideOverId} onClose={() => setSlideOverId(null)} onEdit={openEdit} />}
     </div>
   );
 }
@@ -459,23 +736,33 @@ export default function UsersPage() {
 function UserRowMenu({ user, onEdit, onDelete }: { user: User; onEdit: () => void; onDelete: () => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const handler = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setOpen(o => !o)} className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity">
+      <button
+        onClick={() => setOpen((prev) => !prev)}
+        className="rounded-lg p-1.5 text-muted-foreground opacity-100 transition hover:bg-muted hover:text-foreground lg:opacity-0 lg:group-hover:opacity-100"
+        aria-label={`Thao tÃ¡c vá»›i ${user.fullName}`}
+      >
         <MoreHorizontal size={15} />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-border z-10 overflow-hidden">
-          <button onClick={() => { onEdit(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-aurora-soft/30">
-            <Pencil size={13} />Chỉnh sửa
+        <div className="absolute right-0 top-full z-10 mt-1 w-40 overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-lg">
+          <button onClick={() => { onEdit(); setOpen(false); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted">
+            <Pencil size={13} />
+            Chá»‰nh sá»­a
           </button>
-          <button onClick={() => { onDelete(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50">
-            <Trash2 size={13} />Xóa
+          <button onClick={() => { onDelete(); setOpen(false); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50">
+            <Trash2 size={13} />
+            XÃ³a
           </button>
         </div>
       )}

@@ -28,9 +28,11 @@ describe('NotificationsService', () => {
       notification: {
         create: jest.fn(),
         findMany: jest.fn(),
+        findFirst: jest.fn(),
         update: jest.fn(),
         updateMany: jest.fn(),
         delete: jest.fn(),
+        deleteMany: jest.fn(),
         count: jest.fn(),
       },
     };
@@ -94,12 +96,13 @@ describe('NotificationsService', () => {
 
   describe('markRead', () => {
     it('cập nhật read=true và set readAt', async () => {
-      prisma.notification.update.mockResolvedValue({ ...mockNotification, read: true });
+      prisma.notification.updateMany.mockResolvedValue({ count: 1 });
+      prisma.notification.findFirst.mockResolvedValue({ ...mockNotification, read: true });
 
-      await service.markRead(orgId, 'notif-1');
+      await service.markRead(orgId, userId, 'notif-1');
 
-      expect(prisma.notification.update).toHaveBeenCalledWith({
-        where: { id: 'notif-1' },
+      expect(prisma.notification.updateMany).toHaveBeenCalledWith({
+        where: { id: 'notif-1', orgId, userId },
         data: expect.objectContaining({ read: true, readAt: expect.any(Date) }),
       });
     });
@@ -121,11 +124,11 @@ describe('NotificationsService', () => {
 
   describe('remove', () => {
     it('xóa notification theo id', async () => {
-      prisma.notification.delete.mockResolvedValue(mockNotification);
+      prisma.notification.deleteMany.mockResolvedValue({ count: 1 });
 
-      await service.remove(orgId, 'notif-1');
+      await service.remove(orgId, userId, 'notif-1');
 
-      expect(prisma.notification.delete).toHaveBeenCalledWith({ where: { id: 'notif-1' } });
+      expect(prisma.notification.deleteMany).toHaveBeenCalledWith({ where: { id: 'notif-1', orgId, userId } });
     });
   });
 

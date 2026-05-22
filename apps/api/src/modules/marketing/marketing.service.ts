@@ -1,11 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TenantScopeService } from '../../common/services/tenant-scope.service';
+import { PlanLimitsService } from '../../common/services/plan-limits.service';
 import { CreateCampaignDto, CreateTemplateDto } from './dto/create-campaign.dto';
 import { CampaignStatus } from '@prisma/client';
 
 @Injectable()
 export class MarketingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private tenantScope: TenantScopeService,
+    private planLimits: PlanLimitsService,
+  ) {}
 
   // ── Templates ──────────────────────────────────────────────
 
@@ -25,13 +31,20 @@ export class MarketingService {
   async updateTemplate(orgId: string, id: string, dto: Partial<CreateTemplateDto>) {
     const tmpl = await this.prisma.campaignTemplate.findFirst({ where: { id, orgId, deletedAt: null } });
     if (!tmpl) throw new NotFoundException('Template not found');
-    return this.prisma.campaignTemplate.update({ where: { id }, data: dto });
+    await this.prisma.campaignTemplate.updateMany({
+      where: { id, orgId, deletedAt: null },
+      data: dto,
+    });
+    return this.prisma.campaignTemplate.findFirst({ where: { id, orgId } });
   }
 
   async removeTemplate(orgId: string, id: string) {
     const tmpl = await this.prisma.campaignTemplate.findFirst({ where: { id, orgId, deletedAt: null } });
     if (!tmpl) throw new NotFoundException('Template not found');
-    await this.prisma.campaignTemplate.update({ where: { id }, data: { deletedAt: new Date() } });
+    await this.prisma.campaignTemplate.updateMany({
+      where: { id, orgId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
   }
 
   // ── Campaigns ──────────────────────────────────────────────
@@ -64,6 +77,8 @@ export class MarketingService {
   }
 
   async create(orgId: string, userId: string, dto: CreateCampaignDto) {
+    await this.tenantScope.ensureTemplate(orgId, dto.templateId);
+    await this.planLimits.assertCanCreate(orgId, 'campaigns');
     return this.prisma.campaign.create({
       data: {
         ...dto,
@@ -77,37 +92,41 @@ export class MarketingService {
 
   async update(orgId: string, id: string, dto: Partial<CreateCampaignDto>) {
     await this.findOne(orgId, id);
-    return this.prisma.campaign.update({
-      where: { id },
+    await this.tenantScope.ensureTemplate(orgId, dto.templateId);
+    await this.prisma.campaign.updateMany({
+      where: { id, orgId, deletedAt: null },
       data: {
         ...dto,
         startDate: dto.startDate ? new Date(dto.startDate) : undefined,
         audienceFilter: dto.audienceFilter as any,
       },
     });
+    return this.findOne(orgId, id);
   }
 
   async launch(orgId: string, id: string) {
     await this.findOne(orgId, id);
-    return this.prisma.campaign.update({
-      where: { id },
+    await this.prisma.campaign.updateMany({
+      where: { id, orgId, deletedAt: null },
       data: { status: CampaignStatus.ACTIVE },
     });
+    return this.findOne(orgId, id);
   }
 
   async pause(orgId: string, id: string) {
     await this.findOne(orgId, id);
-    return this.prisma.campaign.update({
-      where: { id },
+    await this.prisma.campaign.updateMany({
+      where: { id, orgId, deletedAt: null },
       data: { status: CampaignStatus.PAUSED },
     });
+    return this.findOne(orgId, id);
   }
 
   async getSummary(orgId: string, id: string) {
     const campaign = await this.findOne(orgId, id);
     const logs = await this.prisma.campaignLog.groupBy({
       by: ['status'],
-      where: { campaignId: id },
+      where: { campaignId: id, orgId },
       _count: { status: true },
     });
     const summary: Record<string, number> = {};
@@ -122,7 +141,10 @@ export class MarketingService {
 
   async remove(orgId: string, id: string) {
     await this.findOne(orgId, id);
-    await this.prisma.campaign.update({ where: { id }, data: { deletedAt: new Date() } });
+    await this.prisma.campaign.updateMany({
+      where: { id, orgId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
   }
 
   // ── Audience preview ───────────────────────────────────────

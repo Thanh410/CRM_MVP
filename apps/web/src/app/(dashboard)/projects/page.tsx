@@ -1,13 +1,22 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2, X, FolderOpen, CheckSquare, Calendar, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatDate, getInitials } from '@/lib/utils';
 import { toast } from 'sonner';
+import { ProjectTable } from './project-table';
+import {
+  getDataTableQueryParams,
+  parseDataTablePageSize,
+  toggleVisibleSelection,
+  type DataTablePageSize,
+} from '@/components/ui/data-table-controls';
+import { ModuleFilterToolbar } from '@/components/ui/module-filter-toolbar';
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+// ������ Types ������������������������������������������������������������������������������������������������������������������������������������������
 interface Project {
   id: string; name: string; description?: string; status: string;
   startDate?: string; dueDate?: string; ownerId?: string; deptId?: string;
@@ -17,6 +26,15 @@ interface Project {
   tasks?: Task[];
 }
 interface Task { id: string; title: string; status: string; assignee?: { fullName: string }; }
+interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
 
 const STATUS_STYLES: Record<string, string> = {
   PLANNING: 'bg-zinc-100 text-zinc-600',
@@ -34,8 +52,21 @@ const TASK_STATUS_LABELS: Record<string, string> = {
   TODO: 'Cần làm', IN_PROGRESS: 'Đang làm', REVIEW: 'Đang review', DONE: 'Xong',
 };
 
-// ─── ProjectModal ─────────────────────────────────────────────────────────────
+// ������ ProjectModal ��������������������������������������������������������������������������������������������������������������������������
 const EMPTY_FORM = { name: '', description: '', status: 'PLANNING', startDate: '', dueDate: '', deptId: '' };
+
+type ProjectForm = typeof EMPTY_FORM;
+
+function buildProjectPayload(form: ProjectForm) {
+  return {
+    name: form.name.trim(),
+    description: form.description.trim() || undefined,
+    status: form.status,
+    startDate: form.startDate || undefined,
+    dueDate: form.dueDate || undefined,
+    deptId: form.deptId || undefined,
+  };
+}
 
 function ProjectModal({ project, onClose }: { project: Project | null; onClose: () => void }) {
   const qc = useQueryClient();
@@ -55,20 +86,20 @@ function ProjectModal({ project, onClose }: { project: Project | null; onClose: 
   });
 
   const createMutation = useMutation({
-    mutationFn: (payload: typeof form) => api.post('/projects', payload).then(r => r.data),
+    mutationFn: (payload: ReturnType<typeof buildProjectPayload>) => api.post('/projects', payload).then(r => r.data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['projects'] }); toast.success('Tạo dự án thành công'); onClose(); },
-    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Tạo thất bại'),
+    onError: (e: any) => toast.error(e.response?.data?.message ?? 'T�o th�t b�i'),
   });
   const updateMutation = useMutation({
-    mutationFn: (payload: Partial<typeof form>) => api.patch(`/projects/${project!.id}`, payload).then(r => r.data),
+    mutationFn: (payload: Partial<ReturnType<typeof buildProjectPayload>>) => api.patch(`/projects/${project!.id}`, payload).then(r => r.data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['projects'] }); toast.success('Cập nhật thành công'); onClose(); },
     onError: (e: any) => toast.error(e.response?.data?.message ?? 'Cập nhật thất bại'),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...form, startDate: form.startDate || undefined, dueDate: form.dueDate || undefined, deptId: form.deptId || undefined };
-    isEdit ? updateMutation.mutate(payload) : createMutation.mutate(payload as typeof form);
+    const payload = buildProjectPayload(form);
+    isEdit ? updateMutation.mutate(payload) : createMutation.mutate(payload);
   };
   const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -80,7 +111,7 @@ function ProjectModal({ project, onClose }: { project: Project | null; onClose: 
       onMouseDown={e => { if (e.target === overlayRef.current) onClose(); }}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
-          <h2 className="text-base font-semibold text-zinc-900">{isEdit ? 'Chỉnh sửa dự án' : 'Tạo dự án mới'}</h2>
+          <h2 className="text-base font-semibold text-zinc-900">{isEdit ? 'Ch�0nh s�a d� �n' : 'T�o d� �n m�:i'}</h2>
           <button onClick={onClose} className="p-1 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-zinc-100"><X size={16} /></button>
         </div>
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
@@ -109,7 +140,7 @@ function ProjectModal({ project, onClose }: { project: Project | null; onClose: 
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>Ngày bắt đầu</label>
+              <label className={labelCls}>Ngày bắt �ầu</label>
               <input className={inputCls} type="date" value={form.startDate} onChange={set('startDate')} />
             </div>
             <div>
@@ -120,7 +151,7 @@ function ProjectModal({ project, onClose }: { project: Project | null; onClose: 
           <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">Hủy</button>
             <button type="submit" disabled={isPending} className="px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-60">
-              {isPending ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo dự án'}
+              {isPending ? 'ang l�u...' : isEdit ? 'L�u thay ��"i' : 'T�o d� �n'}
             </button>
           </div>
         </form>
@@ -129,7 +160,7 @@ function ProjectModal({ project, onClose }: { project: Project | null; onClose: 
   );
 }
 
-// ─── Project Detail Slide-over ────────────────────────────────────────────────
+// ������ Project Detail Slide-over ������������������������������������������������������������������������������������������������
 function ProjectSlideOver({ projectId, onClose, onEdit }: { projectId: string; onClose: () => void; onEdit: (p: Project) => void }) {
   const { data: project, isLoading } = useQuery<Project>({
     queryKey: ['project', projectId],
@@ -193,7 +224,7 @@ function ProjectSlideOver({ projectId, onClose, onEdit }: { projectId: string; o
                 <div className="flex items-center gap-1.5 text-xs text-zinc-500">
                   <Calendar size={13} className="text-zinc-400 shrink-0" />
                   {project.startDate && formatDate(project.startDate)}
-                  {project.startDate && project.dueDate && ' → '}
+                  {project.startDate && project.dueDate && ' �  '}
                   {project.dueDate && formatDate(project.dueDate)}
                 </div>
               )}
@@ -203,21 +234,21 @@ function ProjectSlideOver({ projectId, onClose, onEdit }: { projectId: string; o
             {totalTasks > 0 && (
               <div className="px-5 py-4 border-b border-gray-50">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Tiến độ</span>
+                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Tiến ��"</span>
                   <span className="text-xs font-semibold text-zinc-700">{progress}%</span>
                 </div>
                 <div className="w-full bg-zinc-100 rounded-full h-2">
                   <div className="bg-zinc-500 h-2 rounded-full transition-all" style={{ width: `${progress}%` }} />
                 </div>
-                <p className="text-xs text-zinc-400 mt-1">{doneTasks}/{totalTasks} nhiệm vụ hoàn thành</p>
+                <p className="text-xs text-zinc-400 mt-1">{doneTasks}/{totalTasks} nhi�!m vụ hoàn thành</p>
               </div>
             )}
 
             {/* Tasks by status */}
             <div className="px-5 py-4">
-              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">Nhiệm vụ</p>
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">Nhi�!m vụ</p>
               {totalTasks === 0 ? (
-                <p className="text-sm text-zinc-400 text-center py-4">Chưa có nhiệm vụ</p>
+                <p className="text-sm text-zinc-400 text-center py-4">Chưa có nhi�!m vụ</p>
               ) : (
                 TASK_STATUS_ORDER.map(s => tasksByStatus[s].length > 0 && (
                   <div key={s} className="mb-4">
@@ -242,7 +273,7 @@ function ProjectSlideOver({ projectId, onClose, onEdit }: { projectId: string; o
   );
 }
 
-// ─── Project Card ─────────────────────────────────────────────────────────────
+// ������ Project Card ��������������������������������������������������������������������������������������������������������������������������
 function ProjectCard({ project, onEdit, onDelete, onSelect }: {
   project: Project; onEdit: () => void; onDelete: () => void; onSelect: () => void;
 }) {
@@ -276,7 +307,7 @@ function ProjectCard({ project, onEdit, onDelete, onSelect }: {
       {totalTasks > 0 && (
         <div className="mb-3">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-zinc-400">{doneTasks}/{totalTasks} nhiệm vụ</span>
+            <span className="text-xs text-zinc-400">{doneTasks}/{totalTasks} nhi�!m vụ</span>
             <span className="text-xs font-medium text-zinc-600">{progress}%</span>
           </div>
           <div className="w-full bg-zinc-100 rounded-full h-1.5">
@@ -310,35 +341,113 @@ function ProjectCard({ project, onEdit, onDelete, onSelect }: {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ������ Main Page ��������������������������������������������������������������������������������������������������������������������������������
 export default function ProjectsPage() {
   const qc = useQueryClient();
+  const searchParams = useSearchParams();
+  const search = searchParams.get('q') ?? '';
+  const urlStatus = searchParams.get('status') ?? '';
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [slideOverId, setSlideOverId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<DataTablePageSize>(50);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const { data: projects = [], isLoading } = useQuery<Project[]>({
-    queryKey: ['projects'],
-    queryFn: () => api.get('/projects').then(r => r.data),
+  const queryParams = {
+    ...getDataTableQueryParams(page, pageSize),
+    search: search || undefined,
+    status: urlStatus || statusFilter || undefined,
+  };
+
+  const { data: projectResponse, isLoading } = useQuery<PaginatedResponse<Project>>({
+    queryKey: ['projects', queryParams],
+    queryFn: () => api.get('/projects', { params: queryParams }).then(r => r.data),
   });
+
+  const projects = projectResponse?.data ?? [];
+  const totalCount = projectResponse?.meta?.total ?? 0;
+  const totalPages = projectResponse?.meta?.totalPages ?? 1;
+  const currentPage = Math.min(page, Math.max(1, totalPages));
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/projects/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['projects'] }); toast.success('Đã xóa dự án'); if (slideOverId) setSlideOverId(null); },
-    onError: () => toast.error('Xóa thất bại'),
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      toast.success('� x�a d� �n');
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      if (slideOverId === id) setSlideOverId(null);
+    },
+    onError: () => toast.error('X�a d� �n th�t b�i'),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => api.post('/projects/bulk-delete', { ids }).then(r => r.data as { deletedIds: string[]; failedIds: string[]; count: number }),
+    onSuccess: ({ deletedIds, failedIds }) => {
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      if (slideOverId && deletedIds.includes(slideOverId)) setSlideOverId(null);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        deletedIds.forEach((id) => next.delete(id));
+        return next;
+      });
+      if (deletedIds.length > 0) toast.success(`� x�a ${deletedIds.length} d� �n`);
+      if (failedIds.length > 0) toast.error(`${failedIds.length} d� �n ch�a x�a ��c`);
+    },
+    onError: () => toast.error('X�a d� �n � ch�n th�t b�i'),
   });
 
   const handleDelete = (p: Project) => {
-    if (!window.confirm(`Xóa dự án "${p.name}"?`)) return;
+    if (!window.confirm(`X�a d� �n "${p.name}"?`)) return;
     deleteMutation.mutate(p.id);
   };
   const openEdit = (p: Project) => { setEditingProject(p); setModalOpen(true); setSlideOverId(null); };
 
-  const filtered = statusFilter ? projects.filter(p => p.status === statusFilter) : projects;
+  const toggleRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleVisibleRows = () => {
+    setSelectedIds((prev) => toggleVisibleSelection(projects, prev));
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const changeStatusFilter = (nextStatus: string) => {
+    setStatusFilter(nextStatus);
+    setPage(1);
+    setSelectedIds(new Set());
+  };
+
+  const changePageSize = (value: string) => {
+    const nextPageSize = parseDataTablePageSize(value);
+    if (nextPageSize === 'all' && totalCount > 500 && !window.confirm(`T�i t�t c� ${totalCount} d� �n? Thao t�c n�y c� th� ch�m n�u d� li�u l�n.`)) {
+      return;
+    }
+    setPageSize(nextPageSize);
+    setPage(1);
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkDelete = () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (!window.confirm(`X�a ${ids.length} d� �n �� ch�n?`)) return;
+    bulkDeleteMutation.mutate(ids);
+  };
 
   const counts = Object.keys(STATUS_LABELS).reduce((acc, s) => {
-    acc[s] = projects.filter(p => p.status === s).length;
+    acc[s] = statusFilter === s ? totalCount : 0;
     return acc;
   }, {} as Record<string, number>);
 
@@ -348,7 +457,7 @@ export default function ProjectsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-zinc-900">Dự án</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">{projects.length} dự án</p>
+          <p className="text-sm text-zinc-500 mt-0.5">{totalCount} d� �n</p>
         </div>
         <button onClick={() => { setEditingProject(null); setModalOpen(true); }}
           className="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
@@ -356,45 +465,72 @@ export default function ProjectsPage() {
         </button>
       </div>
 
+      <ModuleFilterToolbar
+        searchPlaceholder="Tìm tên dự án, mô tả..."
+        filters={[
+          {
+            key: 'status',
+            label: 'Trạng thái',
+            options: Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label })),
+          },
+        ]}
+        onChange={() => {
+          setPage(1);
+          setSelectedIds(new Set());
+        }}
+      />
+
       {/* Status filter pills */}
       <div className="flex items-center gap-2 flex-wrap">
-        <button onClick={() => setStatusFilter('')}
+        <button onClick={() => changeStatusFilter('')}
           className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${!statusFilter ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-gray-200'}`}>
-          Tất cả ({projects.length})
+          T�t c� ({statusFilter ? '...' : totalCount})
         </button>
-        {Object.entries(STATUS_LABELS).map(([k, v]) => counts[k] > 0 && (
-          <button key={k} onClick={() => setStatusFilter(k === statusFilter ? '' : k)}
+        {Object.entries(STATUS_LABELS).map(([k, v]) => (
+          <button key={k} onClick={() => changeStatusFilter(k === statusFilter ? '' : k)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${statusFilter === k ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-gray-200'}`}>
-            {v} ({counts[k]})
+            {v}{statusFilter === k ? ` (${counts[k]})` : ''}
           </button>
         ))}
       </div>
 
-      {/* Grid */}
+      {/* Table */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="bg-white border border-zinc-200 rounded-xl p-5 h-36 animate-pulse" />
           ))}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : projects.length === 0 ? (
         <div className="bg-white rounded-xl border border-zinc-200 flex flex-col items-center justify-center py-16 text-zinc-400">
           <FolderOpen size={36} className="mb-3 opacity-30" />
-          <p className="text-sm">Chưa có dự án nào</p>
-          <button onClick={() => setModalOpen(true)} className="mt-3 text-sm text-zinc-900 hover:underline">Tạo dự án đầu tiên</button>
+          <p className="text-sm">Ch�a c� d� �n n�o</p>
+          <button onClick={() => setModalOpen(true)} className="mt-3 text-sm text-zinc-900 hover:underline">T�o d� �n �u ti�n</button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(p => (
-            <ProjectCard
-              key={p.id}
-              project={p}
-              onEdit={() => openEdit(p)}
-              onDelete={() => handleDelete(p)}
-              onSelect={() => setSlideOverId(p.id)}
-            />
-          ))}
-        </div>
+        <ProjectTable
+          projects={projects}
+          selectedIds={selectedIds}
+          page={currentPage}
+          pageSize={pageSize}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onToggleRow={toggleRow}
+          onToggleVisible={toggleVisibleRows}
+          onClearSelection={clearSelection}
+          onBulkDelete={handleBulkDelete}
+          onPageChange={setPage}
+          onPageSizeChange={changePageSize}
+          onSelectProject={setSlideOverId}
+          onEditProject={(id) => {
+            const project = projects.find((item) => item.id === id);
+            if (project) openEdit(project);
+          }}
+          onDeleteProject={(id) => {
+            const project = projects.find((item) => item.id === id);
+            if (project) handleDelete(project);
+          }}
+        />
       )}
 
       {/* Modal */}

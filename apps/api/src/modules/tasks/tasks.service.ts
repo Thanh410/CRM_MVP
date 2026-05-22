@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TenantScopeService } from '../../common/services/tenant-scope.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { QueryTaskDto } from './dto/query-task.dto';
 import { TaskStatus } from '@prisma/client';
 
 @Injectable()
 export class TasksService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private tenantScope: TenantScopeService,
+  ) {}
 
   private taskIncludes = {
     assignee: { select: { id: true, fullName: true, avatar: true } },
@@ -75,6 +79,7 @@ export class TasksService {
   }
 
   async create(orgId: string, userId: string, dto: CreateTaskDto) {
+    await this.validateRefs(orgId, dto);
     const { watcherIds, ...rest } = dto;
     const task = await this.prisma.task.create({
       data: {
@@ -93,21 +98,23 @@ export class TasksService {
 
   async update(orgId: string, id: string, userId: string, dto: Partial<CreateTaskDto>) {
     await this.findOne(orgId, id);
+    await this.validateRefs(orgId, dto);
     const { watcherIds, ...rest } = dto;
-    return this.prisma.task.update({
-      where: { id },
+    await this.prisma.task.updateMany({
+      where: { id, orgId, deletedAt: null },
       data: {
         ...rest,
         dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
         updatedBy: userId,
       },
-      include: this.taskIncludes,
     });
+    return this.findOne(orgId, id);
   }
 
   async moveStatus(orgId: string, id: string, status: TaskStatus) {
     await this.findOne(orgId, id);
-    return this.prisma.task.update({ where: { id }, data: { status } });
+    await this.prisma.task.updateMany({ where: { id, orgId, deletedAt: null }, data: { status } });
+    return this.findOne(orgId, id);
   }
 
   async addComment(orgId: string, taskId: string, userId: string, content: string) {
@@ -120,6 +127,7 @@ export class TasksService {
 
   async addWatcher(orgId: string, taskId: string, userId: string) {
     await this.findOne(orgId, taskId);
+    await this.tenantScope.ensureUser(orgId, userId);
     const exists = await this.prisma.taskWatcher.findUnique({
       where: { taskId_userId: { taskId, userId } },
     });
@@ -137,9 +145,22 @@ export class TasksService {
 
   async remove(orgId: string, id: string) {
     await this.findOne(orgId, id);
-    await this.prisma.task.update({
-      where: { id },
+    await this.prisma.task.updateMany({
+      where: { id, orgId, deletedAt: null },
       data: { deletedAt: new Date() },
     });
+  }
+
+  private async validateRefs(orgId: string, dto: Partial<CreateTaskDto>) {
+    await this.tenantScope.ensureProject(orgId, dto.projectId);
+    await this.tenantScope.ensureTask(orgId, dto.parentId);
+    await this.tenantScope.ensureUser(orgId, dto.assigneeId);
+    await this.tenantScope.ensureLead(orgId, (dto as any).leadId);
+    await this.tenantScope.ensureContact(orgId, (dto as any).contactId);
+    await this.tenantScope.ensureDeal(orgId, (dto as any).dealId);
+    await this.tenantScope.ensureUsers(orgId, dto.watcherIds);
+    if (dto.entityType && dto.entityId) {
+      await this.tenantScope.ensureEntity(orgId, dto.entityType, dto.entityId);
+    }
   }
 }
