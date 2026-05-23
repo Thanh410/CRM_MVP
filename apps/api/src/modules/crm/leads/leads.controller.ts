@@ -12,6 +12,7 @@ import { QueryLeadDto } from './dto/query-lead.dto';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { OrgId } from '../../../common/decorators/org-id.decorator';
 import { RequirePermissions } from '../../../common/decorators/permissions.decorator';
+import { BulkDeleteDto } from '../../../common/dto/bulk-delete.dto';
 
 @ApiTags('Leads')
 @ApiBearerAuth('access-token')
@@ -48,6 +49,17 @@ export class LeadsController {
       'Content-Disposition': `attachment; filename="${filename}"`,
     });
     res.end(buffer);
+  }
+
+  @Post('bulk-delete')
+  @RequirePermissions('leads:delete')
+  @ApiOperation({ summary: 'Soft-delete multiple leads' })
+  bulkDelete(
+    @OrgId() orgId: string,
+    @Body() dto: BulkDeleteDto,
+    @CurrentUser('id') actorId: string,
+  ) {
+    return this.leadsService.bulkRemove(orgId, dto.ids, actorId);
   }
 
   @Post('import/csv')

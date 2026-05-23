@@ -5,6 +5,7 @@ import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { OrgId } from '../../../common/decorators/org-id.decorator';
 import { RequirePermissions } from '../../../common/decorators/permissions.decorator';
+import { BulkDeleteDto } from '../../../common/dto/bulk-delete.dto';
 
 @ApiTags('Companies')
 @ApiBearerAuth('access-token')
@@ -28,6 +29,13 @@ export class CompaniesController {
   @RequirePermissions('companies:read')
   findOne(@OrgId() orgId: string, @Param('id') id: string) {
     return this.svc.findOne(orgId, id);
+  }
+
+  @Post('bulk-delete')
+  @RequirePermissions('companies:delete')
+  @ApiOperation({ summary: 'Delete multiple companies' })
+  bulkDelete(@OrgId() orgId: string, @Body() dto: BulkDeleteDto, @CurrentUser('id') actor: string) {
+    return this.svc.bulkRemove(orgId, dto.ids, actor);
   }
 
   @Patch(':id')

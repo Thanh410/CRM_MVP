@@ -48,9 +48,10 @@ export class TasksController {
   moveStatus(
     @OrgId() orgId: string,
     @Param('id') id: string,
+    @CurrentUser('id') userId: string,
     @Body('status') status: TaskStatus,
   ) {
-    return this.tasksService.moveStatus(orgId, id, status);
+    return this.tasksService.moveStatus(orgId, id, userId, status);
   }
 
   @Post(':id/comments')

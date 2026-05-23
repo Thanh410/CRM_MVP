@@ -1,43 +1,183 @@
 'use client';
 
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ElementType } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { usePathname, useRouter } from 'next/navigation';
 import {
-  LayoutDashboard, Users, Building2, Briefcase, CheckSquare,
-  Megaphone, MessageSquare, BarChart2, Settings, LogOut,
-  UserCircle, FolderOpen, UserCog, Shield,
+  Briefcase,
+  Building2,
+  CheckSquare,
+  ChevronRight,
+  FolderOpen,
+  LayoutDashboard,
+  LogOut,
+  Megaphone,
+  MessageSquare,
+  Settings,
+  Shield,
+  UserCircle,
+  UserCog,
+  Users,
+  X,
 } from 'lucide-react';
-import { useAuthStore } from '@/store/auth.store';
-import { useRouter } from 'next/navigation';
+import { useChatUnreadCount } from '@/app/(dashboard)/chat/hooks';
+import { AvatarGradient } from '@/components/ui/avatar-gradient';
 import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/store/auth.store';
 
-const navItems = [
-  { label: 'Tổng quan', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Khách hàng tiềm năng', href: '/leads', icon: UserCircle },
-  { label: 'Liên hệ', href: '/contacts', icon: Users },
-  { label: 'Công ty', href: '/companies', icon: Building2 },
-  { label: 'Cơ hội', href: '/deals', icon: Briefcase },
-  { label: 'Dự án', href: '/projects', icon: FolderOpen },
-  { label: 'Nhiệm vụ', href: '/tasks', icon: CheckSquare },
-  { label: 'Marketing', href: '/marketing', icon: Megaphone },
-  { label: 'Hộp thư', href: '/inbox', icon: MessageSquare },
-  { label: 'Nhân sự', href: '/users', icon: UserCog },
-  { label: 'Nhật ký', href: '/audit', icon: Shield },
-];
+interface NavItem {
+  label: string;
+  href: string;
+  icon: ElementType;
+  badge?: number;
+}
 
-const bottomItems = [
-  { label: 'Cài đặt', href: '/settings', icon: Settings },
-];
+interface NavGroupDef {
+  label: string;
+  icon: ElementType;
+  items: NavItem[];
+}
 
-export function Sidebar() {
+function buildNavGroups(chatUnreadCount: number): NavGroupDef[] {
+  return [
+    {
+      label: 'CRM',
+      icon: UserCircle,
+      items: [
+        { label: 'Khách hàng tiềm năng', href: '/leads', icon: UserCircle },
+        { label: 'Liên hệ', href: '/contacts', icon: Users },
+        { label: 'Công ty', href: '/companies', icon: Building2 },
+        { label: 'Cơ hội', href: '/deals', icon: Briefcase },
+      ],
+    },
+    {
+      label: 'Công việc',
+      icon: CheckSquare,
+      items: [
+        { label: 'Dự án', href: '/projects', icon: FolderOpen },
+        { label: 'Nhiệm vụ', href: '/tasks', icon: CheckSquare },
+      ],
+    },
+    {
+      label: 'Kết nối',
+      icon: Megaphone,
+      items: [
+        { label: 'Marketing', href: '/marketing', icon: Megaphone },
+        { label: 'Hộp thư', href: '/inbox', icon: MessageSquare },
+        { label: 'Chat', href: '/chat', icon: MessageSquare, badge: chatUnreadCount },
+      ],
+    },
+    {
+      label: 'Quản lý',
+      icon: Shield,
+      items: [
+        { label: 'Nhân sự', href: '/users', icon: UserCog },
+        { label: 'Nhật ký', href: '/audit', icon: Shield },
+      ],
+    },
+  ];
+}
+
+function NavBadge({ count }: { count?: number }) {
+  if (!count) return null;
+  return (
+    <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-aurora-violet px-1.5 text-[10px] font-bold text-white">
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+}
+
+function NavGroup({ group, pathname }: { group: NavGroupDef; pathname: string }) {
+  const hasActive = group.items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
+  const [hovered, setHovered] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const GroupIcon = group.icon;
+  const open = hovered || hasActive;
+
+  const onEnter = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setHovered(true);
+  };
+
+  const onLeave = () => {
+    timerRef.current = setTimeout(() => setHovered(false), 120);
+  };
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    [],
+  );
+
+  return (
+    <div onMouseEnter={onEnter} onMouseLeave={onLeave}>
+      <button
+        className={cn(
+          'flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
+          hasActive ? 'nav-item-active text-white' : 'text-sidebar-muted hover:bg-white/[0.06] hover:text-white',
+        )}
+      >
+        <GroupIcon size={15} className={cn(hasActive ? 'text-white' : 'text-white/40')} />
+        <span className="flex-1 truncate text-left">{group.label}</span>
+        <ChevronRight
+          size={12}
+          className={cn(
+            'shrink-0 transition-transform duration-200',
+            open ? 'rotate-90' : '',
+            hasActive ? 'text-white/50' : 'text-white/30',
+          )}
+        />
+      </button>
+
+      <div className={cn('overflow-hidden transition-all duration-200 ease-out', open ? 'max-h-52 opacity-100' : 'max-h-0 opacity-0')}>
+        <ul className="ml-3.5 mt-0.5 space-y-0.5 border-l border-white/[0.08] pb-1 pl-2.5">
+          {group.items.map((item) => {
+            const Icon = item.icon;
+            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs transition-colors',
+                    active ? 'nav-item-active shimmer font-medium text-white' : 'text-sidebar-muted hover:bg-white/[0.06] hover:text-white',
+                  )}
+                >
+                  <Icon size={13} className={cn(active ? 'text-white' : 'text-white/40')} />
+                  <span className="truncate">{item.label}</span>
+                  <NavBadge count={item.badge} />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+export interface SidebarProps {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
-  const { user, clearAuth } = useAuthStore();
+  const { user, clearAuth, refreshToken } = useAuthStore();
   const router = useRouter();
+  const { data: chatUnread } = useChatUnreadCount();
+  const navGroups = useMemo(() => buildNavGroups(chatUnread?.count ?? 0), [chatUnread?.count]);
+
+  useEffect(() => {
+    if (mobileOpen) onMobileClose?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   const handleLogout = async () => {
     try {
-      const refreshToken = localStorage.getItem('refresh_token');
       await api.post('/auth/logout', { refreshToken });
     } finally {
       clearAuth();
@@ -45,75 +185,89 @@ export function Sidebar() {
     }
   };
 
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
   return (
-    <aside className="w-60 bg-white border-r border-gray-200 flex flex-col h-full shrink-0">
-      {/* Logo */}
-      <div className="h-14 flex items-center px-5 border-b border-gray-100">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">C</span>
-          </div>
-          <span className="font-semibold text-gray-900 text-sm">CRM Vietnam</span>
-        </div>
-      </div>
+    <>
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          onClick={onMobileClose}
+          aria-hidden="true"
+        />
+      )}
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-3 overflow-y-auto">
-        <ul className="space-y-0.5">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = pathname === item.href || pathname.startsWith(item.href + '/');
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors',
-                    active
-                      ? 'bg-indigo-50 text-indigo-700 font-medium'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
-                  )}
-                >
-                  <Icon size={16} className={active ? 'text-indigo-600' : 'text-gray-400'} />
-                  {item.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-
-      {/* Bottom */}
-      <div className="px-3 py-3 border-t border-gray-100 space-y-0.5">
-        {bottomItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors"
-            >
-              <Icon size={16} className="text-gray-400" />
-              {item.label}
-            </Link>
-          );
-        })}
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
-        >
-          <LogOut size={16} className="text-gray-400" />
-          Đăng xuất
-        </button>
-
-        {/* User info */}
-        {user && (
-          <div className="px-3 py-2 mt-2 bg-gray-50 rounded-lg">
-            <p className="text-xs font-medium text-gray-700 truncate">{user.fullName}</p>
-            <p className="text-xs text-gray-400 truncate">{user.email}</p>
-          </div>
+      <aside
+        className={cn(
+          ' flex h-full w-64 max-w-[85vw] shrink-0 flex-col bg-sidebar text-sidebar-fg lg:w-56',
+          'fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-spring',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full',
+          'lg:relative lg:inset-auto lg:translate-x-0 lg:transition-none',
         )}
-      </div>
-    </aside>
+      >
+        <div className="flex h-14 shrink-0 items-center justify-between px-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-aurora shadow-pop">
+              <span className="font-display text-sm font-bold text-white">A</span>
+            </div>
+            <span className="font-display text-sm font-semibold tracking-tight text-white">Aurora CRM</span>
+          </div>
+          <button
+            onClick={onMobileClose}
+            className="rounded-md p-1.5 text-white/60 transition hover:bg-white/10 hover:text-white lg:hidden"
+            aria-label="Đóng menu"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <nav className="sidebar-scroll flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
+          <Link
+            href="/dashboard"
+            className={cn(
+              'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
+              isActive('/dashboard') ? 'nav-item-active shimmer text-white' : 'text-sidebar-muted hover:bg-white/[0.06] hover:text-white',
+            )}
+          >
+            <LayoutDashboard size={15} className={cn(isActive('/dashboard') ? 'text-white' : 'text-white/40')} />
+            <span className="truncate">Tổng quan</span>
+          </Link>
+
+          {navGroups.map((group) => (
+            <NavGroup key={group.label} group={group} pathname={pathname} />
+          ))}
+        </nav>
+
+        <div className="shrink-0 space-y-0.5 border-t border-white/[0.08] px-3 py-3">
+          <Link
+            href="/settings"
+            className={cn(
+              'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
+              isActive('/settings') ? 'nav-item-active shimmer text-white' : 'text-sidebar-muted hover:bg-white/[0.06] hover:text-white',
+            )}
+          >
+            <Settings size={15} className={cn(isActive('/settings') ? 'text-white' : 'text-white/40')} />
+            Cài đặt
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-sidebar-muted transition-colors hover:bg-white/[0.06] hover:text-rose-400"
+          >
+            <LogOut size={15} className="text-white/40" />
+            Đăng xuất
+          </button>
+
+          {user && (
+            <div className="mt-2 flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
+              <AvatarGradient id={user.id ?? user.email ?? user.fullName} name={user.fullName} size="sm" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium leading-tight text-white">{user.fullName}</p>
+                <p className="mt-0.5 truncate text-[11px] text-sidebar-muted">{user.email}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </aside>
+    </>
   );
 }

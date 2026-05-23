@@ -7,7 +7,9 @@ import { LoggerModule } from 'nestjs-pino';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 
 import configuration from './config/configuration';
+import { validateConfig } from './config/validate-config';
 import { PrismaModule } from './prisma/prisma.module';
+import { CommonModule } from './common/common.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TraceIdInterceptor } from './common/interceptors/trace-id.interceptor';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -35,11 +37,13 @@ import { ProjectsModule } from './modules/projects/projects.module';
 import { MarketingModule } from './modules/marketing/marketing.module';
 // Phase 5 – Omnichannel Chat
 import { ConversationsModule } from './modules/conversations/conversations.module';
+import { ChatModule } from './modules/chat/chat.module';
 import { ZaloModule } from './modules/integrations/zalo/zalo.module';
 import { MessengerModule } from './modules/integrations/messenger/messenger.module';
 // Reporting
 import { ReportingModule } from './modules/reporting/reporting.module';
 import { HealthController } from './health.controller';
+import { SearchModule } from './modules/search/search.module';
 
 @Module({
   imports: [
@@ -48,6 +52,7 @@ import { HealthController } from './health.controller';
       isGlobal: true,
       load: [configuration],
       envFilePath: ['.env', '.env.local'],
+      validate: validateConfig,
     }),
 
     // ── Events & Scheduling ────────────────────────────────
@@ -79,6 +84,7 @@ import { HealthController } from './health.controller';
 
     // ── Core Infrastructure ────────────────────────────────
     PrismaModule,
+    CommonModule,
 
     // ── Feature Modules ────────────────────────────────────
     AuthModule,
@@ -106,11 +112,13 @@ import { HealthController } from './health.controller';
 
     // Phase 5 – Omnichannel Chat
     ConversationsModule,
+    ChatModule,
     ZaloModule,
     MessengerModule,
 
     // Reporting
     ReportingModule,
+    SearchModule,
   ],
 
   controllers: [HealthController],

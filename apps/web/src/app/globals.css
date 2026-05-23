@@ -4,52 +4,251 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Neutral (kept names — only values tuned) */
+    --background: 240 20% 98%;
+    --foreground: 240 25% 9%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 240 25% 9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 239 84% 67%;
-    --radius: 0.5rem;
+    --popover-foreground: 240 25% 9%;
+    --primary: 252 78% 67%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 12% 96%;
+    --secondary-foreground: 240 25% 14%;
+    --muted: 240 12% 96%;
+    --muted-foreground: 240 8% 45%;
+    --accent: 240 12% 96%;
+    --accent-foreground: 240 25% 14%;
+    --destructive: 350 89% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 14% 92%;
+    --input: 240 14% 92%;
+    --ring: 252 78% 67%;
+    --radius: 0.75rem;
+
+    /* Aurora palette */
+    --aurora-violet: 252 78% 67%;
+    --aurora-indigo: 234 100% 68%;
+    --aurora-cyan: 186 73% 55%;
+    --aurora-mint: 159 75% 57%;
+    --aurora-pink: 330 100% 72%;
+    --aurora-amber: 35 100% 64%;
+    --aurora-rose: 350 89% 60%;
+
+    /* Surface elevation */
+    --surface-1: 0 0% 100%;
+    --surface-2: 240 20% 99%;
+    --surface-3: 240 25% 97%;
+
+    /* Sidebar (luôn dark, có aurora glow) */
+    --sidebar-bg: 240 30% 5%;
+    --sidebar-fg: 0 0% 95%;
+    --sidebar-muted: 240 10% 60%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 239 84% 67%;
+    --background: 240 25% 6%;
+    --foreground: 0 0% 96%;
+    --card: 240 22% 9%;
+    --card-foreground: 0 0% 96%;
+    --popover: 240 22% 9%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 252 78% 70%;
+    --primary-foreground: 240 30% 5%;
+    --secondary: 240 14% 14%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 240 14% 14%;
+    --muted-foreground: 240 8% 60%;
+    --accent: 240 14% 14%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 350 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 12% 18%;
+    --input: 240 12% 18%;
+    --ring: 252 78% 70%;
+
+    --surface-1: 240 22% 9%;
+    --surface-2: 240 24% 7%;
+    --surface-3: 240 26% 5%;
   }
 }
 
 @layer base {
   * { @apply border-border; }
   body { @apply bg-background text-foreground font-sans; }
+
+  h1, h2, h3 { @apply tracking-tight; }
+
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background rounded-md;
+  }
+
+  button, a { @apply transition-colors duration-150; }
+
+  ::selection { @apply bg-primary text-primary-foreground; }
+}
+
+/* Sidebar scrollbar */
+.sidebar-scroll::-webkit-scrollbar { width: 4px; }
+.sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+.sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.sidebar-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* cmdk Command Palette */
+[cmdk-root] { font-family: inherit; }
+[cmdk-group-heading] {
+  padding: 0 16px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+[cmdk-separator] { height: 1px; background: hsl(var(--border)); margin: 4px 0; }
+
+/* react-day-picker overrides */
+.rdp-custom { font-family: inherit; font-size: 13px; }
+
+/* ============================================================
+   AURORA — motion tokens
+   See docs/UI-REDESIGN.md §3 for usage.
+============================================================ */
+@layer utilities {
+  /* Mobile utilities */
+  .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+  .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+  .ease-spring { transition-timing-function: cubic-bezier(.2,.8,.2,1); }
+  .ease-out-cubic { transition-timing-function: cubic-bezier(.33,1,.68,1); }
+
+  .hover-lift { transition: transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s; will-change: transform; }
+  .hover-lift:hover { transform: translateY(-3px); box-shadow: 0 10px 30px -10px hsl(var(--aurora-violet)/.18); }
+
+  .card-glow { transition: box-shadow .3s, transform .3s; }
+  .card-glow:hover {
+    box-shadow:
+      0 10px 30px -10px hsl(var(--aurora-violet)/.18),
+      0 4px 14px hsl(var(--aurora-cyan)/.10);
+    transform: translateY(-2px);
+  }
+
+  .btn-aurora {
+    background: linear-gradient(135deg, hsl(var(--aurora-violet)) 0%, hsl(var(--aurora-cyan)) 50%, hsl(var(--aurora-pink)) 100%);
+    background-size: 200% 200%;
+    animation: aurora-bgshift 6s ease infinite;
+  }
+  @keyframes aurora-bgshift {
+    0%,100% { background-position: 0% 50%; }
+    50%     { background-position: 100% 50%; }
+  }
+
+  .aurora-glow { position: relative; overflow: hidden; }
+  .aurora-glow::before {
+    content: ''; position: absolute; inset: -20%; pointer-events: none;
+    background:
+      radial-gradient(40% 30% at 20% 10%, hsl(var(--aurora-violet)/.30), transparent 60%),
+      radial-gradient(35% 25% at 80% 90%, hsl(var(--aurora-cyan)/.22), transparent 60%),
+      radial-gradient(30% 20% at 50% 50%, hsl(var(--aurora-pink)/.15), transparent 60%);
+    animation: aurora-drift 14s ease-in-out infinite alternate;
+    z-index: 0;
+  }
+  .aurora-glow > * { position: relative; z-index: 1; }
+  @keyframes aurora-drift {
+    0%   { transform: translate(0,0) rotate(0deg); }
+    100% { transform: translate(8%,-6%) rotate(8deg); }
+  }
+
+  .shimmer { position: relative; overflow: hidden; }
+  .shimmer::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.18) 50%, transparent 70%);
+    transform: translateX(-100%);
+    animation: shimmer-sweep 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes shimmer-sweep {
+    0%       { transform: translateX(-100%); }
+    60%,100% { transform: translateX(100%); }
+  }
+
+  .shine { position: relative; overflow: hidden; }
+  .shine::after {
+    content: ''; position: absolute; top: -50%; left: -60%; width: 50%; height: 200%;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%);
+    transform: rotate(20deg);
+    animation: shine-move 3.4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes shine-move {
+    0%       { left: -60%; }
+    60%,100% { left: 120%; }
+  }
+
+  .ping-ring { animation: ping-ring 1.8s ease-out infinite; }
+  @keyframes ping-ring {
+    0%   { box-shadow: 0 0 0 0   hsl(var(--aurora-rose)/.55); }
+    70%  { box-shadow: 0 0 0 10px hsl(var(--aurora-rose)/0); }
+    100% { box-shadow: 0 0 0 0   hsl(var(--aurora-rose)/0); }
+  }
+
+  .breathe { animation: breathe 2.4s ease-in-out infinite; }
+  @keyframes breathe {
+    0%,100% { transform: scale(1);    opacity: 1; }
+    50%     { transform: scale(1.15); opacity: .7; }
+  }
+
+  .typing-dot {
+    width: 6px; height: 6px; border-radius: 9999px;
+    background: hsl(var(--muted-foreground));
+    animation: typing 1.2s ease-in-out infinite;
+    display: inline-block;
+  }
+  .typing-dot:nth-child(2) { animation-delay: .15s; }
+  .typing-dot:nth-child(3) { animation-delay: .3s; }
+  @keyframes typing {
+    0%,60%,100% { transform: translateY(0);    opacity: .4; }
+    30%         { transform: translateY(-4px); opacity: 1; }
+  }
+
+  .reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s cubic-bezier(.2,.8,.2,1); }
+  .reveal.in { opacity: 1; transform: none; }
+
+  .spark-path { stroke-dasharray: 200; stroke-dashoffset: 200; animation: spark-dash 1.6s .4s ease forwards; }
+  @keyframes spark-dash { to { stroke-dashoffset: 0; } }
+
+  .deal-card { transition: transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s; }
+  .deal-card:hover {
+    transform: translateY(-4px) rotate(-.6deg);
+    box-shadow: 0 14px 34px -10px hsl(var(--aurora-violet)/.30);
+  }
+  .deal-card:hover .wiggle { animation: wiggle .6s ease; }
+  @keyframes wiggle {
+    0%,100% { transform: rotate(0); }
+    25%     { transform: rotate(-12deg); }
+    75%     { transform: rotate(12deg); }
+  }
+
+  .rip { position: relative; overflow: hidden; }
+  .rip-wave {
+    position: absolute; border-radius: 9999px; pointer-events: none;
+    background: rgba(255,255,255,.4); transform: scale(0); opacity: .7;
+    animation: ripple .6s ease-out forwards;
+  }
+  @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+  .nav-item-active {
+    background: linear-gradient(135deg, hsl(var(--aurora-violet)/.22), hsl(var(--aurora-cyan)/.10));
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }

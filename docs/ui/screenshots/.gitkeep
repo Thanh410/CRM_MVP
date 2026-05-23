@@ -1,0 +1,3 @@
+# Screenshots được generate bởi scripts/capture-ui-screenshots.ts
+# Chạy: pnpm tsx scripts/capture-ui-screenshots.ts
+# Không commit screenshots vào git (xem .gitignore)

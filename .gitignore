@@ -53,3 +53,6 @@ apps/api/.pnpm-store/
 
 # Vercel
 .vercel
+
+# Git worktrees
+.worktrees/

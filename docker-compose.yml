@@ -96,7 +96,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-crm_user}:${POSTGRES_PASSWORD:-crm_password_change_me}@postgres:5432/${POSTGRES_DB:-crm_db}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-crm_user}:${POSTGRES_PASSWORD:-crm_password_change_me}@postgres:5432/${POSTGRES_DB:-crm_db}?schema=public&connection_limit=20&pool_timeout=20
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}

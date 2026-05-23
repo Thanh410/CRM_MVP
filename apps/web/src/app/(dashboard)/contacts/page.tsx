@@ -1,10 +1,25 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { TagSelector } from '@/components/tag-selector';
+import { TableSkeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
+import { AvatarGradient } from '@/components/ui/avatar-gradient';
+import { StatusPill, type StatusTone } from '@/components/ui/status-pill';
+import { RippleButton } from '@/components/ui/ripple-button';
+import {
+  BulkActionBar,
+  DataTablePagination,
+  SelectableHeaderCheckbox,
+  getDataTableQueryParams,
+  parseDataTablePageSize,
+  toggleVisibleSelection,
+  type DataTablePageSize,
+} from '@/components/ui/data-table-controls';
 import { api } from '@/lib/api';
-import { formatDate, getInitials, formatCurrency } from '@/lib/utils';
+import { formatDate, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
   Plus,
@@ -18,6 +33,7 @@ import {
   MapPin,
   Briefcase,
   User,
+  Users,
   TrendingUp,
   ChevronLeft,
   ChevronRight,
@@ -85,13 +101,13 @@ const EMPTY_FORM: FormState = {
   address: '',
 };
 
-const DEAL_STAGE_COLORS: Record<string, string> = {
-  LEAD: 'bg-gray-100 text-gray-600',
-  QUALIFIED: 'bg-blue-100 text-blue-700',
-  PROPOSAL: 'bg-yellow-100 text-yellow-700',
-  NEGOTIATION: 'bg-orange-100 text-orange-700',
-  WON: 'bg-green-100 text-green-700',
-  LOST: 'bg-red-100 text-red-700',
+const DEAL_STAGE_TONES: Record<string, StatusTone> = {
+  LEAD: 'muted',
+  QUALIFIED: 'indigo',
+  PROPOSAL: 'amber',
+  NEGOTIATION: 'amber',
+  WON: 'emerald',
+  LOST: 'rose',
 };
 
 const DEAL_STAGE_LABELS: Record<string, string> = {
@@ -212,15 +228,15 @@ function ContactModal({
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-card text-card-foreground rounded-2xl shadow-lift border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="font-display text-base font-bold">
             {isEdit ? 'Chỉnh sửa liên hệ' : 'Thêm liên hệ mới'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition"
+            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition"
           >
             <X size={16} />
           </button>
@@ -230,36 +246,36 @@ function ContactModal({
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           {/* Full Name */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-semibold text-foreground mb-1">
               Họ tên <span className="text-red-500">*</span>
             </label>
             <input
               value={form.fullName}
               onChange={(e) => set('fullName', e.target.value)}
               placeholder="Nguyễn Văn A"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
             />
           </div>
 
           {/* Email + Phone */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-xs font-semibold text-foreground mb-1">Email</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => set('email', e.target.value)}
                 placeholder="email@example.com"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Điện thoại</label>
+              <label className="block text-xs font-semibold text-foreground mb-1">Điện thoại</label>
               <input
                 value={form.phone}
                 onChange={(e) => set('phone', e.target.value)}
                 placeholder="0912 345 678"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
               />
             </div>
           </div>
@@ -267,32 +283,32 @@ function ContactModal({
           {/* Mobile + Job Title */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Di động</label>
+              <label className="block text-xs font-semibold text-foreground mb-1">Di động</label>
               <input
                 value={form.mobile}
                 onChange={(e) => set('mobile', e.target.value)}
                 placeholder="0987 654 321"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Chức danh</label>
+              <label className="block text-xs font-semibold text-foreground mb-1">Chức danh</label>
               <input
                 value={form.jobTitle}
                 onChange={(e) => set('jobTitle', e.target.value)}
                 placeholder="Giám đốc kinh doanh"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
               />
             </div>
           </div>
 
           {/* Company */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Công ty</label>
+            <label className="block text-xs font-semibold text-foreground mb-1">Công ty</label>
             <select
               value={form.companyId}
               onChange={(e) => set('companyId', e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition bg-white"
             >
               <option value="">— Chọn công ty —</option>
               {companies.map((c) => (
@@ -305,11 +321,11 @@ function ContactModal({
 
           {/* Assignee */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Phụ trách</label>
+            <label className="block text-xs font-semibold text-foreground mb-1">Phụ trách</label>
             <select
               value={form.assignedTo}
               onChange={(e) => set('assignedTo', e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition bg-white"
             >
               <option value="">— Chưa phân công —</option>
               {users.map((u) => (
@@ -322,43 +338,33 @@ function ContactModal({
 
           {/* Address */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Địa chỉ</label>
+            <label className="block text-xs font-semibold text-foreground mb-1">Địa chỉ</label>
             <input
               value={form.address}
               onChange={(e) => set('address', e.target.value)}
               placeholder="123 Đường ABC, Quận 1, TP.HCM"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Ghi chú</label>
+            <label className="block text-xs font-semibold text-foreground mb-1">Ghi chú</label>
             <textarea
               value={form.description}
               onChange={(e) => set('description', e.target.value)}
               rows={3}
               placeholder="Thông tin thêm về liên hệ..."
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition resize-none"
             />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition"
-            >
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+            <RippleButton type="button" variant="outline" onClick={onClose}>Hủy</RippleButton>
+            <RippleButton type="submit" variant="aurora" disabled={isPending}>
               {isPending ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo liên hệ'}
-            </button>
+            </RippleButton>
           </div>
         </form>
       </div>
@@ -389,24 +395,24 @@ function ContactSlideOver({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/20"
+        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
         onClick={onClose}
       />
       {/* Panel */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col">
+      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-card text-card-foreground border-l border-border shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
-          <h2 className="text-base font-semibold text-gray-900">Chi tiết liên hệ</h2>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+          <h2 className="font-display text-base font-bold">Chi tiết liên hệ</h2>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition"
+            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition"
           >
             <X size={16} />
           </button>
         </div>
 
         {isLoading && (
-          <div className="flex items-center justify-center flex-1 text-gray-400 text-sm">
+          <div className="flex items-center justify-center flex-1 text-muted-foreground text-sm">
             Đang tải...
           </div>
         )}
@@ -414,94 +420,87 @@ function ContactSlideOver({
         {contact && (
           <div className="flex-1 overflow-y-auto">
             {/* Avatar + name */}
-            <div className="px-5 py-5 border-b border-gray-50">
+            <div className="px-5 py-5 border-b border-border bg-aurora-soft/30">
               <div className="flex items-start gap-4">
-                <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
-                  <span className="text-lg font-bold text-emerald-700">
-                    {getInitials(contact.fullName)}
-                  </span>
-                </div>
+                <AvatarGradient id={contact.id ?? contact.fullName} name={contact.fullName} size="lg" />
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-gray-900 truncate">
+                  <h3 className="font-display text-lg font-bold truncate">
                     {contact.fullName}
                   </h3>
                   {contact.jobTitle && (
-                    <p className="text-sm text-gray-500 mt-0.5">{contact.jobTitle}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{contact.jobTitle}</p>
                   )}
                   {contact.company && (
-                    <div className="flex items-center gap-1.5 mt-1 text-sm text-gray-500">
-                      <Building2 size={13} className="text-gray-400 shrink-0" />
+                    <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
+                      <Building2 size={13} className="shrink-0" />
                       {contact.company.name}
                     </div>
                   )}
                 </div>
-                <button
-                  onClick={() => onEdit(contact)}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition text-gray-600"
-                >
+                <RippleButton variant="outline" size="sm" onClick={() => onEdit(contact)}>
                   <Pencil size={12} /> Sửa
-                </button>
+                </RippleButton>
               </div>
             </div>
 
             {/* Contact info */}
-            <div className="px-5 py-4 border-b border-gray-50">
-              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            <div className="px-5 py-4 border-b border-border">
+              <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                 Thông tin liên hệ
               </h4>
               <div className="space-y-2.5">
                 {contact.email && (
                   <div className="flex items-center gap-2.5 text-sm">
-                    <Mail size={14} className="text-gray-400 shrink-0" />
+                    <Mail size={14} className="text-muted-foreground shrink-0" />
                     <a
                       href={`mailto:${contact.email}`}
-                      className="text-indigo-600 hover:underline truncate"
+                      className="text-aurora-violet hover:underline truncate"
                     >
                       {contact.email}
                     </a>
                   </div>
                 )}
                 {contact.phone && (
-                  <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                    <Phone size={14} className="text-gray-400 shrink-0" />
+                  <div className="flex items-center gap-2.5 text-sm text-foreground/80">
+                    <Phone size={14} className="text-muted-foreground shrink-0" />
                     {contact.phone}
                   </div>
                 )}
                 {contact.mobile && (
-                  <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                    <Phone size={14} className="text-gray-400 shrink-0" />
+                  <div className="flex items-center gap-2.5 text-sm text-foreground/80">
+                    <Phone size={14} className="text-muted-foreground shrink-0" />
                     {contact.mobile}
-                    <span className="text-xs text-gray-400">(di động)</span>
+                    <span className="text-xs text-muted-foreground">(di động)</span>
                   </div>
                 )}
                 {contact.address && (
-                  <div className="flex items-start gap-2.5 text-sm text-gray-600">
-                    <MapPin size={14} className="text-gray-400 shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2.5 text-sm text-foreground/80">
+                    <MapPin size={14} className="text-muted-foreground shrink-0 mt-0.5" />
                     {contact.address}
                   </div>
                 )}
                 {contact.assignee && (
-                  <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                    <User size={14} className="text-gray-400 shrink-0" />
-                    Phụ trách: <span className="font-medium">{contact.assignee.fullName}</span>
+                  <div className="flex items-center gap-2.5 text-sm text-foreground/80">
+                    <User size={14} className="text-muted-foreground shrink-0" />
+                    Phụ trách: <span className="font-semibold">{contact.assignee.fullName}</span>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Tags */}
-            <div className="px-5 py-4 border-b border-gray-50">
-              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tags</h4>
+            <div className="px-5 py-4 border-b border-border">
+              <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Tags</h4>
               <TagSelector entityType="CONTACT" entityId={contact.id} />
             </div>
 
             {/* Description */}
             {contact.description && (
-              <div className="px-5 py-4 border-b border-gray-50">
-                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              <div className="px-5 py-4 border-b border-border">
+                <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Ghi chú
                 </h4>
-                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">
                   {contact.description}
                 </p>
               </div>
@@ -510,40 +509,36 @@ function ContactSlideOver({
             {/* Deals */}
             <div className="px-5 py-4">
               <div className="flex items-center gap-2 mb-3">
-                <TrendingUp size={14} className="text-gray-400" />
-                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <TrendingUp size={14} className="text-aurora-mint" />
+                <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Deals ({contact.deals?.length ?? 0})
                 </h4>
               </div>
               {(!contact.deals || contact.deals.length === 0) ? (
-                <p className="text-sm text-gray-400 italic">Chưa có deal nào.</p>
+                <p className="text-sm text-muted-foreground italic">Chưa có deal nào.</p>
               ) : (
                 <div className="space-y-2">
                   {contact.deals.map((deal) => (
                     <div
                       key={deal.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100"
+                      className="flex items-center justify-between p-3 bg-muted rounded-lg border border-border"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-800 truncate">{deal.title}</p>
+                        <p className="text-sm font-semibold text-foreground truncate">{deal.title}</p>
                         {deal.closedAt && (
-                          <p className="text-xs text-gray-400 mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             Dự kiến: {formatDate(deal.closedAt)}
                           </p>
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0 ml-3">
                         {deal.stage && (
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                              DEAL_STAGE_COLORS[deal.stage] ?? 'bg-gray-100 text-gray-600'
-                            }`}
-                          >
+                          <StatusPill tone={DEAL_STAGE_TONES[deal.stage] ?? 'muted'}>
                             {DEAL_STAGE_LABELS[deal.stage] ?? deal.stage}
-                          </span>
+                          </StatusPill>
                         )}
                         {deal.value != null && (
-                          <span className="text-sm font-semibold text-gray-700">
+                          <span className="text-sm font-semibold font-display">
                             {formatCurrency(deal.value)}
                           </span>
                         )}
@@ -555,8 +550,8 @@ function ContactSlideOver({
             </div>
 
             {/* Meta */}
-            <div className="px-5 py-3 border-t border-gray-50">
-              <p className="text-xs text-gray-400">
+            <div className="px-5 py-3 border-t border-border">
+              <p className="text-xs text-muted-foreground">
                 Tạo ngày {formatDate(contact.createdAt)} · Cập nhật {formatDate(contact.updatedAt)}
               </p>
             </div>
@@ -571,8 +566,11 @@ function ContactSlideOver({
 
 export default function ContactsPage() {
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState('');
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<DataTablePageSize>(50);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Modals / slide-over state
   const [modalOpen, setModalOpen] = useState(false);
@@ -580,10 +578,10 @@ export default function ContactsPage() {
   const [slideOverId, setSlideOverId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['contacts', { search, page }],
+    queryKey: ['contacts', { search, page, pageSize }],
     queryFn: async () => {
       const { data } = await api.get('/contacts', {
-        params: { search: search || undefined, page, limit: 20 },
+        params: { search: search || undefined, ...getDataTableQueryParams(page, pageSize) },
       });
       return data;
     },
@@ -598,6 +596,22 @@ export default function ContactsPage() {
       toast.success('Đã xóa liên hệ');
     },
     onError: () => toast.error('Xóa thất bại'),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => api.post('/contacts/bulk-delete', { ids }).then((res) => res.data as { deletedIds: string[]; failedIds: string[]; count: number }),
+    onSuccess: ({ deletedIds, failedIds }) => {
+      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        deletedIds.forEach((id) => next.delete(id));
+        return next;
+      });
+      if (slideOverId && deletedIds.includes(slideOverId)) setSlideOverId(null);
+      if (deletedIds.length > 0) toast.success(`Đã xóa ${deletedIds.length} liên hệ`);
+      if (failedIds.length > 0) toast.error(`${failedIds.length} liên hệ chưa xóa được`);
+    },
+    onError: () => toast.error('Xóa liên hệ đã chọn thất bại'),
   });
 
   function openCreate() {
@@ -619,6 +633,14 @@ export default function ContactsPage() {
     }
   }
 
+  function changePageSize(value: string) {
+    const next = parseDataTablePageSize(value);
+    if (next === 'all' && (meta?.total ?? 0) > 500 && !window.confirm(`Tải tất cả ${meta?.total ?? 0} liên hệ?`)) return;
+    setPageSize(next);
+    setPage(1);
+    setSelectedIds(new Set());
+  }
+
   const contacts: Contact[] = data?.data ?? [];
   const meta = data?.meta;
   const totalPages = meta?.totalPages ?? 1;
@@ -628,21 +650,83 @@ export default function ContactsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Liên hệ</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{meta?.total ?? 0} liên hệ</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Liên hệ</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            <span className="font-semibold text-foreground">{meta?.total ?? 0}</span> liên hệ trong hệ thống
+          </p>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-        >
+        <RippleButton variant="aurora" onClick={openCreate}>
           <Plus size={14} /> Thêm liên hệ
-        </button>
+        </RippleButton>
       </div>
 
-      {/* Search */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
+      {/* Mobile search (lg:hidden) */}
+      <div className="lg:hidden">
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Tìm liên hệ..."
+            className="w-full pl-8 pr-3 py-2.5 text-sm border border-border rounded-xl bg-card focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition" />
+        </div>
+      </div>
+
+      <BulkActionBar
+        count={selectedIds.size}
+        entityLabel="liên hệ"
+        onClear={() => setSelectedIds(new Set())}
+        onDelete={() => {
+          const ids = Array.from(selectedIds);
+          if (ids.length === 0) return;
+          if (!window.confirm(`Xóa ${ids.length} liên hệ đã chọn?`)) return;
+          bulkDeleteMutation.mutate(ids);
+        }}
+      />
+
+      {/* Mobile card list (lg:hidden) */}
+      <div className="lg:hidden space-y-3">
+        {isLoading ? (
+          [1,2,3].map(i => <div key={i} className="bg-card border border-border rounded-2xl h-20 animate-pulse" />)
+        ) : contacts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+            <span className="text-4xl mb-3">👥</span>
+            <p className="text-sm font-semibold">{search ? 'Không tìm thấy liên hệ' : 'Chưa có liên hệ nào'}</p>
+          </div>
+        ) : contacts.map((contact: Contact) => (
+          <div key={contact.id} onClick={() => setSlideOverId(contact.id)}
+            className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3 active:scale-[0.99] transition-all cursor-pointer hover:border-aurora-violet/30">
+            <AvatarGradient id={contact.id ?? contact.fullName} name={contact.fullName} size="md" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm truncate">{contact.fullName}</p>
+              {contact.jobTitle && <p className="text-xs text-muted-foreground">{contact.jobTitle}</p>}
+              {contact.company && <p className="text-xs text-muted-foreground flex items-center gap-1"><Building2 size={10}/>{contact.company.name}</p>}
+            </div>
+            <div className="text-right shrink-0">
+              {contact.phone && <p className="text-xs text-muted-foreground">{contact.phone}</p>}
+              {contact.email && <p className="text-xs text-aurora-violet truncate max-w-[100px]">{contact.email}</p>}
+            </div>
+          </div>
+        ))}
+        {meta && meta.totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+              className="px-4 py-2 text-xs border border-border rounded-xl bg-card disabled:opacity-40">← Trước</button>
+            <span className="text-xs text-muted-foreground">{page} / {totalPages}</span>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+              className="px-4 py-2 text-xs border border-border rounded-xl bg-card disabled:opacity-40">Sau →</button>
+          </div>
+        )}
+      </div>
+
+      {/* FAB mobile */}
+      <button onClick={openCreate}
+        className="lg:hidden fixed bottom-20 right-4 z-30 w-12 h-12 rounded-2xl bg-gradient-to-br from-aurora-violet to-aurora-cyan text-white shadow-[0_8px_24px_rgba(124,58,237,0.5)] flex items-center justify-center text-2xl font-light active:scale-95 transition-transform">
+        +
+      </button>
+
+      {/* Desktop search */}
+      <div className="hidden lg:block bg-card border border-border rounded-2xl shadow-soft p-4">
         <div className="relative max-w-sm">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             value={search}
             onChange={(e) => {
@@ -650,101 +734,129 @@ export default function ContactsPage() {
               setPage(1);
             }}
             placeholder="Tìm tên, email, số điện thoại..."
-            className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-aurora-violet focus:ring-4 focus:ring-aurora-violet/15 transition"
           />
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden lg:block bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
-            Đang tải...
-          </div>
+          <TableSkeleton rows={6} cols={6} />
+        ) : contacts.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title={search ? 'Không tìm thấy liên hệ' : 'Chưa có liên hệ nào'}
+            description={search
+              ? 'Thử tìm với từ khoá khác.'
+              : 'Thêm liên hệ mới hoặc convert từ leads đã qualified.'}
+            hints={search ? undefined : [
+              'Liên hệ là người thật, có email/SĐT — khác với Lead là khách tiềm năng',
+              'Có thể gắn nhiều liên hệ vào 1 công ty',
+              'Convert lead → contact tự động giữ lịch sử trao đổi',
+            ]}
+            action={{ label: 'Thêm liên hệ', onClick: openCreate, icon: Plus }}
+          />
         ) : (
           <>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <tr className="border-b border-border bg-muted/40">
+                  <th className="px-3 py-3 w-10">
+                    <SelectableHeaderCheckbox
+                      rows={contacts}
+                      selectedIds={selectedIds}
+                      onToggle={() => setSelectedIds((prev) => toggleVisibleSelection(contacts, prev))}
+                    />
+                  </th>
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Họ tên
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Email / SĐT
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Công ty
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Chức danh
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Phụ trách
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Ngày tạo
                   </th>
                   <th className="px-4 py-3 w-20" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
-                {contacts.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="text-center py-12 text-gray-400 text-sm">
-                      Chưa có liên hệ nào. Nhấn "Thêm liên hệ" để bắt đầu.
-                    </td>
-                  </tr>
-                )}
+              <tbody className="divide-y divide-border/60">
                 {contacts.map((contact) => (
                   <tr
                     key={contact.id}
                     onClick={() => setSlideOverId(contact.id)}
-                    className="hover:bg-gray-50/60 transition-colors cursor-pointer"
+                    className="hover:bg-aurora-soft/30 transition-colors cursor-pointer"
                   >
+                    <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(contact.id)}
+                        onChange={(e) => {
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (e.target.checked) next.add(contact.id);
+                            else next.delete(contact.id);
+                            return next;
+                          });
+                        }}
+                        className="h-4 w-4 rounded border-border accent-[hsl(var(--aurora-violet))]"
+                      />
+                    </td>
                     {/* Name + avatar */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
-                          <span className="text-xs font-semibold text-emerald-700">
-                            {getInitials(contact.fullName)}
-                          </span>
-                        </div>
-                        <span className="font-medium text-gray-900">{contact.fullName}</span>
+                        <AvatarGradient id={contact.id ?? contact.fullName} name={contact.fullName} size="sm" />
+                        <span className="font-semibold text-foreground">{contact.fullName}</span>
                       </div>
                     </td>
 
                     {/* Email / Phone */}
-                    <td className="px-4 py-3 text-gray-500">
-                      {contact.email && <div className="truncate max-w-[180px]">{contact.email}</div>}
-                      {contact.phone && <div className="text-xs text-gray-400">{contact.phone}</div>}
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {contact.email && <div className="truncate max-w-[180px] text-foreground/80">{contact.email}</div>}
+                      {contact.phone && <div className="text-xs">{contact.phone}</div>}
                     </td>
 
                     {/* Company */}
                     <td className="px-4 py-3">
                       {contact.company ? (
-                        <div className="flex items-center gap-1.5 text-gray-600">
-                          <Building2 size={13} className="text-gray-400 shrink-0" />
+                        <div className="flex items-center gap-1.5 text-foreground/80">
+                          <Building2 size={13} className="text-muted-foreground shrink-0" />
                           <span className="truncate max-w-[140px]">{contact.company.name}</span>
                         </div>
                       ) : (
-                        <span className="text-gray-300">—</span>
+                        <span className="text-muted-foreground/60">—</span>
                       )}
                     </td>
 
                     {/* Job title */}
-                    <td className="px-4 py-3 text-gray-500">
-                      {contact.jobTitle ?? <span className="text-gray-300">—</span>}
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {contact.jobTitle ?? <span className="text-muted-foreground/60">—</span>}
                     </td>
 
                     {/* Assignee */}
-                    <td className="px-4 py-3 text-gray-500">
-                      {contact.assignee?.fullName ?? (
-                        <span className="text-gray-300">Chưa phân công</span>
+                    <td className="px-4 py-3">
+                      {contact.assignee?.fullName ? (
+                        <div className="flex items-center gap-1.5">
+                          <AvatarGradient id={contact.assignee.id ?? contact.assignee.fullName} name={contact.assignee.fullName} size="xs" />
+                          <span className="text-xs text-foreground/80">{contact.assignee.fullName}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground/60 text-xs">Chưa phân công</span>
                       )}
                     </td>
 
                     {/* Created at */}
-                    <td className="px-4 py-3 text-gray-400 text-xs">
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
                       {formatDate(contact.createdAt)}
                     </td>
 
@@ -754,14 +866,14 @@ export default function ContactsPage() {
                         <button
                           onClick={(e) => openEdit(contact, e)}
                           title="Chỉnh sửa"
-                          className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                          className="p-1.5 text-muted-foreground hover:text-aurora-violet hover:bg-aurora-violet/10 rounded-md transition"
                         >
                           <Pencil size={14} />
                         </button>
                         <button
                           onClick={(e) => handleDelete(contact, e)}
                           title="Xóa"
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                          className="p-1.5 text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-md transition"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -774,25 +886,25 @@ export default function ContactsPage() {
 
             {/* Pagination */}
             {meta && meta.total > 0 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-                <span className="text-xs text-gray-400">
-                  Hiển thị {(page - 1) * 20 + 1}–{Math.min(page * 20, meta.total)} / {meta.total}
+              <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
+                <span className="text-xs text-muted-foreground">
+                  Hiển thị <span className="font-semibold text-foreground">{(page - 1) * 20 + 1}–{Math.min(page * 20, meta.total)}</span> / {meta.total}
                 </span>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="p-1.5 text-gray-500 border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition"
+                    className="p-1.5 text-muted-foreground border border-border rounded-lg bg-card disabled:opacity-40 hover:bg-muted transition"
                   >
                     <ChevronLeft size={14} />
                   </button>
-                  <span className="px-3 py-1.5 text-xs text-gray-600">
+                  <span className="px-3 py-1.5 text-xs font-semibold text-foreground">
                     {page} / {totalPages}
                   </span>
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
-                    className="p-1.5 text-gray-500 border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition"
+                    className="p-1.5 text-muted-foreground border border-border rounded-lg bg-card disabled:opacity-40 hover:bg-muted transition"
                   >
                     <ChevronRight size={14} />
                   </button>
@@ -802,6 +914,18 @@ export default function ContactsPage() {
           </>
         )}
       </div>
+
+      {meta && (
+        <DataTablePagination
+          page={pageSize === 'all' ? 1 : page}
+          totalPages={totalPages}
+          total={meta.total ?? 0}
+          pageSize={pageSize}
+          itemLabel="liên hệ"
+          onPageChange={setPage}
+          onPageSizeChange={changePageSize}
+        />
+      )}
 
       {/* Create / Edit Modal */}
       {modalOpen && (

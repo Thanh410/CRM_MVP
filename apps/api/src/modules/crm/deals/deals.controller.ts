@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { DealsService } from './deals.service';
-import { PaginationDto } from '../../../common/dto/pagination.dto';
+import { BulkDeleteDto } from '../../../common/dto/bulk-delete.dto';
+import { QueryDealDto } from './dto/query-deal.dto';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { OrgId } from '../../../common/decorators/org-id.decorator';
 import { RequirePermissions } from '../../../common/decorators/permissions.decorator';
@@ -20,8 +21,15 @@ export class DealsController {
 
   @Get()
   @RequirePermissions('deals:read')
-  findAll(@OrgId() orgId: string, @Query() query: PaginationDto) {
+  findAll(@OrgId() orgId: string, @Query() query: QueryDealDto) {
     return this.svc.findAll(orgId, query);
+  }
+
+  @Post('bulk-delete')
+  @RequirePermissions('deals:delete')
+  @ApiOperation({ summary: 'Soft-delete multiple deals' })
+  bulkDelete(@OrgId() orgId: string, @Body() dto: BulkDeleteDto, @CurrentUser('id') actor: string) {
+    return this.svc.bulkRemove(orgId, dto.ids, actor);
   }
 
   @Get('kanban')

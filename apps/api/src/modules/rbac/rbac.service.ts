@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TenantScopeService } from '../../common/services/tenant-scope.service';
 
 export const DEFAULT_PERMISSIONS = [
   // Users
@@ -93,7 +94,10 @@ export const ROLE_DEFAULTS: Record<string, string[]> = {
 
 @Injectable()
 export class RbacService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private tenantScope: TenantScopeService,
+  ) {}
 
   async getRoles(orgId: string) {
     return this.prisma.role.findMany({
@@ -111,8 +115,8 @@ export class RbacService {
   }
 
   async assignRoleToUser(orgId: string, userId: string, roleId: string) {
-    const role = await this.prisma.role.findFirst({ where: { id: roleId, orgId } });
-    if (!role) throw new NotFoundException('Role not found');
+    await this.tenantScope.ensureUser(orgId, userId);
+    await this.tenantScope.ensureRole(orgId, roleId);
 
     await this.prisma.userRole.upsert({
       where: { userId_roleId: { userId, roleId } },
@@ -121,9 +125,11 @@ export class RbacService {
     });
   }
 
-  async removeRoleFromUser(userId: string, roleId: string) {
-    await this.prisma.userRole.delete({
-      where: { userId_roleId: { userId, roleId } },
+  async removeRoleFromUser(orgId: string, userId: string, roleId: string) {
+    await this.tenantScope.ensureUser(orgId, userId);
+    await this.tenantScope.ensureRole(orgId, roleId);
+    await this.prisma.userRole.deleteMany({
+      where: { userId, roleId, orgId },
     });
   }
 
@@ -139,8 +145,8 @@ export class RbacService {
       }),
     ]);
 
-    return this.prisma.role.findUnique({
-      where: { id: roleId },
+    return this.prisma.role.findFirst({
+      where: { id: roleId, orgId },
       include: { rolePermissions: { include: { permission: true } } },
     });
   }

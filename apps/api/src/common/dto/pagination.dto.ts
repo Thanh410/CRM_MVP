@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsOptional, IsPositive, Max, Min, IsString } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsOptional, IsPositive, Max, Min, IsString } from 'class-validator';
 
 export class PaginationDto {
   @ApiPropertyOptional({ default: 1 })
@@ -13,8 +13,14 @@ export class PaginationDto {
   @Type(() => Number)
   @IsOptional()
   @Min(1)
-  @Max(100)
+  @Max(500)
   limit?: number = 20;
+
+  @ApiPropertyOptional({ default: false })
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsOptional()
+  @IsBoolean()
+  all?: boolean = false;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -47,14 +53,14 @@ export interface PaginatedResult<T> {
 
 export function paginate<T>(data: T[], total: number, query: PaginationDto): PaginatedResult<T> {
   const page = query.page ?? 1;
-  const limit = query.limit ?? 20;
+  const limit = query.all ? data.length : query.limit ?? 20;
   return {
     data,
     meta: {
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit),
+      totalPages: query.all ? 1 : Math.ceil(total / limit),
     },
   };
 }

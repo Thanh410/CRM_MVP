@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TenantScopeService } from '../../common/services/tenant-scope.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // ── Mock data ─────────────────────────────────────────────
 const orgId = 'org-1';
@@ -45,6 +47,7 @@ const mockPrisma = {
     findFirst: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
   },
   taskComment: {
     create: jest.fn(),
@@ -54,6 +57,19 @@ const mockPrisma = {
     create: jest.fn(),
     deleteMany: jest.fn(),
   },
+};
+const mockTenantScope = {
+  ensureUser: jest.fn().mockResolvedValue(undefined),
+  ensureUsers: jest.fn().mockResolvedValue(undefined),
+  ensureProject: jest.fn().mockResolvedValue(undefined),
+  ensureTask: jest.fn().mockResolvedValue(undefined),
+  ensureLead: jest.fn().mockResolvedValue(undefined),
+  ensureContact: jest.fn().mockResolvedValue(undefined),
+  ensureDeal: jest.fn().mockResolvedValue(undefined),
+  ensureEntity: jest.fn().mockResolvedValue(undefined),
+};
+const mockNotifications = {
+  create: jest.fn().mockResolvedValue({ id: 'notif-1' }),
 };
 
 // ── Test Suite ────────────────────────────────────────────
@@ -67,6 +83,8 @@ describe('TasksService', () => {
       providers: [
         TasksService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: TenantScopeService, useValue: mockTenantScope },
+        { provide: NotificationsService, useValue: mockNotifications },
       ],
     }).compile();
 
@@ -212,8 +230,10 @@ describe('TasksService', () => {
 
   describe('update', () => {
     it('updates task fields', async () => {
-      mockPrisma.task.findFirst.mockResolvedValue({ ...mockTask, subtasks: [], comments: [] });
-      mockPrisma.task.update.mockResolvedValue({ ...mockTask, title: 'Updated Task' });
+      mockPrisma.task.findFirst
+        .mockResolvedValueOnce({ ...mockTask, subtasks: [], comments: [] })
+        .mockResolvedValueOnce({ ...mockTask, title: 'Updated Task', subtasks: [], comments: [] });
+      mockPrisma.task.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.update(orgId, 'task-1', userId, { title: 'Updated Task' } as any);
 
@@ -233,13 +253,15 @@ describe('TasksService', () => {
 
   describe('moveStatus', () => {
     it('changes task status', async () => {
-      mockPrisma.task.findFirst.mockResolvedValue({ ...mockTask, subtasks: [], comments: [] });
-      mockPrisma.task.update.mockResolvedValue({ ...mockTask, status: 'IN_PROGRESS' });
+      mockPrisma.task.findFirst
+        .mockResolvedValueOnce({ ...mockTask, subtasks: [], comments: [] })
+        .mockResolvedValueOnce({ ...mockTask, status: 'IN_PROGRESS', subtasks: [], comments: [] });
+      mockPrisma.task.updateMany.mockResolvedValue({ count: 1 });
 
-      const result = await service.moveStatus(orgId, 'task-1', 'IN_PROGRESS' as any);
+      const result = await service.moveStatus(orgId, 'task-1', userId, 'IN_PROGRESS' as any);
 
-      expect(mockPrisma.task.update).toHaveBeenCalledWith({
-        where: { id: 'task-1' },
+      expect(mockPrisma.task.updateMany).toHaveBeenCalledWith({
+        where: { id: 'task-1', orgId, deletedAt: null },
         data: { status: 'IN_PROGRESS' },
       });
     });
@@ -258,6 +280,19 @@ describe('TasksService', () => {
       expect(mockPrisma.taskComment.create).toHaveBeenCalledWith({
         data: { taskId: 'task-1', authorId: userId, content: 'Looking into this now' },
         include: expect.any(Object),
+      });
+    });
+
+    it('moves task to review when progress update is pending', async () => {
+      mockPrisma.task.findFirst.mockResolvedValue({ ...mockTask, subtasks: [], comments: [] });
+      mockPrisma.taskComment.create.mockResolvedValue({ ...mockComment, content: '[[PENDING]] Waiting for approval' });
+      mockPrisma.task.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.addComment(orgId, 'task-1', userId, '[[PENDING]] Waiting for approval');
+
+      expect(mockPrisma.task.updateMany).toHaveBeenCalledWith({
+        where: { id: 'task-1', orgId, deletedAt: null },
+        data: { status: 'REVIEW', updatedBy: userId },
       });
     });
   });
@@ -303,12 +338,12 @@ describe('TasksService', () => {
   describe('remove', () => {
     it('soft-deletes a task', async () => {
       mockPrisma.task.findFirst.mockResolvedValue({ ...mockTask, subtasks: [], comments: [] });
-      mockPrisma.task.update.mockResolvedValue({});
+      mockPrisma.task.updateMany.mockResolvedValue({ count: 1 });
 
       await service.remove(orgId, 'task-1');
 
-      expect(mockPrisma.task.update).toHaveBeenCalledWith({
-        where: { id: 'task-1' },
+      expect(mockPrisma.task.updateMany).toHaveBeenCalledWith({
+        where: { id: 'task-1', orgId, deletedAt: null },
         data: { deletedAt: expect.any(Date) },
       });
     });

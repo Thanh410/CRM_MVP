@@ -31,4 +31,20 @@ export class QueryTaskDto {
   @ApiPropertyOptional({ description: 'Filter: my tasks only' })
   @IsOptional()
   mine?: string;
+
+  @ApiPropertyOptional({ description: 'Filter: tasks watched by current user' })
+  @IsOptional()
+  watched?: string;
+
+  @ApiPropertyOptional({ description: 'Filter: overdue tasks' })
+  @IsOptional()
+  overdue?: string;
+
+  @ApiPropertyOptional({ description: 'Filter: pending/review tasks' })
+  @IsOptional()
+  pending?: string;
+
+  @ApiPropertyOptional({ description: 'Filter: tasks with unresolved blocker marker' })
+  @IsOptional()
+  blocked?: string;
 }

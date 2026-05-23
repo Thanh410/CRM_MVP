@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -14,6 +15,8 @@ import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -22,16 +25,26 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto, ip?: string, userAgent?: string) {
-    const user = await this.prisma.user.findFirst({
-      where: { email: dto.email, deletedAt: null },
+    const users = await this.prisma.user.findMany({
+      where: {
+        email: dto.email,
+        deletedAt: null,
+        ...(dto.orgSlug ? { org: { slug: dto.orgSlug, deletedAt: null } } : {}),
+      },
       include: {
         userRoles: { include: { role: true } },
+        org: { select: { id: true, slug: true, deletedAt: true } },
       },
     });
 
-    if (!user) {
+    if (users.length === 0) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    if (users.length > 1) {
+      throw new BadRequestException('Organization slug is required for this email');
+    }
+
+    const user = users[0];
 
     if (user.status === 'INACTIVE') {
       throw new UnauthorizedException('Account is inactive');
@@ -61,8 +74,8 @@ export class AuthService {
     });
 
     // Update last login
-    await this.prisma.user.update({
-      where: { id: user.id },
+    await this.prisma.user.updateMany({
+      where: { id: user.id, orgId: user.orgId, deletedAt: null },
       data: { lastLoginAt: new Date() },
     });
 
@@ -213,9 +226,9 @@ export class AuthService {
       },
     );
 
-    // In production, send via email. In dev, log to console.
+    // TODO: gửi email qua mail service khi tích hợp production
     const resetUrl = `${this.configService.get('FRONTEND_URL', 'http://localhost:3001')}/reset-password?token=${resetToken}`;
-    console.log(`\n[PASSWORD RESET] ${user.email}\nURL: ${resetUrl}\nToken: ${resetToken}\n`);
+    this.logger.debug(`[PASSWORD RESET] Gửi link đặt lại mật khẩu tới ${user.email}: ${resetUrl}`);
 
     return { message: 'Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu.' };
   }
@@ -235,8 +248,8 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
-    await this.prisma.user.update({
-      where: { id: payload.sub },
+    await this.prisma.user.updateMany({
+      where: { id: payload.sub, deletedAt: null },
       data: { passwordHash },
     });
 

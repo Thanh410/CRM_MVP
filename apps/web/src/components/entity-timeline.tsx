@@ -18,6 +18,7 @@ import {
   Pencil,
   Check,
   X,
+  RefreshCw,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -73,7 +74,7 @@ const ACTIVITY_TYPE_COLORS: Record<ActivityType, string> = {
   CALL: 'bg-blue-100 text-blue-600',
   EMAIL: 'bg-violet-100 text-violet-600',
   MEETING: 'bg-amber-100 text-amber-600',
-  NOTE: 'bg-gray-100 text-gray-600',
+  NOTE: 'bg-gray-100 text-zinc-600',
   TASK: 'bg-green-100 text-green-600',
   OTHER: 'bg-slate-100 text-slate-600',
 };
@@ -154,17 +155,17 @@ function NewNoteForm({
           onChange={(e) => setContent(e.target.value)}
           placeholder="Thêm ghi chú..."
           rows={2}
-          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+          className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSubmit(e as any);
           }}
         />
         <div className="flex items-center justify-between mt-1.5">
-          <span className="text-xs text-gray-400">Ctrl+Enter để lưu nhanh</span>
+          <span className="text-xs text-zinc-400">Ctrl+Enter để lưu nhanh</span>
           <button
             type="submit"
             disabled={!content.trim() || mutation.isPending}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition"
+            className="flex items-center gap-1 px-3 py-1.5 text-xs bg-zinc-900 text-white hover:bg-zinc-700 disabled:opacity-50 transition"
           >
             <Plus size={12} />
             {mutation.isPending ? 'Đang lưu...' : 'Thêm ghi chú'}
@@ -213,7 +214,7 @@ function NewActivityForm({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-600 transition px-1 py-0.5"
+        className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-900 transition px-1 py-0.5"
       >
         <Plus size={13} />
         Ghi nhận hoạt động
@@ -223,13 +224,13 @@ function NewActivityForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-gray-50 rounded-xl border border-gray-200 p-3 space-y-2.5">
+    <form onSubmit={handleSubmit} className="bg-zinc-50 rounded-xl border border-zinc-200 p-3 space-y-2.5">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-gray-700">Hoạt động mới</p>
+        <p className="text-xs font-semibold text-zinc-700">Hoạt động mới</p>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-xs text-gray-400 hover:text-gray-600"
+          className="text-xs text-zinc-400 hover:text-zinc-600"
         >
           Hủy
         </button>
@@ -245,7 +246,7 @@ function NewActivityForm({
             className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition border ${
               type === opt.value
                 ? `${ACTIVITY_TYPE_COLORS[opt.value]} border-transparent`
-                : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                : 'bg-white text-zinc-500 border-zinc-200 hover:border-gray-300'
             }`}
           >
             <ActivityIcon type={opt.value} size={11} />
@@ -259,14 +260,14 @@ function NewActivityForm({
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Tiêu đề hoạt động..."
-        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+        className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white"
       />
 
       <div className="flex justify-end">
         <button
           type="submit"
           disabled={!title.trim() || mutation.isPending}
-          className="flex items-center gap-1 px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition"
+          className="flex items-center gap-1 px-3 py-1.5 text-xs bg-zinc-900 text-white hover:bg-zinc-700 disabled:opacity-50 transition"
         >
           <Plus size={12} />
           {mutation.isPending ? 'Đang lưu...' : 'Thêm hoạt động'}
@@ -321,20 +322,20 @@ function NoteItem({ note, onDelete }: { note: Note; onDelete: () => void }) {
                   onChange={(e) => setEditContent(e.target.value)}
                   rows={3}
                   autoFocus
-                  className="w-full px-2 py-1.5 text-sm border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full px-2 py-1.5 text-sm border border-indigo-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none"
                 />
                 <div className="flex gap-1.5">
                   <button
                     onClick={handleSave}
                     disabled={updateMutation.isPending || !editContent.trim()}
-                    className="flex items-center gap-1 px-2.5 py-1 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                    className="flex items-center gap-1 px-2.5 py-1 text-xs bg-zinc-900 text-white hover:bg-zinc-700 disabled:opacity-50"
                   >
                     <Check size={11} />
                     {updateMutation.isPending ? 'Đang lưu...' : 'Lưu'}
                   </button>
                   <button
                     onClick={handleCancel}
-                    className="flex items-center gap-1 px-2.5 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"
+                    className="flex items-center gap-1 px-2.5 py-1 text-xs border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600"
                   >
                     <X size={11} />
                     Hủy
@@ -348,9 +349,9 @@ function NoteItem({ note, onDelete }: { note: Note; onDelete: () => void }) {
             )}
             <div className="flex items-center gap-2 mt-1">
               {note.author && (
-                <span className="text-xs font-medium text-gray-500">{note.author.fullName}</span>
+                <span className="text-xs font-medium text-zinc-500">{note.author.fullName}</span>
               )}
-              <span className="text-xs text-gray-400">{relativeTime(note.createdAt)}</span>
+              <span className="text-xs text-zinc-400">{relativeTime(note.createdAt)}</span>
               <span className="text-xs bg-yellow-50 text-yellow-600 px-1.5 py-0.5 rounded-full border border-yellow-100">
                 Ghi chú
               </span>
@@ -381,7 +382,7 @@ function NoteItem({ note, onDelete }: { note: Note; onDelete: () => void }) {
 }
 
 function ActivityItem({ activity, onDelete }: { activity: Activity; onDelete: () => void }) {
-  const colorClass = ACTIVITY_TYPE_COLORS[activity.type] ?? 'bg-gray-100 text-gray-600';
+  const colorClass = ACTIVITY_TYPE_COLORS[activity.type] ?? 'bg-gray-100 text-zinc-600';
   return (
     <div className="group flex items-start gap-3">
       <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${colorClass}`}>
@@ -393,9 +394,9 @@ function ActivityItem({ activity, onDelete }: { activity: Activity; onDelete: ()
             <p className="text-sm font-medium text-gray-800 truncate">{activity.title}</p>
             <div className="flex items-center gap-2 mt-1">
               {activity.author && (
-                <span className="text-xs font-medium text-gray-500">{activity.author.fullName}</span>
+                <span className="text-xs font-medium text-zinc-500">{activity.author.fullName}</span>
               )}
-              <span className="text-xs text-gray-400">{relativeTime(activity.createdAt)}</span>
+              <span className="text-xs text-zinc-400">{relativeTime(activity.createdAt)}</span>
               <span className={`text-xs px-1.5 py-0.5 rounded-full border border-transparent ${colorClass} opacity-80`}>
                 {ACTIVITY_TYPE_LABELS[activity.type]}
               </span>
@@ -426,7 +427,7 @@ export function EntityTimeline({ entityType, entityId }: EntityTimelineProps) {
   const [tab, setTab] = useState<Tab>('all');
 
   // Fetch notes
-  const { data: notesData, isLoading: notesLoading } = useQuery({
+  const { data: notesData, isLoading: notesLoading, refetch: refetchNotes } = useQuery({
     queryKey: ['notes', entityType, entityId],
     queryFn: async () => {
       const { data } = await api.get('/notes', { params: { entityType, entityId } });
@@ -436,7 +437,7 @@ export function EntityTimeline({ entityType, entityId }: EntityTimelineProps) {
   });
 
   // Fetch activities
-  const { data: activitiesData, isLoading: activitiesLoading } = useQuery({
+  const { data: activitiesData, isLoading: activitiesLoading, refetch: refetchActivities } = useQuery({
     queryKey: ['activities', entityType, entityId],
     queryFn: async () => {
       const { data } = await api.get('/activities', { params: { entityType, entityId } });
@@ -506,36 +507,43 @@ export function EntityTimeline({ entityType, entityId }: EntityTimelineProps) {
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-center gap-1 border-b border-gray-100 pb-0">
+      <div className="flex items-center gap-1 border-b border-zinc-100 pb-0">
         {TAB_LABELS.map(({ key, label, count }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg border-b-2 transition ${
               tab === key
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-indigo-500 text-zinc-900'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700'
             }`}
           >
             {label}
             <span
               className={`px-1.5 py-0.5 rounded-full text-[10px] ${
-                tab === key ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'
+                tab === key ? 'bg-indigo-100 text-zinc-900' : 'bg-gray-100 text-zinc-500'
               }`}
             >
               {count}
             </span>
           </button>
         ))}
+        <button
+          onClick={() => { refetchNotes(); refetchActivities(); }}
+          title="Làm mới"
+          className="ml-auto p-1.5 text-zinc-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition"
+        >
+          <RefreshCw size={13} />
+        </button>
       </div>
 
       {/* Timeline list */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-8 text-gray-400 text-sm">
+        <div className="flex items-center justify-center py-8 text-zinc-400 text-sm">
           Đang tải...
         </div>
       ) : visibleItems.length === 0 ? (
-        <div className="flex items-center justify-center py-8 text-gray-400 text-sm">
+        <div className="flex items-center justify-center py-8 text-zinc-400 text-sm">
           Chưa có {tab === 'notes' ? 'ghi chú' : tab === 'activities' ? 'hoạt động' : 'dữ liệu'} nào.
         </div>
       ) : (

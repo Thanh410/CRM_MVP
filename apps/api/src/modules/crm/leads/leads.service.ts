@@ -6,10 +6,14 @@ import { Readable } from 'stream';
 import { stringify } from 'csv-stringify';
 import { parse } from 'csv-parse';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { TenantScopeService } from '../../../common/services/tenant-scope.service';
+import { PlanLimitsService } from '../../../common/services/plan-limits.service';
+import { NotificationsService } from '../../notifications/notifications.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { QueryLeadDto } from './dto/query-lead.dto';
 import { paginate } from '../../../common/dto/pagination.dto';
+import type { BulkDeleteResult } from '../../../common/dto/bulk-delete.dto';
 
 const LEAD_SELECT = {
   id: true, orgId: true, fullName: true, email: true, phone: true,
@@ -24,9 +28,14 @@ export class LeadsService {
   constructor(
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
+    private notificationsService: NotificationsService,
+    private tenantScope: TenantScopeService,
+    private planLimits: PlanLimitsService,
   ) {}
 
   async create(orgId: string, dto: CreateLeadDto, createdBy?: string) {
+    await this.tenantScope.ensureUser(orgId, dto.assignedTo);
+    await this.planLimits.assertCanCreate(orgId, 'leads');
     const lead = await this.prisma.lead.create({
       data: { orgId, createdBy, ...dto },
       select: LEAD_SELECT,
@@ -63,7 +72,10 @@ export class LeadsService {
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.lead.findMany({
-        where, select: LEAD_SELECT, orderBy, skip: query.skip, take: query.limit,
+        where,
+        select: LEAD_SELECT,
+        orderBy,
+        ...(query.all ? {} : { skip: query.skip, take: query.limit }),
       }),
       this.prisma.lead.count({ where }),
     ]);
@@ -90,12 +102,13 @@ export class LeadsService {
 
   async update(orgId: string, id: string, dto: UpdateLeadDto, updatedBy?: string) {
     await this.findOneSimple(orgId, id);
+    await this.tenantScope.ensureUser(orgId, dto.assignedTo);
 
-    const lead = await this.prisma.lead.update({
-      where: { id },
+    await this.prisma.lead.updateMany({
+      where: { id, orgId, deletedAt: null },
       data: { ...dto, updatedBy },
-      select: LEAD_SELECT,
     });
+    const lead = await this.prisma.lead.findFirstOrThrow({ where: { id, orgId }, select: LEAD_SELECT });
 
     this.eventEmitter.emit('audit.create', {
       orgId, userId: updatedBy, action: 'UPDATE', resource: 'leads', resourceId: id,
@@ -110,11 +123,31 @@ export class LeadsService {
     const user = await this.prisma.user.findFirst({ where: { id: assignedTo, orgId } });
     if (!user) throw new BadRequestException('Assignee not found in organization');
 
-    return this.prisma.lead.update({
-      where: { id },
+    await this.prisma.lead.updateMany({
+      where: { id, orgId, deletedAt: null },
       data: { assignedTo, updatedBy: actorId },
-      select: LEAD_SELECT,
     });
+    const lead = await this.prisma.lead.findFirstOrThrow({ where: { id, orgId }, select: LEAD_SELECT });
+
+    // Gửi thông báo tiếng Việt cho người được gán (không gửi nếu tự gán cho mình)
+    if (assignedTo !== actorId) {
+      try {
+        await this.notificationsService.create({
+          orgId,
+          userId: assignedTo,
+          type: 'LEAD_ASSIGNED',
+          title: 'Bạn được gán lead mới',
+          body: `Lead "${lead.fullName}" vừa được gán cho bạn.`,
+          entityType: 'LEAD',
+          entityId: id,
+        });
+      } catch (err) {
+        // Log lỗi nhưng không break flow chính
+        console.error('[LeadsService] Failed to send notification:', err);
+      }
+    }
+
+    return lead;
   }
 
   async convert(orgId: string, id: string, actorId?: string) {
@@ -136,8 +169,8 @@ export class LeadsService {
       },
     });
 
-    await this.prisma.lead.update({
-      where: { id },
+    await this.prisma.lead.updateMany({
+      where: { id, orgId, deletedAt: null },
       data: {
         status: 'CONVERTED',
         convertedContactId: contact.id,
@@ -157,13 +190,40 @@ export class LeadsService {
   async remove(orgId: string, id: string, actorId?: string) {
     await this.findOneSimple(orgId, id);
 
-    await this.prisma.lead.update({
-      where: { id }, data: { deletedAt: new Date(), updatedBy: actorId },
+    await this.prisma.lead.updateMany({
+      where: { id, orgId, deletedAt: null }, data: { deletedAt: new Date(), updatedBy: actorId },
     });
 
     this.eventEmitter.emit('audit.create', {
       orgId, userId: actorId, action: 'DELETE', resource: 'leads', resourceId: id,
     });
+  }
+
+  async bulkRemove(orgId: string, ids: string[], actorId?: string): Promise<BulkDeleteResult> {
+    const uniqueIds = [...new Set(ids)];
+    const existing = await this.prisma.lead.findMany({
+      where: { id: { in: uniqueIds }, orgId, deletedAt: null },
+      select: { id: true },
+    });
+    const deletedIds = existing.map((lead) => lead.id);
+
+    if (deletedIds.length > 0) {
+      await this.prisma.lead.updateMany({
+        where: { id: { in: deletedIds }, orgId, deletedAt: null },
+        data: { deletedAt: new Date(), updatedBy: actorId },
+      });
+      for (const id of deletedIds) {
+        this.eventEmitter.emit('audit.create', {
+          orgId, userId: actorId, action: 'DELETE', resource: 'leads', resourceId: id,
+        });
+      }
+    }
+
+    return {
+      deletedIds,
+      failedIds: uniqueIds.filter((id) => !deletedIds.includes(id)),
+      count: deletedIds.length,
+    };
   }
 
   // ── CSV Export ────────────────────────────────────────────

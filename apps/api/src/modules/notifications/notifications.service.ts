@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationType, EntityType } from '@prisma/client';
 
@@ -30,11 +30,13 @@ export class NotificationsService {
     });
   }
 
-  async markRead(orgId: string, id: string) {
-    return this.prisma.notification.update({
-      where: { id },
+  async markRead(orgId: string, userId: string, id: string) {
+    const result = await this.prisma.notification.updateMany({
+      where: { id, orgId, userId },
       data: { read: true, readAt: new Date() },
     });
+    if (result.count === 0) throw new NotFoundException('Notification not found');
+    return this.prisma.notification.findFirst({ where: { id, orgId, userId } });
   }
 
   async markAllRead(orgId: string, userId: string) {
@@ -45,8 +47,9 @@ export class NotificationsService {
     return { message: 'All notifications marked as read' };
   }
 
-  async remove(orgId: string, id: string) {
-    await this.prisma.notification.delete({ where: { id } });
+  async remove(orgId: string, userId: string, id: string) {
+    const result = await this.prisma.notification.deleteMany({ where: { id, orgId, userId } });
+    if (result.count === 0) throw new NotFoundException('Notification not found');
   }
 
   async unreadCount(userId: string, orgId: string): Promise<number> {

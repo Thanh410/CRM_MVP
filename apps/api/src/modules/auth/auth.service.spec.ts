@@ -26,7 +26,9 @@ const mockUser = {
 const mockPrisma = {
   user: {
     findFirst: jest.fn(),
+    findMany: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
   },
   refreshToken: {
     create: jest.fn(),
@@ -85,9 +87,9 @@ describe('AuthService', () => {
 
     it('returns tokens and user on valid credentials', async () => {
       const hash = await bcrypt.hash('Password123!', 10);
-      mockPrisma.user.findFirst.mockResolvedValue({ ...mockUser, passwordHash: hash });
+      mockPrisma.user.findMany.mockResolvedValue([{ ...mockUser, passwordHash: hash }]);
       mockPrisma.refreshToken.create.mockResolvedValue({});
-      mockPrisma.user.update.mockResolvedValue({});
+      mockPrisma.user.updateMany.mockResolvedValue({ count: 1 });
       mockJwtService.signAsync
         .mockResolvedValueOnce('access-token')
         .mockResolvedValueOnce('refresh-token');
@@ -104,34 +106,34 @@ describe('AuthService', () => {
     });
 
     it('throws UnauthorizedException when user not found', async () => {
-      mockPrisma.user.findFirst.mockResolvedValue(null);
+      mockPrisma.user.findMany.mockResolvedValue([]);
 
       await expect(service.login(dto)).rejects.toThrow(UnauthorizedException);
     });
 
     it('throws UnauthorizedException when user is INACTIVE', async () => {
       const hash = await bcrypt.hash('Password123!', 10);
-      mockPrisma.user.findFirst.mockResolvedValue({
+      mockPrisma.user.findMany.mockResolvedValue([{
         ...mockUser,
         status: 'INACTIVE',
         passwordHash: hash,
-      });
+      }]);
 
       await expect(service.login(dto)).rejects.toThrow(UnauthorizedException);
     });
 
     it('throws UnauthorizedException on wrong password', async () => {
       const hash = await bcrypt.hash('DifferentPassword', 10);
-      mockPrisma.user.findFirst.mockResolvedValue({ ...mockUser, passwordHash: hash });
+      mockPrisma.user.findMany.mockResolvedValue([{ ...mockUser, passwordHash: hash }]);
 
       await expect(service.login(dto)).rejects.toThrow(UnauthorizedException);
     });
 
     it('stores refresh token hash in DB', async () => {
       const hash = await bcrypt.hash('Password123!', 10);
-      mockPrisma.user.findFirst.mockResolvedValue({ ...mockUser, passwordHash: hash });
+      mockPrisma.user.findMany.mockResolvedValue([{ ...mockUser, passwordHash: hash }]);
       mockPrisma.refreshToken.create.mockResolvedValue({});
-      mockPrisma.user.update.mockResolvedValue({});
+      mockPrisma.user.updateMany.mockResolvedValue({ count: 1 });
 
       await service.login(dto);
 
@@ -147,9 +149,9 @@ describe('AuthService', () => {
 
     it('emits audit event on successful login', async () => {
       const hash = await bcrypt.hash('Password123!', 10);
-      mockPrisma.user.findFirst.mockResolvedValue({ ...mockUser, passwordHash: hash });
+      mockPrisma.user.findMany.mockResolvedValue([{ ...mockUser, passwordHash: hash }]);
       mockPrisma.refreshToken.create.mockResolvedValue({});
-      mockPrisma.user.update.mockResolvedValue({});
+      mockPrisma.user.updateMany.mockResolvedValue({ count: 1 });
 
       await service.login(dto, '127.0.0.1', 'TestAgent');
 
@@ -227,14 +229,14 @@ describe('AuthService', () => {
         email: 'admin@test.vn',
         type: 'password-reset',
       });
-      mockPrisma.user.update.mockResolvedValue({});
+      mockPrisma.user.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.refreshToken.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.resetPassword('valid-token', 'NewPassword123!');
 
       expect(result.message).toContain('đặt lại thành công');
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
+      expect(mockPrisma.user.updateMany).toHaveBeenCalledWith({
+        where: { id: 'user-1', deletedAt: null },
         data: { passwordHash: expect.any(String) },
       });
     });
@@ -265,7 +267,7 @@ describe('AuthService', () => {
         sub: 'user-1',
         type: 'password-reset',
       });
-      mockPrisma.user.update.mockResolvedValue({});
+      mockPrisma.user.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.refreshToken.updateMany.mockResolvedValue({ count: 2 });
 
       await service.resetPassword('valid-token', 'NewPassword123!');

@@ -35,6 +35,9 @@ model Organization {
   dealStages        DealStage[]
   deals             Deal[]
   departments       Department[]
+  entityTags        EntityTag[]
+  customFieldValues CustomFieldValue[]
+  campaignLogs      CampaignLog[]
   leads             Lead[]
   notes             Note[]
   notifications     Notification[]
@@ -110,6 +113,7 @@ model User {
   assignedContacts Contact[]                 @relation("ContactAssignee")
   convParticipants ConversationParticipant[]
   assignedConvs    Conversation[]            @relation("ConvAssignee")
+  sentMessages      Message[]                 @relation("MessageSender")
   ownedDeals       Deal[]                    @relation("DealOwner")
   assignedLeads    Lead[]                    @relation("LeadAssignee")
   notes            Note[]
@@ -418,14 +422,17 @@ model Tag {
 }
 
 model EntityTag {
+  orgId      String
   entityType EntityType
   entityId   String
   tagId      String
   createdAt  DateTime   @default(now())
+  org        Organization @relation(fields: [orgId], references: [id])
   tag        Tag        @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
-  @@id([entityType, entityId, tagId])
+  @@id([orgId, entityType, entityId, tagId])
   @@index([tagId])
+  @@index([orgId, entityType, entityId])
   @@map("entity_tags")
 }
 
@@ -468,6 +475,7 @@ model CustomField {
 
 model CustomFieldValue {
   id         String      @id @default(uuid())
+  orgId      String
   fieldId    String
   entityType EntityType
   entityId   String
@@ -475,9 +483,11 @@ model CustomFieldValue {
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
   field      CustomField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  org        Organization @relation(fields: [orgId], references: [id])
 
-  @@unique([fieldId, entityId])
+  @@unique([orgId, fieldId, entityId])
   @@index([entityType, entityId])
+  @@index([orgId, entityType, entityId])
   @@map("custom_field_values")
 }
 
@@ -620,6 +630,7 @@ model Campaign {
 
 model CampaignLog {
   id         String    @id @default(uuid())
+  orgId      String
   campaignId String
   contactId  String?
   status     String
@@ -630,7 +641,9 @@ model CampaignLog {
   createdAt  DateTime  @default(now())
   campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   contact    Contact?  @relation(fields: [contactId], references: [id])
+  org        Organization @relation(fields: [orgId], references: [id])
 
+  @@index([orgId])
   @@index([campaignId])
   @@index([contactId])
   @@map("campaign_logs")
@@ -652,6 +665,7 @@ model ChannelAccount {
   conversations  Conversation[]
 
   @@index([orgId])
+  @@unique([orgId, channel, externalId])
   @@map("channel_accounts")
 }
 
@@ -676,6 +690,7 @@ model Conversation {
   id               String                    @id @default(uuid())
   orgId            String
   channel          ChannelType
+  kind             ConversationKind          @default(EXTERNAL)
   channelAccountId String?
   externalId       String
   status           ConversationStatus        @default(OPEN)
@@ -696,6 +711,7 @@ model Conversation {
 
   @@unique([orgId, channel, externalId])
   @@index([orgId])
+  @@index([kind])
   @@index([status])
   @@index([assignedTo])
   @@index([lastMessageAt])
@@ -705,11 +721,16 @@ model Conversation {
 model ConversationParticipant {
   conversationId String
   userId         String
+  role           ConversationParticipantRole @default(MEMBER)
   joinedAt       DateTime     @default(now())
+  lastReadAt     DateTime?
+  leftAt         DateTime?
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([conversationId, userId])
+  @@index([userId])
+  @@index([leftAt])
   @@map("conversation_participants")
 }
 
@@ -726,9 +747,11 @@ model Message {
   sentAt         DateTime         @default(now())
   createdAt      DateTime         @default(now())
   conversation   Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User?            @relation("MessageSender", fields: [senderId], references: [id])
 
   @@unique([conversationId, externalId])
   @@index([conversationId])
+  @@index([senderId])
   @@index([sentAt])
   @@map("messages")
 }
@@ -877,6 +900,17 @@ enum ConversationStatus {
   CLOSED
 }
 
+enum ConversationKind {
+  EXTERNAL
+  DIRECT
+  GROUP
+}
+
+enum ConversationParticipantRole {
+  ADMIN
+  MEMBER
+}
+
 enum MessageDirection {
   INBOUND
   OUTBOUND
@@ -886,6 +920,7 @@ enum MessageDirection {
 enum ChannelType {
   ZALO
   MESSENGER
+  INTERNAL
   INSTAGRAM
   WHATSAPP
   TELEGRAM

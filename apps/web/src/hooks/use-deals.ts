@@ -28,8 +28,12 @@ export function useCreateDeal() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (dto: any) => api.post('/deals', dto).then((r) => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['deals'] }); toast.success('Tạo deal thành công'); },
-    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Lỗi'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deals'] });
+      qc.invalidateQueries({ queryKey: ['deals', 'kanban'] });
+      toast.success('Tạo deal thành công');
+    },
+    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Tạo deal thất bại'),
   });
 }
 
@@ -38,8 +42,11 @@ export function useMoveDealStage() {
   return useMutation({
     mutationFn: ({ id, stageId }: { id: string; stageId: string }) =>
       api.patch(`/deals/${id}/stage`, { stageId }).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['deals'] }),
-    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Lỗi'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deals'] });
+      qc.invalidateQueries({ queryKey: ['deals', 'kanban'] });
+    },
+    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Di chuyển deal thất bại'),
   });
 }
 
@@ -47,7 +54,11 @@ export function useMarkDealWon() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.patch(`/deals/${id}/won`).then((r) => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['deals'] }); toast.success('Deal đã thắng!'); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deals'] });
+      qc.invalidateQueries({ queryKey: ['deals', 'kanban'] });
+    },
+    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Đánh dấu thắng thất bại'),
   });
 }
 
@@ -56,8 +67,11 @@ export function useMarkDealLost() {
   return useMutation({
     mutationFn: ({ id, lostReason }: { id: string; lostReason?: string }) =>
       api.patch(`/deals/${id}/lost`, { lostReason }).then((r) => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['deals'] }); toast.success('Đã đánh dấu thua'); },
-    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Lỗi'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deals'] });
+      qc.invalidateQueries({ queryKey: ['deals', 'kanban'] });
+    },
+    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Đánh dấu thua thất bại'),
   });
 }
 
@@ -65,8 +79,12 @@ export function useUpdateDeal(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (dto: any) => api.patch(`/deals/${id}`, dto).then((r) => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['deals'] }); toast.success('Cập nhật deal thành công'); },
-    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Lỗi'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deals'] });
+      qc.invalidateQueries({ queryKey: ['deals', 'kanban'] });
+      toast.success('Cập nhật deal thành công');
+    },
+    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Cập nhật deal thất bại'),
   });
 }
 
@@ -82,8 +100,12 @@ export function useDeleteDeal() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/deals/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['deals'] }); toast.success('Đã xóa deal'); },
-    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Xóa thất bại'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deals'] });
+      qc.invalidateQueries({ queryKey: ['deals', 'kanban'] });
+      toast.success('Đã xóa deal');
+    },
+    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Xóa deal thất bại'),
   });
 }
 

@@ -1,0 +1,142 @@
+name: Load Test
+
+on:
+  schedule:
+    # Chủ Nhật 2h sáng UTC (= 9h sáng Việt Nam) — sau khi backup xong
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: 'Scenario chạy'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+          - smoke
+          - load
+          - spike
+          - all
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+
+jobs:
+  load-test:
+    name: k6 Load Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: crm_test
+          POSTGRES_USER: crm
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      # ── Khởi động API ──────────────────────────────────────
+      - name: Generate Prisma client
+        run: pnpm --filter api exec prisma generate
+        env:
+          DATABASE_URL: postgresql://crm:test_password@localhost:5432/crm_test
+
+      - name: Run migrations
+        run: pnpm --filter api exec prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://crm:test_password@localhost:5432/crm_test
+
+      - name: Seed demo users
+        run: pnpm --filter api db:seed
+        env:
+          DATABASE_URL: postgresql://crm:test_password@localhost:5432/crm_test
+
+      - name: Build API
+        run: pnpm --filter api build
+
+      - name: Start API
+        run: |
+          pnpm --filter api start &
+          echo $! > api.pid
+          # Wait for API ready
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/api/health > /dev/null; then
+              echo "API ready after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+        env:
+          DATABASE_URL: postgresql://crm:test_password@localhost:5432/crm_test?connection_limit=20
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test_access_secret_32chars_minimum_xx
+          JWT_REFRESH_SECRET: test_refresh_secret_32chars_minimum
+          ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          NODE_ENV: test
+          PORT: 3000
+
+      - name: Create results directory
+        run: mkdir -p tests/load/results
+
+      # ── Chạy scenarios theo input ──────────────────────────
+      - name: Run smoke test
+        if: github.event.inputs.scenario == 'smoke' || github.event.inputs.scenario == 'all' || github.event_name == 'schedule'
+        run: k6 run tests/load/k6-smoke.js
+        env:
+          BASE_URL: http://localhost:3000/api
+
+      - name: Run load test
+        if: github.event.inputs.scenario == 'load' || github.event.inputs.scenario == 'all' || github.event_name == 'schedule'
+        run: k6 run tests/load/k6-load.js
+        env:
+          BASE_URL: http://localhost:3000/api
+
+      - name: Run spike test
+        if: github.event.inputs.scenario == 'spike' || github.event.inputs.scenario == 'all'
+        run: k6 run tests/load/k6-spike.js
+        env:
+          BASE_URL: http://localhost:3000/api
+
+      # ── Upload kết quả ──────────────────────────────────────
+      - name: Upload k6 results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k6-results-${{ github.run_number }}
+          path: tests/load/results/
+          retention-days: 30
+
+      - name: Stop API
+        if: always()
+        run: |
+          if [ -f api.pid ]; then
+            kill $(cat api.pid) || true
+          fi
