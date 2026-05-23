@@ -12,6 +12,7 @@ export interface Task {
   assignee?: { id: string; fullName: string; avatar?: string };
   project?: { id: string; name: string };
   dueDate?: string;
+  isBlocked?: boolean;
   _count?: { subtasks: number; comments: number };
 }
 
@@ -32,7 +33,15 @@ export function useTasksKanban(projectId?: string) {
   });
 }
 
-export function useTasks(filters?: { mine?: boolean; projectId?: string; status?: string }) {
+export function useTasks(filters?: {
+  mine?: boolean;
+  watched?: boolean;
+  overdue?: boolean;
+  pending?: boolean;
+  blocked?: boolean;
+  projectId?: string;
+  status?: string;
+}) {
   return useQuery<Task[]>({
     queryKey: ['tasks', filters],
     queryFn: async () => {
@@ -40,6 +49,10 @@ export function useTasks(filters?: { mine?: boolean; projectId?: string; status?
       if (filters?.mine) params.set('mine', 'true');
       if (filters?.projectId) params.set('projectId', filters.projectId);
       if (filters?.status) params.set('status', filters.status);
+      if (filters?.watched) params.set('watched', 'true');
+      if (filters?.overdue) params.set('overdue', 'true');
+      if (filters?.pending) params.set('pending', 'true');
+      if (filters?.blocked) params.set('blocked', 'true');
       const res = await api.get(`/tasks?${params}`);
       return res.data;
     },
@@ -50,7 +63,11 @@ export function useCreateTask() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: Partial<Task> & { title: string }) => api.post('/tasks', data).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+    },
   });
 }
 
@@ -59,7 +76,11 @@ export function useMoveTaskStatus() {
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: Task['status'] }) =>
       api.patch(`/tasks/${id}/status`, { status }).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+    },
   });
 }
 
@@ -107,7 +128,11 @@ export function useUpdateTask() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Task> }) =>
       api.patch(`/tasks/${id}`, data).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+    },
   });
 }
 
@@ -124,7 +149,12 @@ export function useAddTaskComment() {
   return useMutation({
     mutationFn: ({ id, content }: { id: string; content: string }) =>
       api.post(`/tasks/${id}/comments`, { content }).then((r) => r.data),
-    onSuccess: (_data, { id }) => qc.invalidateQueries({ queryKey: ['tasks', id] }),
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['tasks', id] });
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+    },
   });
 }
 
@@ -133,7 +163,10 @@ export function useAddWatcher() {
   return useMutation({
     mutationFn: ({ taskId, userId }: { taskId: string; userId: string }) =>
       api.post(`/tasks/${taskId}/watchers/${userId}`).then((r) => r.data),
-    onSuccess: (_data, { taskId }) => qc.invalidateQueries({ queryKey: ['tasks', taskId] }),
+    onSuccess: (_data, { taskId }) => {
+      qc.invalidateQueries({ queryKey: ['tasks', taskId] });
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+    },
   });
 }
 

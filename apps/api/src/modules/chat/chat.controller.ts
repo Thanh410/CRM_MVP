@@ -18,13 +18,19 @@ export class ChatController {
   @Get('conversations')
   @ApiQuery({ name: 'kind', enum: ['direct', 'group'], required: false })
   @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'unreadOnly', required: false })
   listConversations(
     @OrgId() orgId: string,
     @CurrentUser('id') userId: string,
     @Query('kind') kind?: 'direct' | 'group',
     @Query('search') search?: string,
+    @Query('unreadOnly') unreadOnly?: string,
   ) {
-    return this.chatService.listConversations(orgId, userId, { kind, search });
+    return this.chatService.listConversations(orgId, userId, {
+      kind,
+      search,
+      unreadOnly: unreadOnly === 'true',
+    });
   }
 
   @Get('unread-count')

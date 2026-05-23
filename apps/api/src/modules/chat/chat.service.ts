@@ -16,6 +16,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ChatGateway } from './chat.gateway';
 
 type ChatKindFilter = 'direct' | 'group';
+type ChatListQuery = { kind?: ChatKindFilter; search?: string; unreadOnly?: boolean };
 
 @Injectable()
 export class ChatService {
@@ -24,7 +25,7 @@ export class ChatService {
     private readonly gateway: ChatGateway,
   ) {}
 
-  async listConversations(orgId: string, userId: string, query: { kind?: ChatKindFilter; search?: string }) {
+  async listConversations(orgId: string, userId: string, query: ChatListQuery) {
     const where: any = {
       orgId,
       channel: ChannelType.INTERNAL,
@@ -57,7 +58,15 @@ export class ChatService {
       orderBy: [{ lastMessageAt: 'desc' }, { updatedAt: 'desc' }],
     });
 
-    return Promise.all(conversations.map((conversation) => this.presentConversation(conversation, userId)));
+    const presented = await Promise.all(
+      conversations.map((conversation) => this.presentConversation(conversation, userId)),
+    );
+
+    if (query.unreadOnly) {
+      return presented.filter((conversation) => conversation.unreadCount > 0);
+    }
+
+    return presented;
   }
 
   async createDirect(orgId: string, userId: string, targetUserId: string) {

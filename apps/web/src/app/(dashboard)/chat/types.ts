@@ -24,6 +24,8 @@ export interface ChatMessage {
   sentAt: string;
   createdAt?: string;
   sender?: Pick<ChatUser, 'id' | 'fullName' | 'avatar'> | null;
+  pending?: boolean;
+  failed?: boolean;
 }
 
 export interface ChatConversation {
@@ -43,4 +45,4 @@ export interface ChatUnreadCountResponse {
   count: number;
 }
 
-export type ChatKindFilter = 'all' | 'direct' | 'group';
+export type ChatKindFilter = 'all' | 'direct' | 'group' | 'unread';

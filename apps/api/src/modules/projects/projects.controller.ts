@@ -23,6 +23,11 @@ export class ProjectsController {
     return this.projectsService.bulkRemove(orgId, dto.ids);
   }
 
+  @Get(':id/progress')
+  getProgress(@OrgId() orgId: string, @Param('id') id: string) {
+    return this.projectsService.getProgress(orgId, id);
+  }
+
   @Get(':id')
   findOne(@OrgId() orgId: string, @Param('id') id: string) {
     return this.projectsService.findOne(orgId, id);

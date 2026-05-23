@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bell, Check, CheckCheck, Search, X } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { formatDate } from '@/lib/utils';
@@ -19,6 +20,7 @@ export interface HeaderProps {
 }
 
 export function Header({ onOpenSearch }: HeaderProps) {
+  const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -28,6 +30,13 @@ export function Header({ onOpenSearch }: HeaderProps) {
   const markAllRead = useMarkAllRead();
   const deleteNotification = useDeleteNotification();
   const unread = notifications.filter((notification: { read: boolean }) => !notification.read).length;
+
+  const openNotification = (notification: any) => {
+    if (!notification.read) markRead.mutate(notification.id);
+    if (notification.entityType === 'TASK') router.push(`/tasks?taskId=${notification.entityId}`);
+    else if (notification.entityType === 'PROJECT') router.push(`/projects?projectId=${notification.entityId}`);
+    setOpen(false);
+  };
 
   useEffect(() => {
     function handler(event: MouseEvent) {
@@ -108,7 +117,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                   notifications.map((notification: any) => (
                     <div
                       key={notification.id}
-                      onClick={() => !notification.read && markRead.mutate(notification.id)}
+                      onClick={() => openNotification(notification)}
                       className={`group flex cursor-pointer items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/60 ${
                         !notification.read ? 'bg-aurora-violet/5' : ''
                       }`}

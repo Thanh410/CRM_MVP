@@ -7,6 +7,10 @@ import { paginate } from '../../common/dto/pagination.dto';
 import type { BulkDeleteResult } from '../../common/dto/bulk-delete.dto';
 import { QueryProjectDto } from './dto/query-project.dto';
 
+const BLOCKED_MARKER = '[[BLOCKED]]';
+const PROGRESS_MARKER = '[[PROGRESS]]';
+const DONE_MARKER = '[[DONE]]';
+
 class UpdateProjectDto extends PartialType(CreateProjectDto) {}
 
 @Injectable()
@@ -59,13 +63,57 @@ export class ProjectsService {
           include: {
             assignee: { select: { id: true, fullName: true, avatar: true } },
             _count: { select: { subtasks: true, comments: true } },
+            comments: {
+              where: { deletedAt: null },
+              select: { id: true, content: true, createdAt: true },
+              orderBy: { createdAt: 'desc' },
+            },
           },
           orderBy: { createdAt: 'asc' },
         },
       },
     });
     if (!project) throw new NotFoundException('Project not found');
-    return project;
+    const progress = await this.getProgress(orgId, id);
+    return {
+      ...project,
+      progress,
+      tasks: project.tasks.map((task) => ({ ...task, isBlocked: this.isBlocked(task) })),
+    };
+  }
+
+  async getProgress(orgId: string, id: string) {
+    await this.prisma.project.findFirstOrThrow({
+      where: { id, orgId, deletedAt: null },
+      select: { id: true },
+    });
+    const tasks = await this.prisma.task.findMany({
+      where: { orgId, projectId: id, deletedAt: null },
+      select: {
+        id: true,
+        status: true,
+        dueDate: true,
+        comments: {
+          where: { deletedAt: null },
+          select: { content: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+    const now = new Date();
+    const doneCount = tasks.filter((task) => task.status === 'DONE').length;
+    const pendingCount = tasks.filter((task) => task.status === 'REVIEW').length;
+    const overdueCount = tasks.filter((task) => task.status !== 'DONE' && task.dueDate && task.dueDate < now).length;
+    const blockedCount = tasks.filter((task) => this.isBlocked(task)).length;
+
+    return {
+      total: tasks.length,
+      done: doneCount,
+      pending: pendingCount,
+      overdue: overdueCount,
+      blocked: blockedCount,
+      percent: tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0,
+    };
   }
 
   async create(orgId: string, userId: string, dto: CreateProjectDto) {
@@ -123,5 +171,16 @@ export class ProjectsService {
       failedIds: uniqueIds.filter((id) => !deletedIds.includes(id)),
       count: deletedIds.length,
     };
+  }
+
+  private isBlocked(task: { comments?: Array<{ content: string; createdAt: Date }> }) {
+    const latestProgress = [...(task.comments ?? [])]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .find((comment) =>
+        comment.content.startsWith(BLOCKED_MARKER) ||
+        comment.content.startsWith(PROGRESS_MARKER) ||
+        comment.content.startsWith(DONE_MARKER),
+      );
+    return latestProgress?.content.startsWith(BLOCKED_MARKER) ?? false;
   }
 }

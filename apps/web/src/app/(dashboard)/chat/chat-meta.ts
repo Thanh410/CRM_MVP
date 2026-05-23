@@ -2,8 +2,9 @@ import type { ChatConversation } from './types';
 
 export const KIND_LABELS = {
   all: 'Tất cả',
-  direct: 'Cá nhân',
+  direct: 'Tin nhắn riêng',
   group: 'Nhóm',
+  unread: 'Chưa đọc',
 } as const;
 
 export function getConversationTitle(conversation: ChatConversation, currentUserId?: string) {
@@ -23,6 +24,18 @@ export function formatChatTime(value?: string | null) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+}
+
+export function formatChatDate(value?: string | null) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('vi-VN', {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 }
 
 export function getOtherParticipant(conversation: ChatConversation, currentUserId?: string) {

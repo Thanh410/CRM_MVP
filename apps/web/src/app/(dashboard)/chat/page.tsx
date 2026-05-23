@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { RippleButton } from '@/components/ui/ripple-button';
@@ -10,20 +11,23 @@ import { ConversationList } from './_components/conversation-list';
 import { CreateGroupDialog, GroupSettingsDialog } from './_components/group-dialogs';
 import { getConversationTitle } from './chat-meta';
 import {
+  useChatConversation,
   useChatConversations,
   useChatMessages,
   useChatMutations,
   useChatUsers,
 } from './hooks';
 import { connectChatRealtime } from './realtime';
-import type { ChatKindFilter } from './types';
+import type { ChatKindFilter, ChatMessage } from './types';
 
 export default function ChatPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
   const accessToken = useAuthStore((state) => state.accessToken);
 
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const activeId = searchParams.get('conversationId');
   const [kind, setKind] = useState<ChatKindFilter>('all');
   const [search, setSearch] = useState('');
   const [userSearch, setUserSearch] = useState('');
@@ -35,13 +39,28 @@ export default function ChatPage() {
   const [addUserIds, setAddUserIds] = useState<string[]>([]);
 
   const conversationsQuery = useChatConversations(kind, search);
+  const activeConversationQuery = useChatConversation(activeId);
   const messagesQuery = useChatMessages(activeId);
   const usersQuery = useChatUsers(userSearch);
-  const chat = useChatMutations(activeId, currentUser?.id);
+  const chat = useChatMutations(activeId, currentUser?.id, currentUser?.fullName);
+
+  const setActiveId = useCallback(
+    (conversationId: string | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (conversationId) params.set('conversationId', conversationId);
+      else params.delete('conversationId');
+      const query = params.toString();
+      router.replace(query ? `/chat?${query}` : '/chat', { scroll: false });
+    },
+    [router, searchParams],
+  );
 
   const activeConversation = useMemo(
-    () => conversationsQuery.data?.find((conversation) => conversation.id === activeId) ?? null,
-    [activeId, conversationsQuery.data],
+    () =>
+      conversationsQuery.data?.find((conversation) => conversation.id === activeId) ??
+      activeConversationQuery.data ??
+      null,
+    [activeConversationQuery.data, activeId, conversationsQuery.data],
   );
 
   const selectableUsers = (usersQuery.data ?? []).filter((user) => user.id !== currentUser?.id);
@@ -86,9 +105,13 @@ export default function ChatPage() {
   const handleSend = () => {
     const content = message.trim();
     if (!content || !activeId) return;
-    chat.sendMessage.mutate(content, {
-      onSuccess: () => setMessage(''),
-    });
+    chat.sendMessage.mutate({ content });
+    setMessage('');
+  };
+
+  const handleRetryMessage = (failedMessage: ChatMessage) => {
+    if (!failedMessage.failed) return;
+    chat.sendMessage.mutate({ content: failedMessage.content, clientId: failedMessage.id });
   };
 
   const toggleSelectedUser = (userId: string) => {
@@ -129,9 +152,9 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-6rem)] flex-col">
+    <div className="flex h-full min-h-[520px] min-w-0 flex-col lg:min-h-0">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h1 className="font-display text-2xl font-bold tracking-tight">Chat nội bộ</h1>
           <p className="mt-1 text-sm text-muted-foreground">Trao đổi cá nhân và nhóm trong công ty.</p>
         </div>
@@ -142,9 +165,10 @@ export default function ChatPage() {
             setSelectedUserIds([]);
           }}
           size="md"
+          className="shrink-0"
         >
           <Plus className="h-4 w-4" />
-          Tạo nhóm
+          <span className="hidden sm:inline">Tạo nhóm</span>
         </RippleButton>
       </div>
 
@@ -153,6 +177,7 @@ export default function ChatPage() {
           activeId={activeId}
           conversations={conversationsQuery.data}
           currentUserId={currentUser?.id}
+          isError={conversationsQuery.isError}
           isLoading={conversationsQuery.isLoading}
           kind={kind}
           search={search}
@@ -176,6 +201,7 @@ export default function ChatPage() {
             onBack={() => setActiveId(null)}
             onDraftChange={setMessage}
             onOpenGroupSettings={() => setGroupSettingsOpen(true)}
+            onRetryMessage={handleRetryMessage}
             onSend={handleSend}
           />
         </div>

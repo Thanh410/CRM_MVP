@@ -50,7 +50,9 @@ export function BottomNav({ onOpenMore }: BottomNavProps) {
             <div className={cn('rounded-xl px-3 py-1 transition-all duration-200', active && 'bg-aurora-violet/15')}>
               <Icon size={20} strokeWidth={active ? 2.5 : 2} />
             </div>
-            <span className={cn('text-[10px] font-medium transition-colors', active && 'text-aurora-violet')}>{label}</span>
+            <span className={cn('text-[10px] font-medium transition-colors', active && 'text-aurora-violet')}>
+              {label}
+            </span>
           </Link>
         );
       })}

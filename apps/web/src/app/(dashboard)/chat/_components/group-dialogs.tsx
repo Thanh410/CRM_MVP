@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Users, X } from 'lucide-react';
+import { Check, Search, Users, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { AvatarGradient } from '@/components/ui/avatar-gradient';
 import { RippleButton } from '@/components/ui/ripple-button';
@@ -135,7 +135,7 @@ export function GroupSettingsDialog({
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-foreground">{participant.user.fullName}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {participant.role === 'ADMIN' ? 'Quản trị viên' : 'Thành viên'}
+                      {participant.role === 'ADMIN' ? 'Admin' : 'Thành viên'}
                     </p>
                   </div>
                   {canRemove && (
@@ -192,18 +192,18 @@ function DialogFrame({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl border border-border bg-card shadow-lift">
-        <div className="flex items-center justify-between border-b border-border p-4">
-          <div>
-            <p className="font-display text-lg font-bold text-foreground">{title}</p>
-            <p className="text-xs text-muted-foreground">{subtitle}</p>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-3 backdrop-blur-sm">
+      <div className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-lift">
+        <div className="flex items-center justify-between gap-3 border-b border-border p-4">
+          <div className="min-w-0">
+            <p className="truncate font-display text-lg font-bold text-foreground">{title}</p>
+            <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
           </div>
-          <button onClick={onClose} className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-muted">
+          <button onClick={onClose} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted">
             <X className="h-4 w-4" />
           </button>
         </div>
-        {children}
+        <div className="min-h-0 overflow-y-auto">{children}</div>
       </div>
     </div>
   );
@@ -265,7 +265,7 @@ function UserPickList({
                   selected ? 'border-aurora-violet bg-aurora-violet text-white' : 'border-border text-transparent'
                 }`}
               >
-                ✓
+                <Check className="h-3 w-3" />
               </span>
             </button>
           );

@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TenantScopeService } from '../../common/services/tenant-scope.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // ── Mock data ─────────────────────────────────────────────
 const orgId = 'org-1';
@@ -67,6 +68,9 @@ const mockTenantScope = {
   ensureDeal: jest.fn().mockResolvedValue(undefined),
   ensureEntity: jest.fn().mockResolvedValue(undefined),
 };
+const mockNotifications = {
+  create: jest.fn().mockResolvedValue({ id: 'notif-1' }),
+};
 
 // ── Test Suite ────────────────────────────────────────────
 describe('TasksService', () => {
@@ -80,6 +84,7 @@ describe('TasksService', () => {
         TasksService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: TenantScopeService, useValue: mockTenantScope },
+        { provide: NotificationsService, useValue: mockNotifications },
       ],
     }).compile();
 
@@ -253,7 +258,7 @@ describe('TasksService', () => {
         .mockResolvedValueOnce({ ...mockTask, status: 'IN_PROGRESS', subtasks: [], comments: [] });
       mockPrisma.task.updateMany.mockResolvedValue({ count: 1 });
 
-      const result = await service.moveStatus(orgId, 'task-1', 'IN_PROGRESS' as any);
+      const result = await service.moveStatus(orgId, 'task-1', userId, 'IN_PROGRESS' as any);
 
       expect(mockPrisma.task.updateMany).toHaveBeenCalledWith({
         where: { id: 'task-1', orgId, deletedAt: null },
@@ -275,6 +280,19 @@ describe('TasksService', () => {
       expect(mockPrisma.taskComment.create).toHaveBeenCalledWith({
         data: { taskId: 'task-1', authorId: userId, content: 'Looking into this now' },
         include: expect.any(Object),
+      });
+    });
+
+    it('moves task to review when progress update is pending', async () => {
+      mockPrisma.task.findFirst.mockResolvedValue({ ...mockTask, subtasks: [], comments: [] });
+      mockPrisma.taskComment.create.mockResolvedValue({ ...mockComment, content: '[[PENDING]] Waiting for approval' });
+      mockPrisma.task.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.addComment(orgId, 'task-1', userId, '[[PENDING]] Waiting for approval');
+
+      expect(mockPrisma.task.updateMany).toHaveBeenCalledWith({
+        where: { id: 'task-1', orgId, deletedAt: null },
+        data: { status: 'REVIEW', updatedBy: userId },
       });
     });
   });

@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Pencil, Trash2, MessageSquare, X, Eye, UserPlus, LayoutGrid, List, CheckSquare } from 'lucide-react';
 import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors, type DragStartEvent, type DragEndEvent } from '@dnd-kit/core';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import {
   useTasksKanban,
+  useTasks,
   useMoveTaskStatus,
   useCreateTask,
   useUpdateTask,
@@ -56,6 +58,39 @@ const PRIORITY_TONES: Record<string, StatusTone> = {
   URGENT: 'rose',
 };
 
+const STATUS_TEXT: Record<string, string> = {
+  TODO: 'Chưa làm',
+  IN_PROGRESS: 'Đang làm',
+  REVIEW: 'Chờ duyệt',
+  DONE: 'Hoàn thành',
+  CANCELLED: 'Hủy',
+};
+
+const PRIORITY_TEXT: Record<string, string> = {
+  LOW: 'Thấp',
+  MEDIUM: 'Trung bình',
+  HIGH: 'Cao',
+  URGENT: 'Khẩn cấp',
+};
+
+const PROGRESS_TYPES = {
+  PROGRESS: { label: 'Tiến độ', marker: '[[PROGRESS]]', toast: 'Đã cập nhật tiến độ' },
+  PENDING: { label: 'Pending', marker: '[[PENDING]]', toast: 'Đã chuyển sang chờ duyệt' },
+  BLOCKED: { label: 'Khó khăn', marker: '[[BLOCKED]]', toast: 'Đã báo khó khăn' },
+  DONE: { label: 'Hoàn tất', marker: '[[DONE]]', toast: 'Đã hoàn tất nhiệm vụ' },
+} as const;
+
+function cleanProgressContent(content: string) {
+  return content.replace(/^\[\[(BLOCKED|PROGRESS|DONE|PENDING)\]\]\s*/, '');
+}
+
+function progressTone(content: string): StatusTone {
+  if (content.startsWith('[[BLOCKED]]')) return 'rose';
+  if (content.startsWith('[[PENDING]]')) return 'amber';
+  if (content.startsWith('[[DONE]]')) return 'emerald';
+  return 'indigo';
+}
+
 const PRIORITY_LABELS: Record<string, string> = {
   LOW: 'Thấp',
   MEDIUM: 'Trung bình',
@@ -87,6 +122,7 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
   const update = useUpdateTask();
   const { data: users } = useUsers();
   const { data: projects } = useProjects();
+  const projectOptions = Array.isArray(projects) ? projects : (projects as any)?.data ?? [];
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -181,7 +217,7 @@ function TaskEditModal({ task, onClose }: { task: Task; onClose: () => void }) {
               onChange={(e) => setForm((f) => ({ ...f, projectId: e.target.value }))}
             >
               <option value="">-- Không gán --</option>
-              {(projects ?? []).map((p: any) => (
+              {projectOptions.map((p: any) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
@@ -209,6 +245,8 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
   const removeWatcher = useRemoveWatcher();
   const { data: allUsers = [] } = useQuery({ queryKey: ['users', 'select'], queryFn: () => api.get('/users?limit=50').then(r => r.data?.data ?? r.data ?? []) });
   const [comment, setComment] = useState('');
+  const [progressType, setProgressType] = useState<keyof typeof PROGRESS_TYPES>('PROGRESS');
+  const [progressText, setProgressText] = useState('');
   const [showWatcherPicker, setShowWatcherPicker] = useState(false);
 
   const handleAddComment = async (e: React.FormEvent) => {
@@ -217,6 +255,15 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
     await addComment.mutateAsync({ id: taskId, content: comment });
     setComment('');
     toast.success('Đã thêm bình luận');
+  };
+
+  const handleProgressUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!progressText.trim()) return;
+    const config = PROGRESS_TYPES[progressType];
+    await addComment.mutateAsync({ id: taskId, content: `${config.marker} ${progressText.trim()}` });
+    setProgressText('');
+    toast.success(config.toast);
   };
 
   return (
@@ -246,8 +293,9 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
                   {PRIORITY_LABELS[task.priority]}
                 </StatusPill>
                 <StatusPill tone="muted">
-                  {STATUS_LABELS[task.status]}
+                  {STATUS_TEXT[task.status] ?? STATUS_LABELS[task.status]}
                 </StatusPill>
+                {task.isBlocked && <StatusPill tone="rose">Có khó khăn</StatusPill>}
               </div>
               {task.description && (
                 <p className="text-sm text-foreground/80">{task.description}</p>
@@ -263,6 +311,46 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
                   <span>📁 {task.project.name}</span>
                 )}
               </div>
+            </div>
+
+            {/* Progress update */}
+            <div className="p-4 border-b bg-aurora-soft/20">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-foreground">Cập nhật tiến trình</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  Gửi tới người thực hiện và người theo dõi
+                </p>
+              </div>
+              <form onSubmit={handleProgressUpdate} className="space-y-3">
+                <div className="grid grid-cols-4 gap-1.5">
+                  {Object.entries(PROGRESS_TYPES).map(([key, config]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setProgressType(key as keyof typeof PROGRESS_TYPES)}
+                      className={`rounded-lg border px-2 py-1.5 text-xs font-semibold transition ${
+                        progressType === key
+                          ? 'border-aurora-violet bg-aurora-violet/10 text-aurora-violet'
+                          : 'border-border bg-card text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {config.label}
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={progressText}
+                  onChange={(event) => setProgressText(event.target.value)}
+                  rows={3}
+                  placeholder="Nhập tiến trình, lý do pending hoặc khó khăn đang gặp..."
+                  className="w-full resize-none rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-aurora-violet focus:outline-none focus:ring-4 focus:ring-aurora-violet/15"
+                />
+                <div className="flex justify-end">
+                  <RippleButton type="submit" variant="aurora" disabled={addComment.isPending || !progressText.trim()}>
+                    Gửi cập nhật
+                  </RippleButton>
+                </div>
+              </form>
             </div>
 
             {/* Comments */}
@@ -283,7 +371,12 @@ function TaskDetailSlideOver({ taskId, onClose }: { taskId: string; onClose: () 
                           {new Date(c.createdAt).toLocaleString('vi-VN')}
                         </span>
                       </div>
-                      <p className="text-sm text-foreground">{c.content}</p>
+                      <div className="flex items-start gap-2">
+                        {c.content.startsWith('[[') && (
+                          <StatusPill tone={progressTone(c.content)}>{cleanProgressContent(c.content) === c.content ? 'Cập nhật' : 'Tiến trình'}</StatusPill>
+                        )}
+                        <p className="text-sm text-foreground">{cleanProgressContent(c.content)}</p>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -444,9 +537,10 @@ function TaskCard({
             {task.title}
           </p>
           <StatusPill tone={PRIORITY_TONES[task.priority] ?? 'muted'} className="whitespace-nowrap flex-shrink-0">
-            {PRIORITY_LABELS[task.priority]}
+            {PRIORITY_TEXT[task.priority] ?? PRIORITY_LABELS[task.priority]}
           </StatusPill>
         </div>
+        {task.isBlocked && <StatusPill tone="rose">Có khó khăn</StatusPill>}
 
         {task.project && (
           <p className="text-xs text-foreground mb-1">📁 {task.project.name}</p>
@@ -482,7 +576,7 @@ function TaskCard({
               onClick={(e) => { e.stopPropagation(); onMove(task.id, s); }}
               className="text-xs px-2 py-0.5 rounded border border-border hover:border-zinc-400 hover:text-foreground transition-colors"
             >
-              → {STATUS_LABELS[s]}
+              → {STATUS_TEXT[s] ?? STATUS_LABELS[s]}
             </button>
           ))}
       </div>
@@ -497,7 +591,9 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const createTask = useCreateTask();
   const { data: projects } = useProjects();
   const { data: allUsers } = useUsers();
+  const projectOptions = Array.isArray(projects) ? projects : (projects as any)?.data ?? [];
   const [projectId, setProjectId] = useState('');
+  const [assigneeId, setAssigneeId] = useState('');
   const [watcherIds, setWatcherIds] = useState<string[]>([]);
 
   const toggleWatcher = (userId: string) => {
@@ -513,6 +609,7 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
       title,
       priority: priority as any,
       projectId: projectId || undefined,
+      assigneeId: assigneeId || undefined,
       watcherIds: watcherIds.length > 0 ? watcherIds : undefined,
     } as any);
     toast.success('Đã tạo nhiệm vụ');
@@ -549,7 +646,7 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
             </select>
           </div>
 
-          {projects && projects.length > 0 && (
+          {projectOptions.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Dự án</label>
               <select
@@ -558,8 +655,24 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
                 onChange={(e) => setProjectId(e.target.value)}
               >
                 <option value="">-- Không gán dự án --</option>
-                {projects.map((p: any) => (
+                {projectOptions.map((p: any) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {allUsers && allUsers.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Người thực hiện</label>
+              <select
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-zinc-900"
+                value={assigneeId}
+                onChange={(e) => setAssigneeId(e.target.value)}
+              >
+                <option value="">-- Chưa gán --</option>
+                {allUsers.map((u: any) => (
+                  <option key={u.id} value={u.id}>{u.fullName}</option>
                 ))}
               </select>
             </div>
@@ -606,7 +719,19 @@ function CreateTaskModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
 // ─── Page ──────────────────────────────────────────────────────────────────
 export default function TasksPage() {
-  const { data: columns, isLoading, refetch } = useTasksKanban();
+  const searchParams = useSearchParams();
+  const [taskFilter, setTaskFilter] = useState<'all' | 'mine' | 'watched' | 'overdue' | 'pending' | 'blocked'>('all');
+  const [projectFilter, setProjectFilter] = useState('');
+  const { data: columns, isLoading, refetch } = useTasksKanban(projectFilter || undefined);
+  const { data: listTasks = [], isLoading: isListLoading } = useTasks({
+    projectId: projectFilter || undefined,
+    mine: taskFilter === 'mine',
+    watched: taskFilter === 'watched',
+    overdue: taskFilter === 'overdue',
+    pending: taskFilter === 'pending',
+    blocked: taskFilter === 'blocked',
+  });
+  const { data: projects = [] } = useProjects();
   const moveStatus = useMoveTaskStatus();
   const deleteTask = useDeleteTask();
   const [showCreate, setShowCreate] = useState(false);
@@ -615,6 +740,14 @@ export default function TasksPage() {
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [activeDragTask, setActiveDragTask] = useState<Task | null>(null);
+
+  useEffect(() => {
+    const taskId = searchParams.get('taskId');
+    if (taskId) {
+      setDetailTaskId(taskId);
+      setViewMode('list');
+    }
+  }, [searchParams]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -652,7 +785,15 @@ export default function TasksPage() {
   }
 
   const statuses: Task['status'][] = ['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'];
-  const allTasks = columns?.flatMap(c => c.tasks) ?? [];
+  const allTasks = viewMode === 'list' ? listTasks : columns?.flatMap(c => c.tasks) ?? [];
+  const taskFilters = [
+    { value: 'all', label: 'Tất cả' },
+    { value: 'mine', label: 'Của tôi' },
+    { value: 'watched', label: 'Theo dõi' },
+    { value: 'overdue', label: 'Quá hạn' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'blocked', label: 'Khó khăn' },
+  ] as const;
 
   return (
     <div className="h-full flex flex-col">
@@ -676,6 +817,37 @@ export default function TasksPage() {
         </div>
       </div>
 
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {taskFilters.map((filter) => (
+            <button
+              key={filter.value}
+              onClick={() => {
+                setTaskFilter(filter.value);
+                setViewMode('list');
+              }}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                taskFilter === filter.value && viewMode === 'list'
+                  ? 'btn-aurora text-white shadow-pop'
+                  : 'border border-border bg-card text-foreground/80 hover:border-aurora-violet/40'
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+        <select
+          value={projectFilter}
+          onChange={(event) => setProjectFilter(event.target.value)}
+          className="h-9 rounded-lg border border-border bg-card px-3 text-xs text-foreground"
+        >
+          <option value="">Tất cả dự án</option>
+          {(Array.isArray(projects) ? projects : (projects as any)?.data ?? []).map((project: any) => (
+            <option key={project.id} value={project.id}>{project.name}</option>
+          ))}
+        </select>
+      </div>
+
       {viewMode === 'kanban' ? (
       <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -689,7 +861,7 @@ export default function TasksPage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${STATUS_DOT[status]}`} />
-                  <h3 className="font-bold text-foreground text-xs uppercase tracking-wide">{STATUS_LABELS[status]}</h3>
+                  <h3 className="font-bold text-foreground text-xs uppercase tracking-wide">{STATUS_TEXT[status] ?? STATUS_LABELS[status]}</h3>
                   <span className="text-[10px] font-bold opacity-70 text-foreground">{tasks.length}</span>
                 </div>
               </div>
@@ -721,7 +893,7 @@ export default function TasksPage() {
           <div className="bg-card border-2 border-aurora-violet rounded-2xl p-3 shadow-pop opacity-95 w-72 rotate-2">
             <p className="text-sm font-semibold text-foreground">{activeDragTask.title}</p>
             <StatusPill tone={PRIORITY_TONES[activeDragTask.priority] ?? 'muted'} className="mt-1">
-              {PRIORITY_LABELS[activeDragTask.priority]}
+              {PRIORITY_TEXT[activeDragTask.priority] ?? PRIORITY_LABELS[activeDragTask.priority]}
             </StatusPill>
           </div>
         ) : null}
@@ -744,24 +916,32 @@ export default function TasksPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {allTasks.length === 0 && (
+            {isListLoading && (
+              <tr><td colSpan={7} className="text-center py-12 text-muted-foreground text-sm">Đang tải nhiệm vụ...</td></tr>
+            )}
+            {!isListLoading && allTasks.length === 0 && (
               <tr><td colSpan={7} className="text-center py-12 text-muted-foreground text-sm">Chưa có nhiệm vụ nào</td></tr>
             )}
-            {allTasks.map((task) => (
+            {!isListLoading && allTasks.map((task) => (
               <tr key={task.id} onClick={() => setDetailTaskId(task.id)}
                 className="hover:bg-aurora-soft/30 cursor-pointer transition-colors">
-                <td className="px-4 py-3 font-medium text-foreground">{task.title}</td>
+                <td className="px-4 py-3 font-medium text-foreground">
+                  <div className="flex items-center gap-2">
+                    <span>{task.title}</span>
+                    {task.isBlocked && <StatusPill tone="rose">Có khó khăn</StatusPill>}
+                  </div>
+                </td>
                 <td className="px-4 py-3">
                   <StatusPill tone={
                     task.status === 'DONE' ? 'emerald' :
                     task.status === 'IN_PROGRESS' ? 'indigo' :
                     task.status === 'REVIEW' ? 'amber' :
                     'muted'
-                  }>{STATUS_LABELS[task.status]}</StatusPill>
+                  }>{STATUS_TEXT[task.status] ?? STATUS_LABELS[task.status]}</StatusPill>
                 </td>
                 <td className="px-4 py-3">
                   <StatusPill tone={PRIORITY_TONES[task.priority] ?? 'muted'}>
-                    {PRIORITY_LABELS[task.priority]}
+                    {PRIORITY_TEXT[task.priority] ?? PRIORITY_LABELS[task.priority]}
                   </StatusPill>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground text-xs">{task.assignee?.fullName ?? '-'}</td>
@@ -824,6 +1004,3 @@ export default function TasksPage() {
     </div>
   );
 }
-
-
-

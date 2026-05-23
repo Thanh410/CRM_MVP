@@ -3,7 +3,28 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import type { ChatConversation, ChatKindFilter, ChatMessage, ChatUnreadCountResponse, ChatUser } from './types';
+import type {
+  ChatConversation,
+  ChatKindFilter,
+  ChatMessage,
+  ChatUnreadCountResponse,
+  ChatUser,
+} from './types';
+
+type SendMessagePayload = {
+  content: string;
+  clientId?: string;
+};
+
+function normalizeMessages(messages?: ChatMessage[]) {
+  const byId = new Map<string, ChatMessage>();
+  for (const message of messages ?? []) {
+    byId.set(message.id, message);
+  }
+  return Array.from(byId.values()).sort(
+    (first, second) => new Date(first.sentAt).getTime() - new Date(second.sentAt).getTime(),
+  );
+}
 
 export function useChatConversations(kind: ChatKindFilter, search: string) {
   return useQuery<ChatConversation[]>({
@@ -12,7 +33,8 @@ export function useChatConversations(kind: ChatKindFilter, search: string) {
       api
         .get('/chat/conversations', {
           params: {
-            ...(kind !== 'all' ? { kind } : {}),
+            ...(kind === 'direct' || kind === 'group' ? { kind } : {}),
+            ...(kind === 'unread' ? { unreadOnly: true } : {}),
             ...(search.trim() ? { search: search.trim() } : {}),
           },
         })
@@ -27,6 +49,14 @@ export function useChatMessages(conversationId: string | null) {
     queryFn: () => api.get(`/chat/conversations/${conversationId}/messages`).then((res) => res.data),
     enabled: !!conversationId,
     refetchInterval: 10000,
+  });
+}
+
+export function useChatConversation(conversationId: string | null) {
+  return useQuery<ChatConversation>({
+    queryKey: ['chat', 'conversation', conversationId],
+    queryFn: () => api.get(`/chat/conversations/${conversationId}`).then((res) => res.data),
+    enabled: !!conversationId,
   });
 }
 
@@ -48,7 +78,7 @@ export function useChatUnreadCount() {
   });
 }
 
-export function useChatMutations(activeId: string | null, currentUserId?: string) {
+export function useChatMutations(activeId: string | null, currentUserId?: string, currentUserName?: string) {
   const queryClient = useQueryClient();
 
   const refreshConversations = () => {
@@ -74,20 +104,62 @@ export function useChatMutations(activeId: string | null, currentUserId?: string
   });
 
   const sendMessage = useMutation({
-    mutationFn: (content: string) =>
-      api.post(`/chat/conversations/${activeId}/messages`, { content }).then((res) => res.data as ChatMessage),
-    onSuccess: () => {
-      refreshActiveMessages();
+    mutationFn: (payload: SendMessagePayload | string) => {
+      const content = typeof payload === 'string' ? payload : payload.content;
+      return api
+        .post(`/chat/conversations/${activeId}/messages`, { content })
+        .then((res) => res.data as ChatMessage);
+    },
+    onMutate: async (payload) => {
+      if (!activeId || !currentUserId) return undefined;
+      const content = typeof payload === 'string' ? payload : payload.content;
+      const clientId =
+        typeof payload === 'string' || !payload.clientId ? `pending-${Date.now()}` : payload.clientId;
+
+      await queryClient.cancelQueries({ queryKey: ['chat', 'messages', activeId] });
+      const previousMessages = queryClient.getQueryData<ChatMessage[]>(['chat', 'messages', activeId]);
+      const optimisticMessage: ChatMessage = {
+        id: clientId,
+        conversationId: activeId,
+        senderId: currentUserId,
+        content,
+        sentAt: new Date().toISOString(),
+        sender: { id: currentUserId, fullName: currentUserName ?? 'Bạn', avatar: null },
+        pending: true,
+      };
+
+      queryClient.setQueryData<ChatMessage[]>(['chat', 'messages', activeId], (current) =>
+        normalizeMessages([...(current ?? []).filter((message) => message.id !== clientId), optimisticMessage]),
+      );
+
+      return { clientId, conversationId: activeId, previousMessages };
+    },
+    onSuccess: (message, _payload, context) => {
+      if (!context?.conversationId) return;
+      queryClient.setQueryData<ChatMessage[]>(['chat', 'messages', context.conversationId], (current) =>
+        normalizeMessages([...(current ?? []).filter((item) => item.id !== context.clientId && item.id !== message.id), message]),
+      );
       refreshConversations();
     },
-    onError: (error: any) => toast.error(error.response?.data?.message ?? 'Gửi tin nhắn thất bại'),
+    onError: (error: any, _payload, context) => {
+      if (context?.conversationId && context.clientId) {
+        queryClient.setQueryData<ChatMessage[]>(['chat', 'messages', context.conversationId], (current) =>
+          normalizeMessages(
+            (current ?? []).map((message) =>
+              message.id === context.clientId ? { ...message, pending: false, failed: true } : message,
+            ),
+          ),
+        );
+      }
+      toast.error(error.response?.data?.message ?? 'Gửi tin nhắn thất bại');
+    },
   });
 
   const markRead = useMutation({
     mutationFn: (conversationId: string) => api.patch(`/chat/conversations/${conversationId}/read`),
     onSuccess: (_, conversationId) => {
-      refreshActiveMessages(conversationId);
       refreshConversations();
+      queryClient.invalidateQueries({ queryKey: ['chat', 'conversation', conversationId] });
     },
   });
 

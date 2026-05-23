@@ -134,6 +134,21 @@ describe('ChatService', () => {
     expect(conversation.unreadCount).toBe(3);
   });
 
+  it('filters unread conversations after computing exact unread counts', async () => {
+    const service = makeService();
+    prisma.conversation.findMany.mockResolvedValue([
+      makeConversation({ id: 'conversation-1' }),
+      makeConversation({ id: 'conversation-2' }),
+    ]);
+    prisma.message.count.mockResolvedValueOnce(0).mockResolvedValueOnce(2);
+
+    const conversations = await service.listConversations('org-1', 'user-1', { unreadOnly: true });
+
+    expect(conversations).toHaveLength(1);
+    expect(conversations[0].id).toBe('conversation-2');
+    expect(conversations[0].unreadCount).toBe(2);
+  });
+
   it('marks a conversation as read for the current participant', async () => {
     const service = makeService();
     prisma.conversation.findFirst.mockResolvedValue({ id: 'conversation-1' });

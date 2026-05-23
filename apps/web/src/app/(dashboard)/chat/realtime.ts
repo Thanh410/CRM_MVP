@@ -27,12 +27,16 @@ export function connectChatRealtime(queryClient: QueryClient, token?: string | n
 
   const refreshChat = (payload?: { conversationId?: string }) => {
     queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
+    queryClient.invalidateQueries({ queryKey: ['chat', 'conversation'] });
     queryClient.invalidateQueries({ queryKey: ['chat', 'unread-count'] });
     if (payload?.conversationId) {
       queryClient.invalidateQueries({ queryKey: ['chat', 'messages', payload.conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['chat', 'conversation', payload.conversationId] });
     }
   };
 
+  socket.on('connect', () => refreshChat());
+  socket.io.on('reconnect', () => refreshChat());
   socket.on('chat:message.created', refreshChat);
   socket.on('chat:conversation.updated', refreshChat);
   socket.on('chat:read.updated', refreshChat);

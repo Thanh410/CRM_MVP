@@ -32,48 +32,52 @@ const conversation: ChatConversation = {
   ],
 };
 
+function renderList(overrides: Partial<Parameters<typeof ConversationList>[0]> = {}) {
+  return render(
+    <ConversationList
+      activeId={null}
+      conversations={[conversation]}
+      currentUserId="user-1"
+      kind="all"
+      search=""
+      userSearch=""
+      users={[]}
+      onKindChange={vi.fn()}
+      onSearchChange={vi.fn()}
+      onUserSearchChange={vi.fn()}
+      onSelectConversation={vi.fn()}
+      onStartDirect={vi.fn()}
+      {...overrides}
+    />,
+  );
+}
+
 describe('ConversationList', () => {
   it('renders conversation titles and unread badges', () => {
-    render(
-      <ConversationList
-        activeId={null}
-        conversations={[conversation]}
-        currentUserId="user-1"
-        kind="all"
-        search=""
-        userSearch=""
-        users={[]}
-        onKindChange={vi.fn()}
-        onSearchChange={vi.fn()}
-        onUserSearchChange={vi.fn()}
-        onSelectConversation={vi.fn()}
-        onStartDirect={vi.fn()}
-      />,
-    );
+    renderList();
 
     expect(screen.getByText('Lan Hương')).toBeInTheDocument();
     expect(screen.getByText('Chào anh')).toBeInTheDocument();
     expect(screen.getByText('3')).toBeInTheDocument();
   });
 
+  it('switches to the unread filter tab', () => {
+    const onKindChange = vi.fn();
+    renderList({ onKindChange });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chưa đọc' }));
+
+    expect(onKindChange).toHaveBeenCalledWith('unread');
+  });
+
   it('starts a direct chat from the user search result', () => {
     const onStartDirect = vi.fn();
-    render(
-      <ConversationList
-        activeId={null}
-        conversations={[]}
-        currentUserId="user-1"
-        kind="all"
-        search=""
-        userSearch="Lan"
-        users={[{ id: 'user-2', fullName: 'Lan Hương', email: 'lan@example.com' }]}
-        onKindChange={vi.fn()}
-        onSearchChange={vi.fn()}
-        onUserSearchChange={vi.fn()}
-        onSelectConversation={vi.fn()}
-        onStartDirect={onStartDirect}
-      />,
-    );
+    renderList({
+      conversations: [],
+      userSearch: 'Lan',
+      users: [{ id: 'user-2', fullName: 'Lan Hương', email: 'lan@example.com' }],
+      onStartDirect,
+    });
 
     fireEvent.click(screen.getByText('Lan Hương'));
     expect(onStartDirect).toHaveBeenCalledWith('user-2');
